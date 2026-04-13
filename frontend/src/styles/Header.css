@@ -1,0 +1,127 @@
+.header-section {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #e0f2fe 100%);
+    padding-top: 120px;
+    padding-bottom: 80px;
+    position: relative;
+    overflow: hidden;
+}
+
+.header-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.header-highlight {
+    color: #2563eb;
+}
+
+.header-subtitle {
+    font-size: 18px;
+    color: #64748b;
+    margin-bottom: 30px;
+    max-width: 500px;
+}
+
+.btn-header-primary {
+    background-color: #2563eb;
+    border: none;
+    color: #ffffff;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 15px;
+    transition: all 0.3s ease;
+}
+
+.btn-header-outline {
+    background-color: transparent;
+    border: 2px solid #2563eb;
+    color: #2563eb;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.contact-box {
+    display: flex;
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.contact-icon {
+    width: 45px;
+    height: 45px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    font-size: 20px;
+}
+
+.contact-label {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.contact-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e3a5f;
+    margin: 0;
+}
+
+.header-image-container {
+    position: relative;
+}
+
+.header-hero-image {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(37, 99, 235, 0.2);
+}
+
+.header-floating-icon {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background-color: #ffffff;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    font-size: 28px;
+}
+
+.icon-1 {
+    top: 20px;
+    left: -20px;
+}
+
+.icon-2 {
+    bottom: 80px;
+    right: -20px;
+}
+
+.icon-3 {
+    top: 50%;
+    right: 10px;
+}

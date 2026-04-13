@@ -1,6 +1,7 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
+import HomePage from './pages/Homepage';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         {/* Định nghĩa đường dẫn cho từng màn hình */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/home" element={<HomePage />} />
       </Routes>
     </Router>
   );
