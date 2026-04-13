@@ -1,34 +1,42 @@
 // Cart.js
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { clearCart, getCart, removeFromCart, updateQtyInCart } from "../../utils/cart";
 import { Trash2, ShieldCheck, RotateCcw, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const initCart = [
-    { id: 2, brand: "Unique", name: "Gel bôi nướu Metrogyl Denta", price: 65000, qty: 1 },
-];
 
 function formatPrice(n) {
-    return n.toLocaleString("vi-VN") + " ₫";
+    const value = Number(n) || 0;
+    return value.toLocaleString("vi-VN") + " ₫";
 }
 
 export default function Cart() {
-    const [cart, setCart] = useState(initCart);
+
+    const [cart, setCart] = useState([]);
+
     const navigate = useNavigate();
 
+    useEffect(() => {
+        setCart(getCart());
+    }, []);
+
+
     const updateQty = (id, delta) => {
-        setCart((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item
-            )
-        );
+        const next = updateQtyInCart(id, delta);
+        setCart(next);
     };
 
     const removeItem = (id) => {
-        setCart((prev) => prev.filter((item) => item.id !== id));
+        const next = removeFromCart(id);
+        setCart(next);
     };
 
-    const clearCart = () => setCart([]);
+    const handleClearCart = () => {
+        const next = clearCart();
+        setCart(next);
+    };
+
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
     const total = subtotal;
@@ -129,7 +137,7 @@ export default function Cart() {
                                 <button
                                     className="btn"
                                     style={{ color: "#e53e3e", fontSize: 13, border: "none", background: "none" }}
-                                    onClick={clearCart}
+                                    onClick={handleClearCart}
                                 >
                                     Xóa tất cả sản phẩm
                                 </button>

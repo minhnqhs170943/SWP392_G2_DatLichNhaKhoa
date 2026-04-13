@@ -1,17 +1,19 @@
 // Product.js
 import { useState } from "react";
 import { ShoppingCart, FlaskConical } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { addToCart } from "../../utils/cart";
+
 
 const products = [
-    { id: 1, brand: "Pymepharco", name: "Thuốc giảm đau răng Ibuprofen 400mg", desc: "Thuốc giảm đau, hạ sốt hiệu quả cho các trường hợp đau răng cấp tính", price: "45.000 ₫" },
-    { id: 2, brand: "Unique", name: "Gel bôi nướu Metrogyl Denta", desc: "Gel kháng khuẩn điều trị viêm nướu, viêm quanh răng", price: "65.000 ₫" },
-    { id: 3, brand: "Domesco", name: "Thuốc kháng sinh Amoxicillin 500mg", desc: "Kháng sinh điều trị nhiễm trùng răng miệng, áp xe răng", price: "55.000 ₫" },
-    { id: 4, brand: "Corsodyl", name: "Nước súc miệng Chlorhexidine 0.2%", desc: "Dung dịch sát khuẩn chuyên dụng sau phẫu thuật nha khoa", price: "85.000 ₫" },
-    { id: 5, brand: "Septodont", name: "Thuốc tê Lidocaine 2%", desc: "Thuốc tê tại chỗ dùng trong các thủ thuật nha khoa", price: "120.000 ₫" },
-    { id: 6, brand: "Strepsils", name: "Viên ngậm ho Strepsils", desc: "Viên ngậm kháng khuẩn, giảm đau họng và viêm họng", price: "35.000 ₫" },
-    { id: 7, brand: "Calcium-D", name: "Thuốc bổ sung Canxi + Vitamin D3", desc: "Bổ sung canxi giúp răng chắc khỏe, ngăn ngừa loãng xương hàm", price: "150.000 ₫" },
-    { id: 8, brand: "Orajel", name: "Gel điều trị loét miệng Orajel", desc: "Gel giảm đau và chữa lành vết loét miệng nhanh chóng", price: "75.000 ₫" },
+    { id: 1, brand: "Pymepharco", name: "Thuốc giảm đau răng Ibuprofen 400mg", desc: "Thuốc giảm đau, hạ sốt hiệu quả cho các trường hợp đau răng cấp tính", price: "45.000 ₫", priceNumber: 45000 },
+    { id: 2, brand: "Unique", name: "Gel bôi nướu Metrogyl Denta", desc: "Gel kháng khuẩn điều trị viêm nướu, viêm quanh răng", price: "65.000 ₫", priceNumber: 65000 },
+    { id: 3, brand: "Domesco", name: "Thuốc kháng sinh Amoxicillin 500mg", desc: "Kháng sinh điều trị nhiễm trùng răng miệng, áp xe răng", price: "55.000 ₫", priceNumber: 55000 },
+    { id: 4, brand: "Corsodyl", name: "Nước súc miệng Chlorhexidine 0.2%", desc: "Dung dịch sát khuẩn chuyên dụng sau phẫu thuật nha khoa", price: "85.000 ₫", priceNumber: 85000 },
+    { id: 5, brand: "Septodont", name: "Thuốc tê Lidocaine 2%", desc: "Thuốc tê tại chỗ dùng trong các thủ thuật nha khoa", price: "120.000 ₫", priceNumber: 120000 },
+    { id: 6, brand: "Strepsils", name: "Viên ngậm ho Strepsils", desc: "Viên ngậm kháng khuẩn, giảm đau họng và viêm họng", price: "35.000 ₫", priceNumber: 35000 },
+    { id: 7, brand: "Calcium-D", name: "Thuốc bổ sung Canxi + Vitamin D3", desc: "Bổ sung canxi giúp răng chắc khỏe, ngăn ngừa loãng xương hàm", price: "150.000 ₫", priceNumber: 150000 },
+    { id: 8, brand: "Orajel", name: "Gel điều trị loét miệng Orajel", desc: "Gel giảm đau và chữa lành vết loét miệng nhanh chóng", price: "75.000 ₫", priceNumber: 75000 },
 ];
 
 const styles = {
@@ -57,6 +59,16 @@ const styles = {
 
 export default function Product() {
     const [search, setSearch] = useState("");
+    const navigate = useNavigate();
+
+    const handleAddToCart = (product) => {
+        addToCart(product);
+    };
+
+    const handleBuyNow = (product) => {
+        addToCart(product);
+        navigate("/cart");
+    };
 
     const filtered = products.filter(
         (p) =>
@@ -97,10 +109,13 @@ export default function Product() {
                             <div style={styles.price}>{p.price}</div>
                         </div>
                         <div style={styles.cardActions}>
-                            <button style={styles.btnCart}>
+                            <button style={styles.btnCart} onClick={() => handleAddToCart(p)}>
                                 <ShoppingCart size={15} />
                             </button>
-                            <button style={styles.btnBuy}>Mua ngay</button>
+                            <button style={styles.btnBuy} onClick={() => handleBuyNow(p)}>
+                                Mua ngay
+                            </button>
+
                         </div>
                     </div>
                 ))}

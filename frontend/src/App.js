@@ -4,6 +4,8 @@ import Register from './pages/Auth/Register';
 import Product from './pages/Market/Product';
 import ProductDetail from './pages/Market/ProductDetail';
 import Cart from './pages/Market/Cart';
+import Doctor from './pages/Market/Doctor';
+import DoctorDetail from './pages/Market/DoctorDetail';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/product" element={<Product />} />
+        <Route path="/doctor" element={<Doctor />} />
+        <Route path="/doctor-detail/:id" element={<DoctorDetail />} />
         <Route path="/product-detail/:id" element={<ProductDetail />} />
         <Route path='/cart' element={<Cart />} />
       </Routes>

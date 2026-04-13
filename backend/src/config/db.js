@@ -14,13 +14,17 @@ const config = {
 
 async function connectDB() {
   try {
-    // Thêm dòng này để kiểm tra pool đã tồn tại chưa (tránh tạo nhiều kết nối)
-    let pool = await sql.connect(config);
+    const pool = await sql.connect(config);
     console.log("Kết nối SQL Server thành công!");
     return pool;
   } catch (err) {
     console.error("Lỗi kết nối chi tiết: ", err.message);
+    throw err;
   }
 }
 
-module.exports = { sql, connectDB };
+async function getPool() {
+  return connectDB();
+}
+
+module.exports = { sql, connectDB, getPool };
