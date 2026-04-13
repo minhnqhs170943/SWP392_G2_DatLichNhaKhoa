@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ShoppingCart, FlaskConical } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { addToCart } from "../../utils/cart";
+import Navbar from "../../components/Navbar";
 
 
 const products = [
@@ -17,7 +18,7 @@ const products = [
 ];
 
 const styles = {
-    page: { padding: "32px 40px", background: "#f5f6fa", minHeight: "100vh" },
+    page: { padding: "110px 40px 32px", background: "#f5f6fa", minHeight: "100vh" },
     title: { fontSize: 22, fontWeight: 700, color: "#111", marginBottom: 4 },
     subtitle: { fontSize: 13, color: "#888", marginBottom: 20 },
     searchInput: {
@@ -77,49 +78,53 @@ export default function Product() {
     );
 
     return (
-        <div style={styles.page}>
-            <h1 style={styles.title}>Thuốc nha khoa</h1>
-            <p style={styles.subtitle}>Các loại thuốc và dược phẩm chuyên dụng cho nha khoa</p>
-            <input
-                style={styles.searchInput}
-                type="text"
+        <div>
+            <Navbar />
+            <div style={styles.page}>
+                <h1 style={styles.title}>Thuốc nha khoa</h1>
+                <p style={styles.subtitle}>Các loại thuốc và dược phẩm chuyên dụng cho nha khoa</p>
+                <input
+                    style={styles.searchInput}
+                    type="text"
 
-                placeholder="Tìm kiếm thuốc hoặc dược phẩm..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
+                    placeholder="Tìm kiếm thuốc hoặc dược phẩm..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
 
-            <div style={styles.grid}>
-                {filtered.map((p) => (
-                    <div key={p.id} style={styles.card}>
-                        <div style={styles.cardImg}>
-                            <FlaskConical size={48} color="#ccc" />
-                        </div>
-                        <div style={styles.cardBody}>
-                            <div style={styles.brand}>{p.brand}</div>
-                            <div style={styles.prodName}>
-                                <Link
-                                    to={`/product-detail/${p.id}`}
-                                    style={{ textDecoration: 'none', color: '#111' }} // Bỏ gạch chân mặc định của thẻ a
-                                >
-                                    {p.name}
-                                </Link>
+                <div style={styles.grid}>
+                    {filtered.map((p) => (
+                        <div key={p.id} style={styles.card}>
+                            <div style={styles.cardImg}>
+                                <FlaskConical size={48} color="#ccc" />
                             </div>
-                            <div style={styles.prodDesc}>{p.desc}</div>
-                            <div style={styles.price}>{p.price}</div>
-                        </div>
-                        <div style={styles.cardActions}>
-                            <button style={styles.btnCart} onClick={() => handleAddToCart(p)}>
-                                <ShoppingCart size={15} />
-                            </button>
-                            <button style={styles.btnBuy} onClick={() => handleBuyNow(p)}>
-                                Mua ngay
-                            </button>
+                            <div style={styles.cardBody}>
+                                <div style={styles.brand}>{p.brand}</div>
+                                <div style={styles.prodName}>
+                                    <Link
+                                        to={`/product-detail/${p.id}`}
+                                        style={{ textDecoration: 'none', color: '#111' }} // Bỏ gạch chân mặc định của thẻ a
+                                    >
+                                        {p.name}
+                                    </Link>
+                                </div>
+                                <div style={styles.prodDesc}>{p.desc}</div>
+                                <div style={styles.price}>{p.price}</div>
+                            </div>
+                            <div style={styles.cardActions}>
+                                <button style={styles.btnCart} onClick={() => handleAddToCart(p)}>
+                                    <ShoppingCart size={15} />
+                                </button>
+                                <button style={styles.btnBuy} onClick={() => handleBuyNow(p)}>
+                                    Mua ngay
+                                </button>
 
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         </div>
+
     );
 }
