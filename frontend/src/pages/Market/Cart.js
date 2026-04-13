@@ -53,7 +53,7 @@ export default function Cart() {
                             <button
                                 className="btn mx-auto"
                                 style={{ background: "#1DA0E0", color: "#fff", borderRadius: 10, width: 180 }}
-                                onClick={() => navigate("/thuoc-nha-khoa")}
+                                onClick={() => navigate("/product")}
                             >
                                 Mua sắm ngay
                             </button>
@@ -173,7 +173,7 @@ export default function Cart() {
                         <button
                             className="btn w-100 fw-semibold"
                             style={{ height: 46, background: "#fff", color: "#333", border: "1px solid #ddd", borderRadius: 10, fontSize: 14 }}
-                            onClick={() => navigate("/thuoc-nha-khoa")}
+                            onClick={() => navigate("/product")}
                         >
                             Tiếp tục mua sắm
                         </button>

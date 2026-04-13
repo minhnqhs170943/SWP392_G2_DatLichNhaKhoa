@@ -1,15 +1,15 @@
 const sql = require('mssql');
 
 const config = {
-  user: 'sa',
-  password: 'nam123',
-  server: 'localhost',
-  database: 'master', // Thay bằng tên DB thực tế của bạn sau này
+  user: process.env.DB_USER || 'sa',
+  password: process.env.DB_PASSWORD || '',
+  server: process.env.DB_SERVER || 'localhost',
+  database: process.env.DB_NAME || 'master',
   options: {
-    encrypt: true,
-    trustServerCertificate: true
+    encrypt: (process.env.DB_ENCRYPT || 'true').toLowerCase() === 'true',
+    trustServerCertificate: (process.env.DB_TRUST_SERVER_CERT || 'true').toLowerCase() === 'true'
   },
-  port: 57302 // Hardcode cổng động tạm thời
+  port: Number(process.env.DB_PORT) || 1433
 };
 
 async function connectDB() {
