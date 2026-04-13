@@ -1,6 +1,7 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
+import HomePage from './pages/Homepage';
 import Product from './pages/Market/Product';
 import ProductDetail from './pages/Market/ProductDetail';
 import Cart from './pages/Market/Cart';
@@ -17,6 +18,7 @@ function App() {
         {/* Định nghĩa đường dẫn cho từng màn hình */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/product" element={<Product />} />
         <Route path="/doctor" element={<Doctor />} />
         <Route path="/doctor-detail/:id" element={<DoctorDetail />} />
