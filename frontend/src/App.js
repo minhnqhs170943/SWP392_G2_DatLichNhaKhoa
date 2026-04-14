@@ -12,6 +12,7 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import OrdersPage from './pages/OrdersPage';
+import Review from './pages/Market/Review';
 
 
 
@@ -36,6 +37,7 @@ function App() {
         <Route path='/payment/success' element={<PaymentSuccess />} />
         <Route path='/payment/cancel' element={<PaymentCancel />} />
         <Route path='/orders' element={<OrdersPage />} />
+        <Route path='/review' element= {<Review/>}/>
       </Routes>
     </Router>
   );
