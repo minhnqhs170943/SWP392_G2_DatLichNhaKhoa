@@ -49,9 +49,18 @@ const Login = () => {
                         </button>
                     </form>
 
-                    <div className="text-center">
+                    <div className="text-center mt-2">
                         <span className="small text-muted">Chưa có tài khoản? </span>
                         <Link to="/register" className="small text-decoration-none fw-bold">Đăng ký ngay</Link>
+                    </div>
+                    <div className="mt-4 text-center border-top pt-3">
+                        <small className="text-muted d-block mb-2">Truy cập nhanh (Dành cho Ban Giám Đốc):</small>
+                        <button 
+                            className="btn btn-outline-dark btn-sm rounded-pill px-4 mb-2"
+                            onClick={() => window.location.href = '/admin-analytics'}
+                        >
+                            Vào Admin Analytics
+                        </button>
                     </div>
                 </div>
             </div>

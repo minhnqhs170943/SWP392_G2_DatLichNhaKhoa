@@ -12,15 +12,19 @@ const config = {
   port: Number(process.env.DB_PORT) || 1433
 };
 
-async function connectDB() {
-  try {
-    // Thêm dòng này để kiểm tra pool đã tồn tại chưa (tránh tạo nhiều kết nối)
-    let pool = await sql.connect(config);
+const poolPromise = new sql.ConnectionPool(config)
+  .connect()
+  .then(pool => {
     console.log("Kết nối SQL Server thành công!");
     return pool;
-  } catch (err) {
-    console.error("Lỗi kết nối chi tiết: ", err.message);
-  }
+  })
+  .catch(err => {
+    console.log("Lỗi kết nối chi tiết: ", err);
+    process.exit(1);
+  });
+
+function connectDB() {
+    return poolPromise;
 }
 
-module.exports = { sql, connectDB };
+module.exports = { sql, connectDB, poolPromise };
