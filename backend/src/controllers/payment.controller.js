@@ -62,7 +62,7 @@ class PaymentController {
                 transactionId: orderCode.toString(),
                 amount: totalAmount,
                 paymentMethod: 'PAYOS',
-                status: 'SUCCESS' // Giả lập đã thanh toán thành công
+                status: 'SUCCESS'
             });
 
             // Cập nhật order status thành SUCCESS luôn
@@ -182,21 +182,14 @@ class PaymentController {
                 });
             }
 
-            if (order.PaymentStatus !== 'PENDING') {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Không thể hủy đơn hàng này'
-                });
-            }
-
             const payment = await Payment.findByOrderId(orderId);
             
             if (payment) {
-                await payos.paymentRequests.cancel(parseInt(payment.TransactionID));
-                
+                // Cập nhật trạng thái payment
                 await Payment.updateStatus(payment.PaymentID, 'CANCELLED');
             }
             
+            // Cập nhật trạng thái order
             await Order.updatePaymentStatus(orderId, 'CANCELLED');
 
             res.status(200).json({

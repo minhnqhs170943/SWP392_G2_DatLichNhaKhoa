@@ -205,7 +205,15 @@ const PaymentQRPage = () => {
                         Mở trang PayOS
                     </button>
                     <button
-                        onClick={() => navigate('/payment/cancel')}
+                        onClick={async () => {
+                            try {
+                                await paymentService.cancelPayment(paymentData.orderId);
+                                navigate('/payment/cancel');
+                            } catch (error) {
+                                console.error('Error canceling payment:', error);
+                                navigate('/payment/cancel');
+                            }
+                        }}
                         style={{
                             flex: 1,
                             padding: '12px',
