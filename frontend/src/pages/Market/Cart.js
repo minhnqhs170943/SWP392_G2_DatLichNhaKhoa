@@ -3,6 +3,9 @@ import { clearCart, getCart, removeFromCart, updateQtyInCart } from "../../utils
 import { Trash2, ShieldCheck, RotateCcw, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { RotateCcw, ShieldCheck, Trash2, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 

@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { registerApi } from '../../services/authService'; // Import service gọi API
 
 const Register = () => {
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
+        username: '',
         fullName: '',
         email: '',
         phone: '',
+        address: '',
         password: '',
         confirmPassword: ''
     });
@@ -14,19 +19,41 @@ const Register = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleRegister = (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
+
+        // Kiểm tra mật khẩu xác nhận
         if (formData.password !== formData.confirmPassword) {
             alert("Mật khẩu xác nhận không khớp!");
             return;
         }
-        console.log("Dữ liệu đăng ký:", formData);
-        // Sau này sẽ gọi API POST /register ở đây
+
+        const payload = {
+            username: formData.username,
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            password: formData.password
+        };
+
+        try {
+            const data = await registerApi(payload);
+
+            if (data && data.success) {
+                alert("Đăng ký thành công! Vui lòng đăng nhập.");
+                navigate('/login');
+            } else {
+                alert(data?.message || "Đăng ký thất bại!");
+            }
+        } catch (error) {
+            alert(error.message || "Lỗi kết nối! Vui lòng thử lại.");
+        }
     };
 
     return (
-        <div className="container-fluid vh-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: '#e3f2fd' }}>
-            <div className="card shadow-lg border-0" style={{ width: '450px', borderRadius: '15px' }}>
+        <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-5" style={{ backgroundColor: '#e3f2fd' }}>
+            <div className="card shadow-lg border-0" style={{ width: '500px', borderRadius: '15px' }}>
                 <div className="card-body p-5">
                     <div className="text-center mb-4">
                         <h2 className="fw-bold text-primary">Đăng Ký Tài Khoản</h2>
@@ -34,6 +61,20 @@ const Register = () => {
                     </div>
 
                     <form onSubmit={handleRegister}>
+                        {/* Trường Username */}
+                        <div className="mb-3">
+                            <label className="form-label fw-semibold">Tên đăng nhập</label>
+                            <input
+                                type="text"
+                                name="username"
+                                className="form-control"
+                                placeholder="nguyenvana123"
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+
+                        {/* Trường FullName */}
                         <div className="mb-3">
                             <label className="form-label fw-semibold">Họ và tên</label>
                             <input
@@ -46,6 +87,7 @@ const Register = () => {
                             />
                         </div>
 
+                        {/* Trường Email */}
                         <div className="mb-3">
                             <label className="form-label fw-semibold">Email</label>
                             <input
@@ -58,20 +100,34 @@ const Register = () => {
                             />
                         </div>
 
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold">Số điện thoại</label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                className="form-control"
-                                placeholder="090xxxxxxx"
-                                onChange={handleChange}
-                                required
-                            />
+                        {/* Nhóm Phone & Address */}
+                        <div className="row">
+                            <div className="col-md-6 mb-3">
+                                <label className="form-label fw-semibold">Số điện thoại</label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    className="form-control"
+                                    placeholder="090xxxxxxx"
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="col-md-6 mb-3">
+                                <label className="form-label fw-semibold">Địa chỉ</label>
+                                <input
+                                    type="text"
+                                    name="address"
+                                    className="form-control"
+                                    placeholder="Hà Nội..."
+                                    onChange={handleChange}
+                                />
+                            </div>
                         </div>
 
+                        {/* Nhóm Mật khẩu */}
                         <div className="row">
-                            <div className="mb-3">
+                            <div className="col-md-6 mb-3">
                                 <label className="form-label fw-semibold">Mật khẩu</label>
                                 <input
                                     type="password"
@@ -82,10 +138,7 @@ const Register = () => {
                                     required
                                 />
                             </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="mb-3">
+                            <div className="col-md-6 mb-4">
                                 <label className="form-label fw-semibold">Xác nhận mật khẩu</label>
                                 <input
                                     type="password"
