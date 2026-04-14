@@ -1,13 +1,32 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { loginApi } from '../../services/authService';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        console.log('Login:', { email, password });
+        const data = await loginApi(email, password);
+
+        if (data.success) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            if (data.user.RoleID === 1) {
+                alert("Đăng nhập với tư cách admin thành công");
+                navigate('/admin-dashboard');
+            } else if (data.user.RoleID === 2) {
+                alert("Đăng nhập với tư cách nhân viên thành công");
+                navigate('/doctor-dashboard');
+            } else {
+                alert("Đăng nhập thành công!");
+                navigate('/home');
+            }
+        } else {
+            alert(data.message);
+        }
     };
 
     return (
@@ -15,10 +34,16 @@ const Login = () => {
             className="d-flex justify-content-center align-items-center min-vh-100"
             style={{ backgroundColor: '#e8f0fe' }}
         >
+            
             <div
                 className="bg-white rounded-4 p-4 p-md-5 shadow-sm"
                 style={{ width: '100%', maxWidth: '420px' }}
             >
+                <div className="mb-4">
+                    <Link to="/home" className="text-decoration-none text-muted">
+                        ← Trang chủ
+                    </Link>
+                </div>
                 <div className="text-center mb-4">
                     <h2 className="fw-bold mb-2" style={{ color: '#1a1a2e' }}>
                         Đăng nhập
@@ -26,7 +51,7 @@ const Login = () => {
                     <p className="text-muted mb-0">Chào mừng bạn quay trở lại</p>
                 </div>
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleLogin}>
                     <div className="mb-3">
                         <label className="form-label text-muted small">Email</label>
                         <input
@@ -35,6 +60,7 @@ const Login = () => {
                             placeholder="your@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            required
                             style={{
                                 borderRadius: '8px',
                                 border: '1px solid #e0e0e0',
@@ -51,6 +77,7 @@ const Login = () => {
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            required
                             style={{
                                 borderRadius: '8px',
                                 border: '1px solid #e0e0e0',
