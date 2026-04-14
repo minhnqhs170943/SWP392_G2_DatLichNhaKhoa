@@ -6,6 +6,7 @@ import CartItemList from '../components/Checkout/CartItemList';
 import ShippingInfo from '../components/Checkout/ShippingInfo';
 import OrderSummary from '../components/Checkout/OrderSummary';
 import PaymentMethods from '../components/Checkout/PaymentMethods';
+import paymentService from '../services/paymentService';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const CheckoutPage = () => {
@@ -66,14 +67,52 @@ const CheckoutPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!formData.fullName || !formData.phone || !formData.district || !formData.ward || !formData.address) {
       alert('Vui lòng điền đầy đủ thông tin giao hàng');
       return;
     }
-    console.log('Đặt hàng:', { cartItems, paymentMethod, formData });
-    alert('Đặt hàng thành công!');
-    navigate('/home');
+
+    try {
+      // Lấy userId từ localStorage hoặc context (giả sử đã đăng nhập)
+      const userId = localStorage.getItem('userId') || 1;
+      
+      const shippingAddress = `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`;
+      
+      // Chuẩn bị dữ liệu thanh toán
+      const paymentData = {
+        userId: parseInt(userId),
+        items: cartItems.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        shippingAddress: shippingAddress,
+        returnUrl: `${window.location.origin}/payment/success`,
+        cancelUrl: `${window.location.origin}/payment/cancel`
+      };
+
+      if (paymentMethod === 'payos') {
+        // Thanh toán qua PayOS
+        const response = await paymentService.createPayment(paymentData);
+        
+        if (response.success) {
+          // Chuyển hướng đến trang thanh toán PayOS
+          window.location.href = response.data.checkoutUrl;
+        } else {
+          alert('Lỗi tạo thanh toán: ' + response.message);
+        }
+      } else {
+        // Thanh toán COD hoặc phương thức khác
+        console.log('Đặt hàng:', { cartItems, paymentMethod, formData });
+        alert('Đặt hàng thành công!');
+        navigate('/home');
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      alert('Có lỗi xảy ra khi thanh toán. Vui lòng thử lại!');
+    }
   };
 
   return (
