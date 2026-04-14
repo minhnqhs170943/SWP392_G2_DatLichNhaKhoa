@@ -1,10 +1,9 @@
-import { Wallet, CreditCard, Banknote } from 'lucide-react';
+import { Banknote, QrCode } from 'lucide-react';
 
 const PaymentMethods = ({ selectedMethod, onMethodChange, onCheckout, disabled }) => {
   const paymentOptions = [
     { id: 'cod', name: 'COD', desc: 'Thanh toán khi nhận hàng', icon: Banknote, color: '#38a169' },
-    { id: 'vnpay', name: 'VNPay', desc: 'Chuyển khoản ngân hàng', icon: CreditCard, color: '#3b82f6' },
-    { id: 'momo', name: 'MoMo', desc: 'Ví điện tử MoMo', icon: Wallet, color: '#ec4899' }
+    { id: 'payos', name: 'PayOS', desc: 'Thanh toán qua PayOS (QR Code)', icon: QrCode, color: '#ff6b35' }
   ];
 
   return (

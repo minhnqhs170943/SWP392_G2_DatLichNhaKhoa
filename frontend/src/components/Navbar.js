@@ -1,15 +1,30 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import './../styles/Navbar.css';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('user')
+        localStorage.removeItem('user');
         alert("Đã đăng xuất");
         navigate('/home');
     };
+
     return (
         <nav className="custom-navbar">
             <div className="container">
@@ -42,12 +57,124 @@ const Navbar = () => {
                     </div>
 
                     <div className="d-flex align-items-center gap-3">
+                        {user && (
+                            <Link to="/cart" className="custom-nav-link" style={{ fontSize: '20px' }}>
+                                🛒
+                            </Link>
+                        )}
                         {user ? (
-                            <>
-                                <span className="text-primary fw-bold">Chào, {user.FullName}</span>
-                                {user.RoleID === 1 && <Link to="/admin" className="btn-admin">Quản lý</Link>}
-                                <button onClick={handleLogout} className="btn-login">Đăng xuất</button>
-                            </>
+                            <div style={{ position: 'relative' }} ref={dropdownRef}>
+                                <button
+                                    onClick={() => setShowDropdown(!showDropdown)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '8px 12px',
+                                        background: 'white',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        color: '#1f2937'
+                                    }}
+                                >
+                                    <span>Chào, {user.FullName}</span>
+                                    <span style={{ fontSize: '12px' }}>▼</span>
+                                </button>
+                                
+                                {showDropdown && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        right: 0,
+                                        marginTop: '8px',
+                                        background: 'white',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '6px',
+                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                        minWidth: '200px',
+                                        zIndex: 1000
+                                    }}>
+                                        <Link
+                                            to="/orders"
+                                            onClick={() => setShowDropdown(false)}
+                                            style={{
+                                                display: 'block',
+                                                padding: '12px 16px',
+                                                color: '#374151',
+                                                textDecoration: 'none',
+                                                fontSize: '14px',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                        >
+                                            📦 Đơn hàng của tôi
+                                        </Link>
+                                        <Link
+                                            to="/profile"
+                                            onClick={() => setShowDropdown(false)}
+                                            style={{
+                                                display: 'block',
+                                                padding: '12px 16px',
+                                                color: '#374151',
+                                                textDecoration: 'none',
+                                                fontSize: '14px',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                        >
+                                            👤 Thông tin cá nhân
+                                        </Link>
+                                        {user.RoleID === 1 && (
+                                            <Link
+                                                to="/admin"
+                                                onClick={() => setShowDropdown(false)}
+                                                style={{
+                                                    display: 'block',
+                                                    padding: '12px 16px',
+                                                    color: '#374151',
+                                                    textDecoration: 'none',
+                                                    fontSize: '14px',
+                                                    borderBottom: '1px solid #f3f4f6',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                                onMouseLeave={(e) => e.target.style.background = 'white'}
+                                            >
+                                                ⚙️ Quản lý
+                                            </Link>
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                setShowDropdown(false);
+                                                handleLogout();
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                background: 'white',
+                                                border: 'none',
+                                                color: '#ef4444',
+                                                textAlign: 'left',
+                                                fontSize: '14px',
+                                                cursor: 'pointer',
+                                                borderRadius: '0 0 6px 6px',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = '#fef2f2'}
+                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                        >
+                                            🚪 Đăng xuất
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         ) : (
                             <>
                                 <Link to="/login" className="btn-login">Đăng nhập</Link>

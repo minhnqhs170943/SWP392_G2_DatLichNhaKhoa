@@ -8,6 +8,10 @@ import Cart from './pages/Market/Cart'
 import Doctor from './pages/Market/Doctor';
 import CheckoutPage from './pages/CheckoutPage';
 import DoctorDetail from './pages/Market/DoctorDetail';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
+import PaymentQRPage from './pages/PaymentQRPage';
+import OrdersPage from './pages/OrdersPage';
 
 
 
@@ -28,6 +32,10 @@ function App() {
         <Route path="/product-detail/:id" element={<ProductDetail />} />
         <Route path='/cart' element={<Cart />} />
         <Route path='/checkout' element={<CheckoutPage />} />
+        <Route path='/payment/qr' element={<PaymentQRPage />} />
+        <Route path='/payment/success' element={<PaymentSuccess />} />
+        <Route path='/payment/cancel' element={<PaymentCancel />} />
+        <Route path='/orders' element={<OrdersPage />} />
       </Routes>
     </Router>
   );
