@@ -1,67 +1,120 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { loginApi } from '../../services/authService';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        console.log("Đăng nhập với:", { email, password });
+        const data = await loginApi(email, password);
+
+        if (data.success) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            if (data.user.RoleID === 1) {
+                alert("Đăng nhập với tư cách admin thành công");
+                navigate('/admin-dashboard');
+            } else if (data.user.RoleID === 2) {
+                alert("Đăng nhập với tư cách nhân viên thành công");
+                navigate('/doctor-dashboard');
+            } else {
+                alert("Đăng nhập thành công!");
+                navigate('/home');
+            }
+        } else {
+            alert(data.message);
+        }
     };
 
     return (
-        <div className="container-fluid vh-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: '#e3f2fd' }}>
-            <div className="card shadow-lg border-0" style={{ width: '400px', borderRadius: '15px' }}>
-                <div className="card-body p-5">
-                    <div className="text-center mb-4">
-                        <h2 className="fw-bold text-primary">🦷 Nha Khoa G2</h2>
-                        <p className="text-muted">Đặt lịch khám nhanh chóng</p>
+        <div
+            className="d-flex justify-content-center align-items-center min-vh-100"
+            style={{ backgroundColor: '#e8f0fe' }}
+        >
+            
+            <div
+                className="bg-white rounded-4 p-4 p-md-5 shadow-sm"
+                style={{ width: '100%', maxWidth: '420px' }}
+            >
+                <div className="mb-4">
+                    <Link to="/home" className="text-decoration-none text-muted">
+                        ← Trang chủ
+                    </Link>
+                </div>
+                <div className="text-center mb-4">
+                    <h2 className="fw-bold mb-2" style={{ color: '#1a1a2e' }}>
+                        Đăng nhập
+                    </h2>
+                    <p className="text-muted mb-0">Chào mừng bạn quay trở lại</p>
+                </div>
+
+                <form onSubmit={handleLogin}>
+                    <div className="mb-3">
+                        <label className="form-label text-muted small">Email</label>
+                        <input
+                            type="email"
+                            className="form-control form-control-lg"
+                            placeholder="your@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            style={{
+                                borderRadius: '8px',
+                                border: '1px solid #e0e0e0',
+                                padding: '12px 16px',
+                            }}
+                        />
                     </div>
 
-                    <form onSubmit={handleLogin}>
-                        <div className="mb-3 text-start">
-                            <label className="form-label fw-semibold">Email</label>
-                            <input
-                                type="email"
-                                className="form-control form-control-lg"
-                                placeholder="name@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="mb-4 text-start">
-                            <label className="form-label fw-semibold">Mật khẩu</label>
-                            <input
-                                type="password"
-                                className="form-control form-control-lg"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <button type="submit" className="btn btn-primary btn-lg w-100 shadow-sm mb-3">
-                            Đăng nhập
-                        </button>
-                    </form>
-
-                    <div className="text-center mt-2">
-                        <span className="small text-muted">Chưa có tài khoản? </span>
-                        <Link to="/register" className="small text-decoration-none fw-bold">Đăng ký ngay</Link>
+                    <div className="mb-4">
+                        <label className="form-label text-muted small">Mật khẩu</label>
+                        <input
+                            type="password"
+                            className="form-control form-control-lg"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            style={{
+                                borderRadius: '8px',
+                                border: '1px solid #e0e0e0',
+                                padding: '12px 16px',
+                            }}
+                        />
                     </div>
-                    <div className="mt-4 text-center border-top pt-3">
-                        <small className="text-muted d-block mb-2">Truy cập nhanh (Dành cho Ban Giám Đốc):</small>
-                        <button 
-                            className="btn btn-outline-dark btn-sm rounded-pill px-4 mb-2"
-                            onClick={() => window.location.href = '/admin-analytics'}
-                        >
-                            Vào Admin Analytics
-                        </button>
-                    </div>
+
+                    <button
+                        type="submit"
+                        className="btn btn-lg w-100 text-white fw-semibold"
+                        style={{
+                            backgroundColor: '#4285f4',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            border: 'none',
+                        }}
+                    >
+                        Đăng nhập
+                    </button>
+                </form>
+
+                <div className="d-flex align-items-center my-4">
+                    <hr className="flex-grow-1" style={{ borderColor: '#e0e0e0' }} />
+                    <span className="px-3 text-muted small">Hoặc</span>
+                    <hr className="flex-grow-1" style={{ borderColor: '#e0e0e0' }} />
+                </div>
+
+                <div className="text-center mt-4">
+                    <span className="text-muted">Chưa có tài khoản? </span>
+                    <Link
+                        to="/register"
+                        className="text-decoration-none fw-medium"
+                        style={{ color: '#4285f4' }}
+                    >
+                        Đăng ký ngay
+                    </Link>
                 </div>
             </div>
         </div>

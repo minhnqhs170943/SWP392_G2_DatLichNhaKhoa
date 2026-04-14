@@ -30,7 +30,7 @@ const Register = () => {
                 <div className="card-body p-5">
                     <div className="text-center mb-4">
                         <h2 className="fw-bold text-primary">Đăng Ký Tài Khoản</h2>
-                        <p className="text-muted">Gia nhập gia đình Nha Khoa G2</p>
+                        <p className="text-muted">Tạo Tài Khoản Mới</p>
                     </div>
 
                     <form onSubmit={handleRegister}>
@@ -71,7 +71,7 @@ const Register = () => {
                         </div>
 
                         <div className="row">
-                            <div className="col-md-6 mb-3">
+                            <div className="mb-3">
                                 <label className="form-label fw-semibold">Mật khẩu</label>
                                 <input
                                     type="password"
@@ -82,8 +82,11 @@ const Register = () => {
                                     required
                                 />
                             </div>
-                            <div className="col-md-6 mb-4">
-                                <label className="form-label fw-semibold">Xác nhận</label>
+                        </div>
+
+                        <div className="row">
+                            <div className="mb-3">
+                                <label className="form-label fw-semibold">Xác nhận mật khẩu</label>
                                 <input
                                     type="password"
                                     name="confirmPassword"

@@ -1,23 +1,16 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { connectDB } = require('./src/config/db');
+const rootRoutes = require('./src/routes/index');
+require('dotenv').config();
 
 const app = express();
-
-const adminStatsRoutes = require('./src/routes/adminStatsRoutes');
-
-// Khởi tạo middleware
 app.use(cors());
 app.use(express.json());
 
-// Kết nối với CSDL SQL Server
 connectDB();
 
-app.get('/', (req, res) => res.send('API Running'));
-
-// Khai báo Routes
-app.use('/api/admin/analytics', adminStatsRoutes);
+app.use('/api', rootRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
