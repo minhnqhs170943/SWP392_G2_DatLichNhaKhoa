@@ -17,10 +17,10 @@ const Footer = () => {
                             Kết nối bạn với các phòng khám uy tín và đội ngũ bác sĩ chuyên nghiệp.
                         </p>
                         <div className="footer-social-icons">
-                            <a href="#" className="footer-social-icon">f</a>
-                            <a href="#" className="footer-social-icon">in</a>
-                            <a href="#" className="footer-social-icon">yt</a>
-                            <a href="#" className="footer-social-icon">ig</a>
+                            <a href="#!" className="footer-social-icon">f</a>
+                            <a href="#!" className="footer-social-icon">in</a>
+                            <a href="#!" className="footer-social-icon">yt</a>
+                            <a href="#!" className="footer-social-icon">ig</a>
                         </div>
                     </div>
 
@@ -48,19 +48,19 @@ const Footer = () => {
                         <h4 className="footer-heading">Dịch vụ</h4>
                         <ul className="footer-link-list">
                             <li className="footer-link-item">
-                                <a href="#" className="footer-link">Khám tổng quát</a>
+                                <a href="#!" className="footer-link">Khám tổng quát</a>
                             </li>
                             <li className="footer-link-item">
-                                <a href="#" className="footer-link">Niềng răng</a>
+                                <a href="#!" className="footer-link">Niềng răng</a>
                             </li>
                             <li className="footer-link-item">
-                                <a href="#" className="footer-link">Tẩy trắng răng</a>
+                                <a href="#!" className="footer-link">Tẩy trắng răng</a>
                             </li>
                             <li className="footer-link-item">
-                                <a href="#" className="footer-link">Nhổ răng khôn</a>
+                                <a href="#!" className="footer-link">Nhổ răng khôn</a>
                             </li>
                             <li className="footer-link-item">
-                                <a href="#" className="footer-link">Trồng răng Implant</a>
+                                <a href="#!" className="footer-link">Trồng răng Implant</a>
                             </li>
                         </ul>
                     </div>
@@ -97,8 +97,8 @@ const Footer = () => {
                         </div>
                         <div className="col-md-6">
                             <div className="footer-bottom-links justify-content-md-end justify-content-start mt-3 mt-md-0">
-                                <a href="#" className="footer-bottom-link">Điều khoản sử dụng</a>
-                                <a href="#" className="footer-bottom-link">Chính sách bảo mật</a>
+                                <a href="#!" className="footer-bottom-link">Điều khoản sử dụng</a>
+                                <a href="#!" className="footer-bottom-link">Chính sách bảo mật</a>
                             </div>
                         </div>
                     </div>
