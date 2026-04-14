@@ -82,7 +82,7 @@ const Navbar = () => {
                         <Link to="/product" className="custom-nav-link">
                             Sản Phẩm
                         </Link>
-                        <Link to="/gioi-thieu" className="custom-nav-link">
+                        <Link to="/doctor" className="custom-nav-link">
                             Giới thiệu
                         </Link>
                         <Link to="/lien-he" className="custom-nav-link">

@@ -24,6 +24,10 @@ export default function DoctorDetail() {
                     id: row.DoctorID,
                     name: row.FullName,
                     specialty: row.Specialty || "Nha khoa",
+                    exp: row.ExperienceYears || 0,
+                    active: row.IsActive,
+                    bio: row.Bio || "Đang cập nhật thông tin bác sĩ.",
+                    avt: row.AvatarURL || "https://via.placeholder.com/360x340?text=Doctor",
                     desc: row.Description || row.Bio || "Đang cập nhật thông tin bác sĩ.",
                 };
 
@@ -59,7 +63,7 @@ export default function DoctorDetail() {
     return (
         <div>
             <Navbar />
-            <div className="min-vh-100 py-4 px-4" style={{ background: "#f5f6fa" }}>
+            <div className="min-vh-100 py-4 px-4" style={{ background: "#f5f6fa", paddingTop: "90px" }}>
                 <button
                     className="btn d-flex align-items-center gap-2 mb-4 text-muted"
                     style={{ fontSize: 13 }}
@@ -91,16 +95,16 @@ export default function DoctorDetail() {
                                 {doctor.Specialty}
                             </div>
                             <h2 className="fw-bold mb-2" style={{ fontSize: 20 }}>
-                                {doctor.FullName}
+                                {doctor.name}
                             </h2>
 
                             <p className="text-muted mb-3" style={{ fontSize: 14, lineHeight: 1.7 }}>
-                                {doctor.Bio}
+                                {doctor.bio}
                             </p>
 
                             <div>
                             <p className=" mb-3" style={{ fontSize: 14, lineHeight: 1.7 }}>
-                                {doctor.Description}
+                                {doctor.desc}
                             </p>
                             </div>
                             <div className="row g-2">
@@ -125,10 +129,10 @@ export default function DoctorDetail() {
 
                 <div className="row g-4 mt-1">
                     {[
-                        { title: "Giới thiệu", content: doctor.Description || "Đang cập nhập" },
-                        { title: "Kinh nghiệm", content: `${doctor.ExperienceYears} năm`|| "Đang cập nhập" },
-                        { title: "Dịch Vụ CHuyên Môn", content: doctor.Specialty|| "Đang cập nhập" },
-                        { title: "Trạng thái", content: doctor.IsActive ? " 🟢 Đang hoạt động" : " 🔴 Không hoạt động" || "Đang cập nhập" },
+                        { title: "Giới thiệu", content: doctor.desc || "Đang cập nhập" },
+                        { title: "Kinh nghiệm", content: `${doctor.exp} năm`|| "Đang cập nhập" },
+                        { title: "Dịch Vụ CHuyên Môn", content: doctor.specialty|| "Đang cập nhập" },
+                        { title: "Trạng thái", content: doctor.active ? " 🟢 Đang hoạt động" : " 🔴 Không hoạt động" || "Đang cập nhập" },
                     ].map((section, i) => (
                         <div key={i} className="col-md-6">
                             <div className="card border p-3" style={{ borderRadius: 12, borderColor: "#eee" }}>
