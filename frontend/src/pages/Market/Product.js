@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { ShoppingCart, Package } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { addToCart } from "../../utils/cart";
+import { addCartItem } from "../../services/cartApi";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { fetchProducts } from "../../services/productApi";
@@ -116,13 +116,25 @@ export default function Product() {
         loadProducts();
     }, []);
 
-    const handleAddToCart = (product) => {
-        addToCart(product);
+    const handleAddToCart = async (product) => {
+        try {
+            await addCartItem(product.id, 1);
+            window.dispatchEvent(new Event("cart:updated"));
+        } catch (e) {
+            alert(e.message);
+            if (e.message.includes("đăng nhập")) navigate("/login");
+        }
     };
 
-    const handleBuyNow = (product) => {
-        addToCart(product);
-        navigate("/cart");
+    const handleBuyNow = async (product) => {
+        try {
+            await addCartItem(product.id, 1);
+            window.dispatchEvent(new Event("cart:updated"));
+            navigate("/cart");
+        } catch (e) {
+            alert(e.message);
+            if (e.message.includes("đăng nhập")) navigate("/login");
+        }
     };
 
     const filtered = products.filter((p) =>

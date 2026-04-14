@@ -1,11 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
+import { fetchCart } from '../services/cartApi';
 import './../styles/Navbar.css';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
     const [showDropdown, setShowDropdown] = useState(false);
+    const [cartCount, setCartCount] = useState(0);
+    const [cartGlow, setCartGlow] = useState(false);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -18,6 +21,37 @@ const Navbar = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const loadCartCount = async () => {
+            if (!user) {
+                if (mounted) setCartCount(0);
+                return;
+            }
+            try {
+                const rows = await fetchCart();
+                const total = (rows || []).reduce((sum, item) => sum + (Number(item.Quantity) || 0), 0);
+                if (mounted) setCartCount(total);
+            } catch {
+                if (mounted) setCartCount(0);
+            }
+        };
+
+        const handleCartUpdated = () => {
+            loadCartCount();
+            setCartGlow(true);
+            window.setTimeout(() => setCartGlow(false), 500);
+        };
+
+        loadCartCount();
+        window.addEventListener('cart:updated', handleCartUpdated);
+        return () => {
+            mounted = false;
+            window.removeEventListener('cart:updated', handleCartUpdated);
+        };
+    }, [user]);
 
     const handleLogout = () => {
         localStorage.removeItem('user');
@@ -58,8 +92,9 @@ const Navbar = () => {
 
                     <div className="d-flex align-items-center gap-3">
                         {user && (
-                            <Link to="/cart" className="custom-nav-link" style={{ fontSize: '20px' }}>
+                            <Link to="/cart" className={`custom-nav-link cart-link ${cartGlow ? 'cart-glow' : ''}`} style={{ fontSize: '20px' }}>
                                 🛒
+                                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                             </Link>
                         )}
                         {user ? (

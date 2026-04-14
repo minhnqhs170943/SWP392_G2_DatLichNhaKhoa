@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -7,29 +7,13 @@ import ShippingInfo from '../components/Checkout/ShippingInfo';
 import OrderSummary from '../components/Checkout/OrderSummary';
 import PaymentMethods from '../components/Checkout/PaymentMethods';
 import paymentService from '../services/paymentService';
+import { clearCartItems, fetchCart, removeCartItem, updateCartItem } from '../services/cartApi';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Kem đánh răng phục hồi men răng',
-      brand: 'Bio-Enamel',
-      description: 'Công thức chuyên sâu cho răng nhạy cảm, 75ml',
-      price: 3000,
-      quantity: 1,
-    },
-    {
-      id: 2,
-      name: 'Bàn chải lông mềm cao cấp',
-      brand: 'Precision',
-      description: 'Công nghệ lông tơ, bộ 2 cái',
-      price: 5000,
-      quantity: 2,
-    }
-  ]);
+  const [cartItems, setCartItems] = useState([]);
 
   const [paymentMethod, setPaymentMethod] = useState('cod');
   
@@ -42,20 +26,55 @@ const CheckoutPage = () => {
     address: ''
   });
 
+  const mapCartRows = (rows) => {
+    return (rows || []).map((x) => ({
+      id: x.ProductID,
+      name: x.ProductName,
+      brand: x.Brand,
+      description: x.Brand || '',
+      price: Number(x.Price) || 0,
+      quantity: x.Quantity,
+    }));
+  };
+
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const rows = await fetchCart();
+        setCartItems(mapCartRows(rows));
+      } catch (e) {
+        alert(e.message);
+        if (e.message.includes('đăng nhập')) navigate('/login');
+      }
+    };
+
+    loadCart();
+  }, [navigate]);
+
   const calculateSubtotal = () => {
     return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
-  const updateQty = (id, delta) => {
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
-      )
-    );
+  const updateQty = async (id, delta) => {
+    const item = cartItems.find((x) => x.id === id);
+    if (!item) return;
+
+    const nextQty = item.quantity + delta;
+    try {
+      const rows = await updateCartItem(id, nextQty);
+      setCartItems(mapCartRows(rows));
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
-  const removeItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+  const removeItem = async (id) => {
+    try {
+      const rows = await removeCartItem(id);
+      setCartItems(mapCartRows(rows));
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
   const handleFormChange = (e) => {
@@ -79,7 +98,7 @@ const CheckoutPage = () => {
       }
       
       const user = JSON.parse(userStr);
-      const userId = user.UserID;
+      const userId = user.UserID || user.UserId || user.id;
       
       const shippingAddress = `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`;
       
@@ -127,6 +146,8 @@ const CheckoutPage = () => {
         });
         
         if (response.success) {
+          await clearCartItems();
+          setCartItems([]);
           // Redirect đến trang success với thông tin đơn hàng
           const total = calculateSubtotal();
           navigate('/payment/success', {
