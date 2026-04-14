@@ -15,16 +15,103 @@
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Public+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#d3e4fe",
+              "background": "#f7f9fb",
+              "surface-bright": "#f7f9fb",
+              "primary-fixed-dim": "#2d68f0",
+              "on-tertiary-fixed": "#423056",
+              "on-secondary-fixed-variant": "#4d5d73",
+              "on-tertiary-fixed-variant": "#604c74",
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed": "#d3e4fe",
+              "surface-tint": "#0053dc",
+              "tertiary-dim": "#5f4b73",
+              "on-primary-fixed-variant": "#f9f7ff",
+              "on-secondary": "#f7f9ff",
+              "on-tertiary-container": "#56436a",
+              "on-secondary-container": "#435368",
+              "outline-variant": "#acb3b7",
+              "outline": "#747c80",
+              "error-dim": "#67040d",
+              "on-error-container": "#6e0a12",
+              "primary-container": "#3e76fe",
+              "on-secondary-fixed": "#314055",
+              "on-primary": "#faf8ff",
+              "secondary": "#506076",
+              "primary": "#0053dc",
+              "on-background": "#2c3437",
+              "surface": "#f7f9fb",
+              "primary-dim": "#0049c2",
+              "tertiary-fixed-dim": "#d9c0ef",
+              "on-primary-container": "#000000",
+              "secondary-dim": "#44546a",
+              "surface-dim": "#d4dbdf",
+              "tertiary-container": "#e7cdfe",
+              "primary-fixed": "#3e76fe",
+              "inverse-on-surface": "#9a9d9f",
+              "error-container": "#fa746f",
+              "surface-container-low": "#f0f4f7",
+              "surface-variant": "#dce4e8",
+              "inverse-surface": "#0b0f10",
+              "on-primary-fixed": "#ffffff",
+              "on-surface": "#2c3437",
+              "on-tertiary": "#fff6ff",
+              "on-surface-variant": "#596064",
+              "on-error": "#fff7f6",
+              "tertiary-fixed": "#e7cdfe",
+              "error": "#a83836",
+              "secondary-fixed-dim": "#c5d6f0",
+              "surface-container-high": "#e3e9ed",
+              "surface-container-highest": "#dce4e8",
+              "surface-container": "#eaeff2",
+              "tertiary": "#6b5780",
+              "inverse-primary": "#618bff"
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px"
+            },
+            fontFamily: {
+              headline: ["Manrope"],
+              body: ["Public Sans"],
+              label: ["Public Sans"]
+            }
+          }
+        }
+      };
+    </script>
+    
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        font-family: 'Public Sans', sans-serif;
+        background-color: #f7f9fb;
+      }
+      h1, h2, h3, h4 {
+        font-family: 'Manrope', sans-serif;
+      }
+    </style>
+    
+    <title>Clinical Sanctuary Dental - Checkout</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

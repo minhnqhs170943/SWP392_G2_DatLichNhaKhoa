@@ -30,7 +30,7 @@ const Navbar = () => {
                         <Link to="/phong-kham" className="custom-nav-link">
                             Đặt Lịch
                         </Link>
-                        <Link to="/dich-vu" className="custom-nav-link">
+                        <Link to="/product" className="custom-nav-link">
                             Sản Phẩm
                         </Link>
                         <Link to="/gioi-thieu" className="custom-nav-link">
