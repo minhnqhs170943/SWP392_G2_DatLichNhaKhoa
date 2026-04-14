@@ -2,6 +2,7 @@
 import { ShoppingCart, ArrowLeft, Star, Shield, Truck, RotateCcw } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Footer from "../../components/Footer";
 
 const products = [
     { id: 1, brand: "Pymepharco", name: "Thuốc giảm đau răng Ibuprofen 400mg", desc: "Thuốc giảm đau, hạ sốt hiệu quả cho các trường hợp đau răng cấp tính", price: "45.000 ₫", rating: 4.5, reviews: 128, detail: "Ibuprofen 400mg là thuốc chống viêm không steroid (NSAID) giúp giảm đau, hạ sốt và chống viêm hiệu quả. Thường được dùng để giảm đau răng, đau đầu, đau cơ và các cơn đau nhẹ đến vừa.", usage: "Uống 1 viên mỗi 6-8 giờ sau khi ăn. Không dùng quá 3 viên/ngày.", ingredients: "Ibuprofen 400mg, tá dược vừa đủ.", warning: "Không dùng cho người mẫn cảm với Ibuprofen, phụ nữ có thai 3 tháng cuối, người loét dạ dày." },
@@ -136,7 +137,7 @@ export default function ProductDetail() {
                     </div>
                 ))}
             </div>
-
+                <Footer/>
         </div>
     );
 }
