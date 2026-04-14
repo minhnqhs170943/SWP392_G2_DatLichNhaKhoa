@@ -40,31 +40,34 @@ class PaymentController {
             }));
             await OrderDetail.createBulk(orderDetails);
 
-            // Tạo payment link với PayOS
+            // Tạo payment link với PayOS (API mới)
             const orderCode = order.OrderID;
             const paymentData = {
                 orderCode: orderCode,
                 amount: totalAmount,
                 description: `Thanh toán đơn hàng #${orderCode}`,
-                returnUrl: returnUrl || `${process.env.FRONTEND_URL}/payment/success`,
-                cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancel`,
                 items: items.map(item => ({
                     name: item.name,
                     quantity: item.quantity,
                     price: item.price
-                }))
+                })),
+                cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancel`,
+                returnUrl: returnUrl || `${process.env.FRONTEND_URL}/payment/success`
             };
 
-            const paymentLinkResponse = await payos.createPaymentLink(paymentData);
+            const paymentLinkResponse = await payos.paymentRequests.create(paymentData);
 
-            // Lưu thông tin payment
+            // Lưu thông tin payment với status SUCCESS luôn (vì không có webhook)
             await Payment.create({
                 orderId: order.OrderID,
-                transactionId: paymentLinkResponse.orderCode.toString(),
+                transactionId: orderCode.toString(),
                 amount: totalAmount,
                 paymentMethod: 'PAYOS',
-                status: 'PENDING'
+                status: 'SUCCESS' // Giả lập đã thanh toán thành công
             });
+
+            // Cập nhật order status thành SUCCESS luôn
+            await Order.updatePaymentStatus(order.OrderID, 'SUCCESS');
 
             res.status(200).json({
                 success: true,
@@ -90,20 +93,9 @@ class PaymentController {
     async handleWebhook(req, res) {
         try {
             const webhookData = req.body;
-            
-            console.log('PayOS Webhook received:', webhookData);
+            const verifiedData = payos.webhooks.verify(webhookData);
 
-            // Verify webhook signature
-            const isValid = payos.verifyPaymentWebhookData(webhookData);
-            
-            if (!isValid) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid webhook signature'
-                });
-            }
-
-            const { orderCode, code, desc } = webhookData.data;
+            const { orderCode, code } = verifiedData.data;
 
             // Tìm payment theo orderCode
             const payment = await Payment.findByTransactionId(orderCode.toString());
@@ -133,9 +125,9 @@ class PaymentController {
 
         } catch (error) {
             console.error('Error handling webhook:', error);
-            res.status(500).json({
+            res.status(400).json({
                 success: false,
-                message: 'Error processing webhook',
+                message: 'Invalid webhook',
                 error: error.message
             });
         }
@@ -201,10 +193,8 @@ class PaymentController {
             const payment = await Payment.findByOrderId(orderId);
             
             if (payment) {
-                // Hủy payment trên PayOS
-                await payos.cancelPaymentLink(parseInt(payment.TransactionID));
+                await payos.paymentRequests.cancel(parseInt(payment.TransactionID));
                 
-                // Cập nhật trạng thái
                 await Payment.updateStatus(payment.PaymentID, 'CANCELLED');
             }
             

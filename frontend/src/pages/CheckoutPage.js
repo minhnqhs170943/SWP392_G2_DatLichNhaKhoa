@@ -18,7 +18,7 @@ const CheckoutPage = () => {
       name: 'Kem đánh răng phục hồi men răng',
       brand: 'Bio-Enamel',
       description: 'Công thức chuyên sâu cho răng nhạy cảm, 75ml',
-      price: 450000,
+      price: 3000,
       quantity: 1,
     },
     {
@@ -26,13 +26,12 @@ const CheckoutPage = () => {
       name: 'Bàn chải lông mềm cao cấp',
       brand: 'Precision',
       description: 'Công nghệ lông tơ, bộ 2 cái',
-      price: 300000,
+      price: 5000,
       quantity: 2,
     }
   ]);
 
   const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [promoCode, setPromoCode] = useState('');
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -42,9 +41,6 @@ const CheckoutPage = () => {
     ward: '',
     address: ''
   });
-
-  const shippingFee = 30000;
-  const discount = 50000;
 
   const calculateSubtotal = () => {
     return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -74,8 +70,16 @@ const CheckoutPage = () => {
     }
 
     try {
-      // Lấy userId từ localStorage hoặc context (giả sử đã đăng nhập)
-      const userId = localStorage.getItem('userId') || 1;
+      // Lấy userId từ localStorage
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        alert('Vui lòng đăng nhập để thanh toán!');
+        navigate('/login');
+        return;
+      }
+      
+      const user = JSON.parse(userStr);
+      const userId = user.UserID;
       
       const shippingAddress = `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`;
       
@@ -98,16 +102,47 @@ const CheckoutPage = () => {
         const response = await paymentService.createPayment(paymentData);
         
         if (response.success) {
-          // Chuyển hướng đến trang thanh toán PayOS
-          window.location.href = response.data.checkoutUrl;
+          // Tính tổng tiền
+          const total = calculateSubtotal();
+          
+          // Chuyển đến trang QR riêng thay vì redirect trực tiếp
+          navigate('/payment/qr', {
+            state: {
+              paymentData: {
+                orderId: response.data.orderId,
+                checkoutUrl: response.data.checkoutUrl,
+                qrCode: response.data.qrCode,
+                amount: total
+              }
+            }
+          });
         } else {
           alert('Lỗi tạo thanh toán: ' + response.message);
         }
+      } else if (paymentMethod === 'cod') {
+        // Thanh toán COD - Tạo order luôn
+        const response = await paymentService.createPayment({
+          ...paymentData,
+          paymentMethod: 'COD'
+        });
+        
+        if (response.success) {
+          // Redirect đến trang success với thông tin đơn hàng
+          const total = calculateSubtotal();
+          navigate('/payment/success', {
+            state: {
+              orderData: {
+                orderId: response.data.orderId,
+                totalAmount: total,
+                paymentMethod: 'COD'
+              }
+            }
+          });
+        } else {
+          alert('Lỗi tạo đơn hàng: ' + response.message);
+        }
       } else {
-        // Thanh toán COD hoặc phương thức khác
-        console.log('Đặt hàng:', { cartItems, paymentMethod, formData });
-        alert('Đặt hàng thành công!');
-        navigate('/home');
+        alert('Vui lòng chọn phương thức thanh toán!');
       }
     } catch (error) {
       console.error('Error during checkout:', error);
@@ -138,8 +173,6 @@ const CheckoutPage = () => {
                 cartItems={cartItems}
                 onUpdateQty={updateQty}
                 onRemoveItem={removeItem}
-                promoCode={promoCode}
-                onPromoCodeChange={setPromoCode}
               />
               
               <ShippingInfo
@@ -152,8 +185,6 @@ const CheckoutPage = () => {
             <div className="col-lg-4">
               <OrderSummary
                 subtotal={calculateSubtotal()}
-                shippingFee={shippingFee}
-                discount={discount}
               />
               
               <PaymentMethods

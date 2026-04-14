@@ -13,8 +13,8 @@ class Order {
                 .input('OrderDate', sql.DateTime, new Date())
                 .query(`
                     INSERT INTO Orders (UserID, TotalAmount, PaymentMethod, PaymentStatus, ShippingAddress, OrderDate)
-                    OUTPUT INSERTED.*
-                    VALUES (@UserID, @TotalAmount, @PaymentMethod, @PaymentStatus, @ShippingAddress, @OrderDate)
+                    VALUES (@UserID, @TotalAmount, @PaymentMethod, @PaymentStatus, @ShippingAddress, @OrderDate);
+                    SELECT * FROM Orders WHERE OrderID = SCOPE_IDENTITY();
                 `);
             return result.recordset[0];
         } catch (error) {
@@ -37,15 +37,19 @@ class Order {
     static async updatePaymentStatus(orderId, status) {
         try {
             const pool = await sql.connect();
-            const result = await pool.request()
+            await pool.request()
                 .input('OrderID', sql.Int, orderId)
                 .input('PaymentStatus', sql.VarChar(50), status)
                 .query(`
                     UPDATE Orders 
                     SET PaymentStatus = @PaymentStatus 
                     WHERE OrderID = @OrderID
-                    OUTPUT INSERTED.*
                 `);
+            
+            const result = await pool.request()
+                .input('OrderID', sql.Int, orderId)
+                .query('SELECT * FROM Orders WHERE OrderID = @OrderID');
+            
             return result.recordset[0];
         } catch (error) {
             throw error;
