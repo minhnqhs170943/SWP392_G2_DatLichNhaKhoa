@@ -7,7 +7,7 @@ class PaymentController {
     // Tạo link thanh toán PayOS
     async createPaymentLink(req, res) {
         try {
-            const { userId, items, shippingAddress, returnUrl, cancelUrl } = req.body;
+            const { userId, items, shippingAddress, paymentMethod, returnUrl, cancelUrl } = req.body;
 
             // Validate input
             if (!userId || !items || items.length === 0 || !shippingAddress) {
@@ -22,12 +22,15 @@ class PaymentController {
                 return sum + (item.price * item.quantity);
             }, 0);
 
+            // Xác định payment method (mặc định là PAYOS nếu không có)
+            const finalPaymentMethod = paymentMethod || 'PAYOS';
+
             // Tạo order trong database
             const order = await Order.create({
                 userId,
                 totalAmount,
-                paymentMethod: 'PAYOS',
-                paymentStatus: 'PENDING',
+                paymentMethod: finalPaymentMethod,
+                paymentStatus: finalPaymentMethod === 'COD' ? 'SUCCESS' : 'PENDING',
                 shippingAddress
             });
 
@@ -39,6 +42,29 @@ class PaymentController {
                 unitPrice: item.price
             }));
             await OrderDetail.createBulk(orderDetails);
+
+            // Nếu là COD, không cần tạo payment link
+            if (finalPaymentMethod === 'COD') {
+                // Lưu thông tin payment với status SUCCESS
+                await Payment.create({
+                    orderId: order.OrderID,
+                    transactionId: `COD-${order.OrderID}`,
+                    amount: totalAmount,
+                    paymentMethod: 'COD',
+                    status: 'SUCCESS'
+                });
+
+                // Cập nhật order status thành SUCCESS
+                await Order.updatePaymentStatus(order.OrderID, 'SUCCESS');
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Tạo đơn hàng COD thành công',
+                    data: {
+                        orderId: order.OrderID
+                    }
+                });
+            }
             
             const orderCode = Math.floor(100000 + Math.random() * 900000);
             const paymentData = {
