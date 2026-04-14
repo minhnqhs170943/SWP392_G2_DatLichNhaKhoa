@@ -6,7 +6,6 @@ import Product from './pages/Market/Product';
 import ProductDetail from './pages/Market/ProductDetail';
 import Cart from './pages/Market/Cart';
 import AdminAnalytics from './pages/Admin/AdminAnalytics';
-import Cart from './pages/Market/Cart'
 import Doctor from './pages/Market/Doctor';
 import CheckoutPage from './pages/CheckoutPage';
 import DoctorDetail from './pages/Market/DoctorDetail';
