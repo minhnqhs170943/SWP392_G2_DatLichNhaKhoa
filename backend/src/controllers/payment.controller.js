@@ -39,20 +39,19 @@ class PaymentController {
                 unitPrice: item.price
             }));
             await OrderDetail.createBulk(orderDetails);
-
-            // Tạo payment link với PayOS (API mới)
-            const orderCode = order.OrderID;
+            
+            const orderCode = Math.floor(100000 + Math.random() * 900000);
             const paymentData = {
                 orderCode: orderCode,
                 amount: totalAmount,
-                description: `Thanh toán đơn hàng #${orderCode}`,
+                description: `Thanh toan don hang #${order.OrderID}`,
                 items: items.map(item => ({
                     name: item.name,
                     quantity: item.quantity,
                     price: item.price
                 })),
                 cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancel`,
-                returnUrl: returnUrl || `${process.env.FRONTEND_URL}/payment/success`
+                returnUrl: returnUrl || `${process.env.FRONTEND_URL}/payment/success?orderCode=${order.OrderID}`
             };
 
             const paymentLinkResponse = await payos.paymentRequests.create(paymentData);
