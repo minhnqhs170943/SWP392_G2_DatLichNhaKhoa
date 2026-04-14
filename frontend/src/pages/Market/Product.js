@@ -1,22 +1,11 @@
 // Product.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, Package } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { addToCart } from "../../utils/cart";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-
-
-const products = [
-    { id: 1, brand: "Pymepharco", name: "Thuốc giảm đau răng Ibuprofen 400mg", desc: "Thuốc giảm đau, hạ sốt hiệu quả cho các trường hợp đau răng cấp tính", price: "45.000 ₫", priceNumber: 45000 },
-    { id: 2, brand: "Unique", name: "Gel bôi nướu Metrogyl Denta", desc: "Gel kháng khuẩn điều trị viêm nướu, viêm quanh răng", price: "65.000 ₫", priceNumber: 65000 },
-    { id: 3, brand: "Domesco", name: "Thuốc kháng sinh Amoxicillin 500mg", desc: "Kháng sinh điều trị nhiễm trùng răng miệng, áp xe răng", price: "55.000 ₫", priceNumber: 55000 },
-    { id: 4, brand: "Corsodyl", name: "Nước súc miệng Chlorhexidine 0.2%", desc: "Dung dịch sát khuẩn chuyên dụng sau phẫu thuật nha khoa", price: "85.000 ₫", priceNumber: 85000 },
-    { id: 5, brand: "Septodont", name: "Thuốc tê Lidocaine 2%", desc: "Thuốc tê tại chỗ dùng trong các thủ thuật nha khoa", price: "120.000 ₫", priceNumber: 120000 },
-    { id: 6, brand: "Strepsils", name: "Viên ngậm ho Strepsils", desc: "Viên ngậm kháng khuẩn, giảm đau họng và viêm họng", price: "35.000 ₫", priceNumber: 35000 },
-    { id: 7, brand: "Calcium-D", name: "Thuốc bổ sung Canxi + Vitamin D3", desc: "Bổ sung canxi giúp răng chắc khỏe, ngăn ngừa loãng xương hàm", price: "150.000 ₫", priceNumber: 150000 },
-    { id: 8, brand: "Orajel", name: "Gel điều trị loét miệng Orajel", desc: "Gel giảm đau và chữa lành vết loét miệng nhanh chóng", price: "75.000 ₫", priceNumber: 75000 },
-];
+import { fetchProducts } from "../../services/productApi";
 
 const styles = {
     page: { padding: "96px 56px 40px", background: "#f5f6fa", minHeight: "100vh" },
@@ -87,9 +76,45 @@ const styles = {
 
 export default function Product() {
     const [search, setSearch] = useState("");
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const [priceOrder, setPriceOrder] = useState("none");
     const [nameOrder, setNameOrder] = useState("none");
     const navigate = useNavigate();
+
+
+    useEffect(() => {
+        const loadProducts = async () => {
+            try {
+                setLoading(true);
+                const rows = await fetchProducts();
+
+                const mapped = rows.map((p) => {
+                    const priceNumber = Number(p.Price) || 0;
+                    return {
+                        id: p.ProductID,
+                        name: p.ProductName,
+                        brand: p.Brand || "Không xác định",
+                        desc: p.Description || "Đang cập nhật thông tin sản phẩm.",
+                        price: priceNumber.toLocaleString("vi-VN") + " ₫",
+                        priceNumber,
+                        stockQuantity: p.StockQuantity,
+                        image: p.ImageURL,
+                    };
+                });
+
+                setProducts(mapped);
+                setError("");
+            } catch (e) {
+                setError(e.message || "Không tải được danh sách sản phẩm");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadProducts();
+    }, []);
 
     const handleAddToCart = (product) => {
         addToCart(product);
@@ -124,6 +149,8 @@ export default function Product() {
                 <div style={styles.container}>
                 <h1 style={styles.title}>Thuốc nha khoa</h1>
                 <p style={styles.subtitle}>Các loại thuốc và dược phẩm chuyên dụng cho nha khoa</p>
+                {loading && <p className="text-muted mb-2">Đang tải sản phẩm...</p>}
+                {error && <p style={{ color: "#dc2626", marginBottom: 8 }}>{error}</p>}
                 <div style={styles.searchFilterRow}>
                     <input
                         style={styles.searchInput}
@@ -176,9 +203,8 @@ export default function Product() {
                                     <ShoppingCart size={20} />
                                 </button>
                                 <button style={styles.btnDetail} onClick={() => handleBuyNow(p)}>
-                                    Chi tiết
+                                    Mua Ngay
                                 </button>
-
                             </div>
                         </div>
                     ))}
@@ -190,4 +216,3 @@ export default function Product() {
 
     );
 }
-

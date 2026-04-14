@@ -1,19 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Stethoscope, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-
-const doctors = [
-    { id: 1, specialty: "Rang Ham Mat", name: "BS. Nguyen Van Nam", desc: "Chuyen dieu tri nha chu, viem loi va phuc hinh rang." },
-    { id: 2, specialty: "Nieng Rang", name: "BS. Tran Thi Lan", desc: "Tu van va thuc hien nieng rang cho tre em va nguoi lon." },
-    { id: 3, specialty: "Nho Rang", name: "BS. Le Minh Tuan", desc: "Nho rang kho, rang khon va xu ly bien chung rang mieng." },
-    { id: 4, specialty: "Tay Trang Rang", name: "BS. Pham Thu Ha", desc: "Tay trang rang tham my bang cong nghe den LED hien dai." },
-    { id: 5, specialty: "Phuc Hinh Rang", name: "BS. Vu Quoc Bao", desc: "Tram rang, boc su va phuc hoi chuc nang an nhai." },
-    { id: 6, specialty: "Noi Nha", name: "BS. Do Hai Yen", desc: "Dieu tri tuy rang va bao ton rang that toi uu." },
-    { id: 7, specialty: "Tieu Phau", name: "BS. Hoang Gia Huy", desc: "Tieu phau rang mieng va dieu tri ton thuong mo mem." },
-    { id: 8, specialty: "Kham Tong Quat", name: "BS. Bui Thanh Mai", desc: "Kham dinh ky, tu van phong ngua benh rang mieng." },
-];
+import { fetchDoctors } from "../../services/doctorApi";
 
 const styles = {
     page: { padding: "88px 56px 36px", background: "#f5f6fa", minHeight: "100vh" },
@@ -72,8 +62,39 @@ const styles = {
     },
 };
 
+
+
 export default function Doctor() {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const [doctors, setDoctors] = useState([]);
+
+
+    useEffect(() => {
+        const loadDoctors = async () => {
+            try {
+                setLoading(true);
+                const rows = await fetchDoctors();
+
+                const mapped = rows.map((d) => ({
+                    id: d.DoctorID,
+                    name: d.FullName,
+                    specialty: d.Specialty || "Nha khoa",
+                    desc: d.Description || d.Bio || "Đang cập nhật thông tin bác sĩ.",
+                }));
+
+                setDoctors(mapped);
+                setError("");
+            } catch (e) {
+                setError(e.message || "Không tải được danh sách bác sĩ");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadDoctors();
+    }, []);
 
     const filtered = doctors.filter(
         (d) =>
@@ -86,45 +107,45 @@ export default function Doctor() {
             <Navbar />
             <div style={styles.page}>
                 <div style={styles.container}>
-                <h1 style={styles.title}>Bac si nha khoa</h1>
-                <p style={styles.subtitle}>Danh sach bac si va chuyen khoa tai phong kham</p>
-                <input
-                    style={styles.searchInput}
-                    type="text"
-                    placeholder="Tim kiem bac si hoac chuyen khoa..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
+                    <h1 style={styles.title}>Bác Sĩ Nha Khoa</h1>
+                    <p style={styles.subtitle}>Danh sach bac si va chuyen khoa tai phong kham</p>
+                    <input
+                        style={styles.searchInput}
+                        type="text"
+                        placeholder="Tim kiem bac si hoac chuyen khoa..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
 
-                <div style={styles.grid}>
-                    {filtered.map((doctor) => (
-                        <div key={doctor.id} style={styles.card}>
-                            <div style={styles.cardImg}>
-                                <Stethoscope size={58} color="#9ca3af" />
-                            </div>
-                            <div style={styles.cardBody}>
-                                <div style={styles.specialty}>{doctor.specialty}</div>
-                                <div style={styles.doctorName}>
-                                    <Link to={`/doctor-detail/${doctor.id}`} style={{ textDecoration: "none", color: "#111" }}>
-                                        {doctor.name}
+                    <div style={styles.grid}>
+                        {filtered.map((doctor) => (
+                            <div key={doctor.id} style={styles.card}>
+                                <div style={styles.cardImg}>
+                                    <Stethoscope size={58} color="#9ca3af" />
+                                </div>
+                                <div style={styles.cardBody}>
+                                    <div style={styles.specialty}>{doctor.specialty}</div>
+                                    <div style={styles.doctorName}>
+                                        <Link to={`/doctor-detail/${doctor.id}`} style={{ textDecoration: "none", color: "#111" }}>
+                                            {doctor.name}
+                                        </Link>
+                                    </div>
+                                    <div style={styles.doctorDesc}>{doctor.desc}</div>
+                                </div>
+                                <div style={styles.cardActions}>
+                                    <button style={styles.btnIcon}>
+                                        <UserRound size={20} />
+                                    </button>
+                                    <Link to={`/doctor-detail/${doctor.id}`} style={styles.btnDetail}>
+                                        Chi tiết
                                     </Link>
                                 </div>
-                                <div style={styles.doctorDesc}>{doctor.desc}</div>
                             </div>
-                            <div style={styles.cardActions}>
-                                <button style={styles.btnIcon}>
-                                    <UserRound size={20} />
-                                </button>
-                                <Link to={`/doctor-detail/${doctor.id}`} style={styles.btnDetail}>
-                                    Chi tiết
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
                 </div>
             </div>
-            <Footer/>
+            <Footer />
         </div>
 
     );

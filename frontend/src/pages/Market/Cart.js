@@ -13,7 +13,6 @@ function formatPrice(n) {
 
 export default function Cart() {
     const [cart, setCart] = useState([]);
-    const [promoCode, setPromoCode] = useState("");
 
     const navigate = useNavigate();
 
@@ -138,20 +137,7 @@ export default function Cart() {
                                     ))}
 
                                         <div className="d-flex gap-2 mt-3 pt-3" style={{ borderTop: "1px solid #f0f0f0" }}>
-                                            <input
-                                                className="form-control form-control-sm"
-                                                placeholder="Nhập mã giảm giá"
-                                                type="text"
-                                                value={promoCode}
-                                                onChange={(e) => setPromoCode(e.target.value)}
-                                                style={{ borderRadius: 8, border: "1px solid #e0e0e0", fontSize: 13, height: 38 }}
-                                            />
-                                            <button
-                                                className="btn btn-sm fw-semibold"
-                                                style={{ background: "#4285f4", color: "#fff", borderRadius: 8, fontSize: 13, minWidth: 80 }}
-                                            >
-                                                Áp dụng
-                                            </button>
+                                        
                                         </div>
                                     </div>
                                 </div>
