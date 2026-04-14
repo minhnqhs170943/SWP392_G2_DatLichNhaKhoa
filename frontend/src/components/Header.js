@@ -15,7 +15,7 @@ const Header = () => {
                         </p>
                         <div className="d-flex flex-wrap gap-3">
                             <button className="btn-header-primary">Đặt lịch khám</button>
-                            <button className="btn-header-outline">Xem phòng khám</button>
+                            <button className="btn-header-outline">Về chúng tôi</button>
                         </div>
                         <div className="contact-box flex-wrap">
                             <div className="contact-item">
