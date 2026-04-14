@@ -1,10 +1,10 @@
 // Cart.js
-import { useEffect, useState } from "react";
-import { clearCart, getCart, removeFromCart, updateQtyInCart } from "../../utils/cart";
-import { Trash2, ShieldCheck, RotateCcw, Truck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { RotateCcw, ShieldCheck, Trash2, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import { clearCart, getCart, removeFromCart, updateQtyInCart } from "../../utils/cart";
 
 
 function formatPrice(n) {
@@ -177,6 +177,7 @@ export default function Cart() {
                                 className="btn w-100 fw-semibold mb-2"
                                 style={{ height: 46, background: "#1DA0E0", color: "#fff", borderRadius: 10, fontSize: 15 }}
                                 disabled={cart.length === 0}
+                                onClick={() => navigate("/checkout")}
                             >
                                 Thanh toán
                             </button>
