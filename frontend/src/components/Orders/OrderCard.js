@@ -10,9 +10,10 @@ const OrderCard = ({ order }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'SUCCESS': return '#10b981';
-            case 'PENDING': return '#f59e0b';
-            case 'FAILED': return '#ef4444';
+            case 'SUCCESS': return '#10b981'; // Xanh lá
+            case 'PENDING': return '#f59e0b'; // Cam
+            case 'CANCELLED': return '#6b7280'; // Xám
+            case 'FAILED': return '#ef4444'; // Đỏ
             default: return '#6b7280';
         }
     };
@@ -21,6 +22,7 @@ const OrderCard = ({ order }) => {
         switch (status) {
             case 'SUCCESS': return 'Thành công';
             case 'PENDING': return 'Chờ xử lý';
+            case 'CANCELLED': return 'Đã hủy';
             case 'FAILED': return 'Thất bại';
             default: return status;
         }
@@ -31,6 +33,22 @@ const OrderCard = ({ order }) => {
             case 'PAYOS': return 'PayOS';
             case 'COD': return 'Thanh toán khi nhận hàng';
             default: return method;
+        }
+    };
+
+    const getPaymentMethodColor = (method) => {
+        switch (method) {
+            case 'PAYOS': return '#3b82f6'; // Xanh dương
+            case 'COD': return '#8b5cf6'; // Tím
+            default: return '#6b7280';
+        }
+    };
+
+    const getPaymentMethodIcon = (method) => {
+        switch (method) {
+            case 'PAYOS': return '💳';
+            case 'COD': return '💵';
+            default: return '💰';
         }
     };
 
@@ -105,12 +123,23 @@ const OrderCard = ({ order }) => {
                         fontSize: '16px', 
                         fontWeight: '600', 
                         color: '#1f2937',
-                        marginBottom: '2px'
+                        marginBottom: '4px'
                     }}>
                         {order.TotalAmount?.toLocaleString('vi-VN')} ₫
                     </div>
-                    <div style={{ fontSize: '11px', color: '#9ca3af' }}>
-                        {getPaymentMethodText(order.PaymentMethod)}
+                    <div style={{ 
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '2px 8px',
+                        background: `${getPaymentMethodColor(order.PaymentMethod)}10`,
+                        color: getPaymentMethodColor(order.PaymentMethod),
+                        borderRadius: '10px',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                    }}>
+                        <span>{getPaymentMethodIcon(order.PaymentMethod)}</span>
+                        <span>{getPaymentMethodText(order.PaymentMethod)}</span>
                     </div>
                 </div>
             </div>

@@ -38,11 +38,13 @@ const OrdersPage = () => {
 
     const filteredOrders = orders.filter(order => {
         if (filter === 'ALL') return true;
+        if (filter === 'CANCELLED') return order.PaymentStatus === 'CANCELLED';
         return order.PaymentStatus === filter;
     });
 
     const getStatusCount = (status) => {
         if (status === 'ALL') return orders.length;
+        if (status === 'CANCELLED') return orders.filter(o => o.PaymentStatus === 'CANCELLED').length;
         return orders.filter(o => o.PaymentStatus === status).length;
     };
 
@@ -104,6 +106,7 @@ const OrdersPage = () => {
                             { key: 'ALL', label: 'Tất cả', color: '#1a1a1a' },
                             { key: 'SUCCESS', label: 'Thành công', color: '#10b981' },
                             { key: 'PENDING', label: 'Chờ xử lý', color: '#f59e0b' },
+                            { key: 'CANCELLED', label: 'Đã hủy', color: '#6b7280' },
                             { key: 'FAILED', label: 'Thất bại', color: '#ef4444' }
                         ].map(tab => (
                             <button
