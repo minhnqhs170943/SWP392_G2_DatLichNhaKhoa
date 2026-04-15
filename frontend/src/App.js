@@ -13,7 +13,9 @@ import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import OrdersPage from './pages/OrdersPage';
 import Review from './pages/Market/Review';
-
+import AdminAnalytics from './pages/Admin/AdminAnalytics';
+import UserManagement from './pages/Admin/UserManagement';
+import AdminLayout from './layouts/admin-layout/AdminLayout';
 
 
 function App() {
@@ -38,6 +40,9 @@ function App() {
         <Route path='/payment/cancel' element={<PaymentCancel />} />
         <Route path='/orders' element={<OrdersPage />} />
         <Route path='/review' element= {<Review/>}/>
+        {/* Dashboards */}
+        <Route path='/admin-analytics' element={<AdminLayout><AdminAnalytics /></AdminLayout>} />
+        <Route path='/admin/user' element={<AdminLayout><UserManagement /></AdminLayout>} />
       </Routes>
     </Router>
   );
