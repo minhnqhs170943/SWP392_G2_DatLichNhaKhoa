@@ -7,6 +7,8 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { fetchProducts } from "../../services/productApi";
 
+
+
 const styles = {
     page: { padding: "96px 56px 40px", background: "#f5f6fa", minHeight: "100vh" },
     container: { maxWidth: 1460, margin: "0 auto" },
@@ -195,7 +197,14 @@ export default function Product() {
                     {displayedProducts.map((p) => (
                         <div key={p.id} style={styles.card}>
                             <div style={styles.cardImg}>
-                                <Package size={58} color="#9ca3af" />
+                                {
+                                    p.image ? (
+                                        <img src={p.image} alt={p.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                                    ) : (
+                                        <Package size={58} color="#9ca3af" />
+                                    )
+                                }
+                               
                             </div>
                             <div style={styles.cardBody}>
                                 <div style={styles.brand}>{p.brand}</div>
