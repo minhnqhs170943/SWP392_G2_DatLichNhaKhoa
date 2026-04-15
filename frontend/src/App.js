@@ -13,6 +13,7 @@ import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import OrdersPage from './pages/OrdersPage';
 import Review from './pages/Market/Review';
+import AdminProduct from './pages/Admin/AdminProduct';
 
 
 
@@ -38,6 +39,7 @@ function App() {
         <Route path='/payment/cancel' element={<PaymentCancel />} />
         <Route path='/orders' element={<OrdersPage />} />
         <Route path='/review' element= {<Review/>}/>
+        <Route path='/admin/products' element={<AdminProduct />} />
       </Routes>
     </Router>
   );
