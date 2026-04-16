@@ -1,5 +1,4 @@
 const userModel = require('../models/user.model');
-const nodemailer = require('nodemailer');
 const transporter = require('../config/mailer');
 const jwt = require('jsonwebtoken');
 
@@ -8,8 +7,8 @@ const login = async (req, res) => {
     try {
         const user = await userModel.findUserByEmail(email);
 
-        if (user && user.PasswordHash === password) {
-            const { PasswordHash, ...userInfos } = user;
+        if (user && user.Password === password) {
+            const { Password, ...userInfos } = user;
 
             const token = jwt.sign(
                 { userId: user.UserID, roleId: user.RoleID },
@@ -107,7 +106,7 @@ const changePassword = async (req, res) => {
         const user = await userModel.getUserById(userId);
         if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
 
-        const currentPassword = user.PasswordHash;
+        const currentPassword = user.Password;
         if (currentPassword === newPassword) {
             return res.status(400).json({ success: false, message: "Mật khẩu mới không được trùng với mật khẩu cũ" });
         }
