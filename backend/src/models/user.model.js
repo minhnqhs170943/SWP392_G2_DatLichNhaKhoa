@@ -12,15 +12,15 @@ const createUser = async (userData) => {
     const request = new sql.Request();
     
     request.input('roleId', sql.Int, 4);
-    request.input('passwordHash', sql.VarChar, password);
+    request.input('password', sql.VarChar, password);
     request.input('fullName', sql.NVarChar, fullName);
     request.input('email', sql.VarChar, email);
     request.input('phone', sql.VarChar, phone);
     request.input('address', sql.NVarChar, address);
 
     await request.query(`
-        INSERT INTO Users (RoleID, PasswordHash, FullName, Email, Phone, Address, IsActive, CreatedAt)
-        VALUES (@roleId, @passwordHash, @fullName, @email, @phone, @address, 1, GETDATE())
+        INSERT INTO Users (RoleID, Password, FullName, Email, Phone, Address, IsActive, CreatedAt)
+        VALUES (@roleId, @password, @fullName, @email, @phone, @address, 1, GETDATE())
     `);
 };
 
@@ -52,7 +52,7 @@ const changePassword = async (userId, newPassword) => {
     
     await request.query(`
         UPDATE Users
-        SET PasswordHash = @newPassword
+        SET Password = @newPassword
         WHERE UserID = @userId
     `);
 };
