@@ -4,22 +4,30 @@ class Payment {
     static async create(paymentData) {
         try {
             const pool = await sql.connect();
-            await pool.request()
-                .input('OrderID', sql.Int, paymentData.orderId)
-                .input('TransactionID', sql.VarChar(255), paymentData.transactionId)
-                .input('Amount', sql.Decimal(10, 2), paymentData.amount)
-                .input('PaymentMethod', sql.VarChar(50), paymentData.paymentMethod)
-                .input('PaymentDate', sql.DateTime, new Date())
-                .input('Status', sql.VarChar(50), paymentData.status)
+            const result = await pool.request()
+                .input('InvoiceID', sql.Int, paymentData.invoiceId)
+                .input('TransactionID', sql.VarChar(100), paymentData.transactionId)
+                .input('Amount', sql.Decimal(18, 2), paymentData.amount)
+                .input('PaymentMethod', sql.NVarChar(50), paymentData.paymentMethod)
+                .input('Status', sql.NVarChar(50), paymentData.status)
                 .query(`
-                    INSERT INTO Payments (OrderID, TransactionID, Amount, PaymentMethod, PaymentDate, Status)
-                    VALUES (@OrderID, @TransactionID, @Amount, @PaymentMethod, @PaymentDate, @Status)
+                    INSERT INTO Payments (InvoiceID, TransactionID, Amount, PaymentMethod, PaymentDate, Status)
+                    VALUES (@InvoiceID, @TransactionID, @Amount, @PaymentMethod, GETDATE(), @Status);
+                    SELECT * FROM Payments WHERE PaymentID = SCOPE_IDENTITY();
                 `);
             
+            return result.recordset[0];
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async findByInvoiceId(invoiceId) {
+        try {
+            const pool = await sql.connect();
             const result = await pool.request()
-                .input('OrderID', sql.Int, paymentData.orderId)
-                .query('SELECT * FROM Payments WHERE OrderID = @OrderID');
-            
+                .input('InvoiceID', sql.Int, invoiceId)
+                .query('SELECT * FROM Payments WHERE InvoiceID = @InvoiceID');
             return result.recordset[0];
         } catch (error) {
             throw error;
@@ -31,7 +39,12 @@ class Payment {
             const pool = await sql.connect();
             const result = await pool.request()
                 .input('OrderID', sql.Int, orderId)
-                .query('SELECT * FROM Payments WHERE OrderID = @OrderID');
+                .query(`
+                    SELECT p.* 
+                    FROM Payments p
+                    INNER JOIN Invoices i ON p.InvoiceID = i.InvoiceID
+                    WHERE i.OrderID = @OrderID
+                `);
             return result.recordset[0];
         } catch (error) {
             throw error;
@@ -42,7 +55,7 @@ class Payment {
         try {
             const pool = await sql.connect();
             const result = await pool.request()
-                .input('TransactionID', sql.VarChar(255), transactionId)
+                .input('TransactionID', sql.VarChar(100), transactionId)
                 .query('SELECT * FROM Payments WHERE TransactionID = @TransactionID');
             return result.recordset[0];
         } catch (error) {
@@ -55,7 +68,7 @@ class Payment {
             const pool = await sql.connect();
             await pool.request()
                 .input('PaymentID', sql.Int, paymentId)
-                .input('Status', sql.VarChar(50), status)
+                .input('Status', sql.NVarChar(50), status)
                 .query(`
                     UPDATE Payments 
                     SET Status = @Status 

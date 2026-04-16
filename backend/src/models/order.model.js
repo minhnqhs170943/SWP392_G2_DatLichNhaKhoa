@@ -4,18 +4,22 @@ class Order {
     static async create(orderData) {
         try {
             const pool = await sql.connect();
-            const result = await pool.request()
+            await pool.request()
                 .input('UserID', sql.Int, orderData.userId)
-                .input('TotalAmount', sql.Decimal(10, 2), orderData.totalAmount)
-                .input('PaymentMethod', sql.VarChar(50), orderData.paymentMethod)
-                .input('PaymentStatus', sql.VarChar(50), orderData.paymentStatus || 'PENDING')
+                .input('AppointmentID', sql.Int, orderData.appointmentId || null)
+                .input('TotalAmount', sql.Decimal(18, 2), orderData.totalAmount)
                 .input('ShippingAddress', sql.NVarChar(255), orderData.shippingAddress)
-                .input('OrderDate', sql.DateTime, new Date())
+                .input('Status', sql.NVarChar(50), orderData.status || 'Pending')
                 .query(`
-                    INSERT INTO Orders (UserID, TotalAmount, PaymentMethod, PaymentStatus, ShippingAddress, OrderDate)
-                    VALUES (@UserID, @TotalAmount, @PaymentMethod, @PaymentStatus, @ShippingAddress, @OrderDate);
+                    INSERT INTO Orders (UserID, AppointmentID, TotalAmount, ShippingAddress, Status, OrderDate)
+                    VALUES (@UserID, @AppointmentID, @TotalAmount, @ShippingAddress, @Status, GETDATE());
                     SELECT * FROM Orders WHERE OrderID = SCOPE_IDENTITY();
                 `);
+            
+            const result = await pool.request()
+                .input('UserID', sql.Int, orderData.userId)
+                .query('SELECT TOP 1 * FROM Orders WHERE UserID = @UserID ORDER BY OrderID DESC');
+            
             return result.recordset[0];
         } catch (error) {
             throw error;
@@ -34,15 +38,15 @@ class Order {
         }
     }
 
-    static async updatePaymentStatus(orderId, status) {
+    static async updateStatus(orderId, status) {
         try {
             const pool = await sql.connect();
             await pool.request()
                 .input('OrderID', sql.Int, orderId)
-                .input('PaymentStatus', sql.VarChar(50), status)
+                .input('Status', sql.NVarChar(50), status)
                 .query(`
                     UPDATE Orders 
-                    SET PaymentStatus = @PaymentStatus 
+                    SET Status = @Status 
                     WHERE OrderID = @OrderID
                 `);
             
@@ -61,7 +65,23 @@ class Order {
             const pool = await sql.connect();
             const result = await pool.request()
                 .input('UserID', sql.Int, userId)
-                .query('SELECT * FROM Orders WHERE UserID = @UserID ORDER BY OrderDate DESC');
+                .query(`
+                    SELECT 
+                        o.OrderID,
+                        o.UserID,
+                        o.AppointmentID,
+                        o.TotalAmount,
+                        o.ShippingAddress,
+                        o.Status,
+                        o.OrderDate,
+                        ISNULL(i.Status, 'Unpaid') as PaymentStatus,
+                        ISNULL(p.PaymentMethod, 'N/A') as PaymentMethod
+                    FROM Orders o
+                    LEFT JOIN Invoices i ON o.OrderID = i.OrderID
+                    LEFT JOIN Payments p ON i.InvoiceID = p.InvoiceID
+                    WHERE o.UserID = @UserID 
+                    ORDER BY o.OrderDate DESC
+                `);
             return result.recordset;
         } catch (error) {
             throw error;

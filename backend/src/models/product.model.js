@@ -9,9 +9,9 @@ const findAllProducts = async () => {
             Brand,
             Description,
             Price,
-            StockQuantity,
             ImageURL,
-            IsActive
+            IsActive,
+            CreatedAt
         FROM [dbo].[Products] 
         WHERE IsActive = 1
         ORDER BY ProductID DESC
@@ -29,9 +29,9 @@ const findProductById = async (productId) => {
             Brand,
             Description,
             Price,
-            StockQuantity,
             ImageURL,
-            IsActive
+            IsActive,
+            CreatedAt
         FROM [dbo].[Products]
         WHERE ProductID = @productId AND IsActive = 1
     `);
@@ -47,41 +47,39 @@ const findAllProductsForAdmin = async () => {
             Brand,
             Description,
             Price,
-            StockQuantity,
             ImageURL,
-            IsActive
+            IsActive,
+            CreatedAt
         FROM [dbo].[Products]
         ORDER BY ProductID DESC
     `);
     return result.recordset;
 };
 
-const createProduct = async ({ productName, brand, description, price, stockQuantity, imageURL }) => {
+const createProduct = async ({ productName, brand, description, price, imageURL }) => {
     const request = new sql.Request();
     request.input('productName', sql.NVarChar(sql.MAX), productName);
     request.input('brand', sql.NVarChar(sql.MAX), brand || null);
     request.input('description', sql.NVarChar(sql.MAX), description || null);
     request.input('price', sql.Decimal(18, 2), price);
-    request.input('stockQuantity', sql.Int, stockQuantity);
     request.input('imageURL', sql.NVarChar(sql.MAX), imageURL || null);
 
     const result = await request.query(`
-        INSERT INTO [dbo].[Products] (ProductName, Brand, Description, Price, StockQuantity, ImageURL, IsActive)
+        INSERT INTO [dbo].[Products] (ProductName, Brand, Description, Price, ImageURL, IsActive, CreatedAt)
         OUTPUT INSERTED.ProductID
-        VALUES (@productName, @brand, @description, @price, @stockQuantity, @imageURL, 1)
+        VALUES (@productName, @brand, @description, @price, @imageURL, 1, GETDATE())
     `);
 
     return result.recordset[0]?.ProductID;
 };
 
-const updateProduct = async (productId, { productName, brand, description, price, stockQuantity, imageURL, isActive }) => {
+const updateProduct = async (productId, { productName, brand, description, price, imageURL, isActive }) => {
     const request = new sql.Request();
     request.input('productId', sql.Int, productId);
     request.input('productName', sql.NVarChar(sql.MAX), productName);
     request.input('brand', sql.NVarChar(sql.MAX), brand || null);
     request.input('description', sql.NVarChar(sql.MAX), description || null);
     request.input('price', sql.Decimal(18, 2), price);
-    request.input('stockQuantity', sql.Int, stockQuantity);
     request.input('imageURL', sql.NVarChar(sql.MAX), imageURL || null);
     request.input('isActive', sql.Bit, isActive ? 1 : 0);
 
@@ -92,7 +90,6 @@ const updateProduct = async (productId, { productName, brand, description, price
             Brand = @brand,
             Description = @description,
             Price = @price,
-            StockQuantity = @stockQuantity,
             ImageURL = @imageURL,
             IsActive = @isActive
         WHERE ProductID = @productId

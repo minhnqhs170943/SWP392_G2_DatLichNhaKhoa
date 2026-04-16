@@ -8,6 +8,9 @@ const OrderCard = ({ order }) => {
     const [orderDetails, setOrderDetails] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    // Determine the actual status to display (Order.Status takes priority for CANCELLED)
+    const displayStatus = order.Status === 'CANCELLED' ? 'CANCELLED' : order.PaymentStatus;
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'SUCCESS': return '#10b981'; // Xanh lá
@@ -101,13 +104,13 @@ const OrderCard = ({ order }) => {
                         </h3>
                         <span style={{
                             padding: '2px 8px',
-                            background: `${getStatusColor(order.PaymentStatus)}15`,
-                            color: getStatusColor(order.PaymentStatus),
+                            background: `${getStatusColor(displayStatus)}15`,
+                            color: getStatusColor(displayStatus),
                             borderRadius: '10px',
                             fontSize: '11px',
                             fontWeight: '600'
                         }}>
-                            {getStatusText(order.PaymentStatus)}
+                            {getStatusText(displayStatus)}
                         </span>
                     </div>
                     <p style={{ 
@@ -221,7 +224,7 @@ const OrderCard = ({ order }) => {
                 >
                     {loading ? 'Đang tải...' : showDetails ? 'Ẩn chi tiết' : 'Xem chi tiết'}
                 </button>
-                {order.PaymentStatus === 'PENDING' && order.PaymentMethod === 'PAYOS' && (
+                {displayStatus === 'PENDING' && order.PaymentMethod === 'PAYOS' && (
                     <button
                         onClick={() => navigate(`/payment/qr`, { 
                             state: { orderId: order.OrderID } 

@@ -1,18 +1,26 @@
 const userModel = require('../models/user.model');
 const nodemailer = require('nodemailer');
 const transporter = require('../config/mailer');
+const jwt = require('jsonwebtoken');
 
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await userModel.findUserByEmail(email);
 
-        if (user && user.Password === password) {
-            const { Password, ...userInfos } = user;
+        if (user && user.PasswordHash === password) {
+            const { PasswordHash, ...userInfos } = user;
+
+            const token = jwt.sign(
+                { userId: user.UserID, roleId: user.RoleID },
+                process.env.JWT_SECRET || 'SWP392_SECRET_KEY',
+                { expiresIn: '1d' }
+            );
 
             return res.status(200).json({
                 success: true,
                 message: "Đăng nhập thành công",
+                token: token,
                 user: userInfos
             });
         }
@@ -99,7 +107,7 @@ const changePassword = async (req, res) => {
         const user = await userModel.getUserById(userId);
         if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
 
-        const currentPassword = user.Password;
+        const currentPassword = user.PasswordHash;
         if (currentPassword === newPassword) {
             return res.status(400).json({ success: false, message: "Mật khẩu mới không được trùng với mật khẩu cũ" });
         }
