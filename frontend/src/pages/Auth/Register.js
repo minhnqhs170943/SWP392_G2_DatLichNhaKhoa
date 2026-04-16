@@ -6,7 +6,6 @@ const Register = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        username: '',
         fullName: '',
         email: '',
         phone: '',
@@ -22,14 +21,12 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
 
-        // Kiểm tra mật khẩu xác nhận
         if (formData.password !== formData.confirmPassword) {
             alert("Mật khẩu xác nhận không khớp!");
             return;
         }
 
         const payload = {
-            username: formData.username,
             fullName: formData.fullName,
             email: formData.email,
             phone: formData.phone,
@@ -61,20 +58,7 @@ const Register = () => {
                     </div>
 
                     <form onSubmit={handleRegister}>
-                        {/* Trường Username */}
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold">Tên đăng nhập</label>
-                            <input
-                                type="text"
-                                name="username"
-                                className="form-control"
-                                placeholder="nguyenvana123"
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
 
-                        {/* Trường FullName */}
                         <div className="mb-3">
                             <label className="form-label fw-semibold">Họ và tên</label>
                             <input
@@ -87,7 +71,6 @@ const Register = () => {
                             />
                         </div>
 
-                        {/* Trường Email */}
                         <div className="mb-3">
                             <label className="form-label fw-semibold">Email</label>
                             <input
@@ -100,7 +83,6 @@ const Register = () => {
                             />
                         </div>
 
-                        {/* Nhóm Phone & Address */}
                         <div className="row">
                             <div className="col-md-6 mb-3">
                                 <label className="form-label fw-semibold">Số điện thoại</label>
@@ -125,7 +107,6 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {/* Nhóm Mật khẩu */}
                         <div className="row">
                             <div className="col-md-6 mb-3">
                                 <label className="form-label fw-semibold">Mật khẩu</label>
