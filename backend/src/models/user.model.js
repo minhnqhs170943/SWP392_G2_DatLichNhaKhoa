@@ -11,7 +11,7 @@ const createUser = async (userData) => {
     const { password, fullName, email, phone, address } = userData;
     const request = new sql.Request();
     
-    request.input('roleId', sql.Int, 3);
+    request.input('roleId', sql.Int, 4);
     request.input('password', sql.VarChar, password);
     request.input('fullName', sql.NVarChar, fullName);
     request.input('email', sql.VarChar, email);
