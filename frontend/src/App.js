@@ -14,6 +14,11 @@ import OrdersPage from './pages/OrdersPage';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
+import OrdersPage from './pages/OrdersPage';
+import NotificationsPage from './pages/NotificationsPage';
+import Review from './pages/Market/Review';
+import AdminProduct from './pages/Admin/AdminProduct';
+
 
 
 function App() {
@@ -39,6 +44,9 @@ function App() {
         <Route path='/orders' element={<OrdersPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path='/notifications' element={<NotificationsPage />} />
+        <Route path='/review' element= {<Review/>}/>
+        <Route path='/admin/products' element={<AdminProduct />} />
       </Routes>
     </Router>
   );
