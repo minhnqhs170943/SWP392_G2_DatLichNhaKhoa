@@ -6,12 +6,55 @@ const Navbar = () => {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
     const dropdownRef = useRef(null);
+    const notifRef = useRef(null);
+
+    // Mock notifications - sẽ thay bằng API sau
+    const [notifications, setNotifications] = useState([
+        {
+            id: 1,
+            title: 'Đơn hàng #123 đã được xác nhận',
+            message: 'Đơn hàng đang được chuẩn bị',
+            time: '2 giờ trước',
+            isRead: false,
+            icon: '📦'
+        },
+        {
+            id: 2,
+            title: 'Thanh toán thành công',
+            message: 'Đơn hàng #122 - 150.000đ',
+            time: '5 giờ trước',
+            isRead: false,
+            icon: '💳'
+        },
+        {
+            id: 3,
+            title: 'Khuyến mãi đặc biệt',
+            message: 'Giảm giá 20% tất cả sản phẩm',
+            time: '1 ngày trước',
+            isRead: true,
+            icon: '🎉'
+        }
+    ]);
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    const markAsRead = (id) => {
+        setNotifications(prev =>
+            prev.map(notif =>
+                notif.id === id ? { ...notif, isRead: true } : notif
+            )
+        );
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setShowDropdown(false);
+            }
+            if (notifRef.current && !notifRef.current.contains(event.target)) {
+                setShowNotifications(false);
             }
         };
 
@@ -58,9 +101,166 @@ const Navbar = () => {
 
                     <div className="d-flex align-items-center gap-3">
                         {user && (
-                            <Link to="/cart" className="custom-nav-link" style={{ fontSize: '20px' }}>
-                                🛒
-                            </Link>
+                            <>
+                                {/* Notifications Icon */}
+                                <div style={{ position: 'relative' }} ref={notifRef}>
+                                    <button
+                                        onClick={() => setShowNotifications(!showNotifications)}
+                                        style={{
+                                            position: 'relative',
+                                            padding: '8px',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            fontSize: '22px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        🔔
+                                        {unreadCount > 0 && (
+                                            <span style={{
+                                                position: 'absolute',
+                                                top: '2px',
+                                                right: '2px',
+                                                background: '#ef4444',
+                                                color: 'white',
+                                                fontSize: '10px',
+                                                fontWeight: '600',
+                                                padding: '2px 5px',
+                                                borderRadius: '10px',
+                                                minWidth: '18px',
+                                                textAlign: 'center'
+                                            }}>
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    {showNotifications && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            right: 0,
+                                            marginTop: '8px',
+                                            background: 'white',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '6px',
+                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                            width: '360px',
+                                            maxHeight: '400px',
+                                            overflowY: 'auto',
+                                            zIndex: 1000
+                                        }}>
+                                            <div style={{
+                                                padding: '12px 16px',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}>
+                                                <h3 style={{
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    color: '#1f2937',
+                                                    margin: 0
+                                                }}>
+                                                    Thông báo
+                                                </h3>
+                                                {unreadCount > 0 && (
+                                                    <span style={{
+                                                        fontSize: '12px',
+                                                        color: '#3b82f6',
+                                                        fontWeight: '500'
+                                                    }}>
+                                                        {unreadCount} mới
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {notifications.slice(0, 3).map(notif => (
+                                                <div
+                                                    key={notif.id}
+                                                    onClick={() => markAsRead(notif.id)}
+                                                    style={{
+                                                        padding: '12px 16px',
+                                                        borderBottom: '1px solid #f3f4f6',
+                                                        cursor: 'pointer',
+                                                        background: notif.isRead ? 'white' : '#eff6ff',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = notif.isRead ? 'white' : '#eff6ff'}
+                                                >
+                                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                                        <div style={{ fontSize: '20px' }}>{notif.icon}</div>
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{
+                                                                fontSize: '13px',
+                                                                fontWeight: '500',
+                                                                color: '#1f2937',
+                                                                marginBottom: '2px'
+                                                            }}>
+                                                                {notif.title}
+                                                            </div>
+                                                            <div style={{
+                                                                fontSize: '12px',
+                                                                color: '#6b7280',
+                                                                marginBottom: '4px'
+                                                            }}>
+                                                                {notif.message}
+                                                            </div>
+                                                            <div style={{
+                                                                fontSize: '11px',
+                                                                color: '#9ca3af'
+                                                            }}>
+                                                                {notif.time}
+                                                            </div>
+                                                        </div>
+                                                        {!notif.isRead && (
+                                                            <div style={{
+                                                                width: '8px',
+                                                                height: '8px',
+                                                                background: '#3b82f6',
+                                                                borderRadius: '50%',
+                                                                marginTop: '4px'
+                                                            }} />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <button
+                                                onClick={() => {
+                                                    setShowNotifications(false);
+                                                    navigate('/notifications');
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    background: 'white',
+                                                    border: 'none',
+                                                    color: '#3b82f6',
+                                                    fontSize: '13px',
+                                                    fontWeight: '500',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                                onMouseLeave={(e) => e.target.style.background = 'white'}
+                                            >
+                                                Xem tất cả thông báo
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Cart Icon */}
+                                <Link to="/cart" className="custom-nav-link" style={{ fontSize: '20px' }}>
+                                    🛒
+                                </Link>
+                            </>
                         )}
                         {user ? (
                             <div style={{ position: 'relative' }} ref={dropdownRef}>
