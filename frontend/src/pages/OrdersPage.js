@@ -38,13 +38,13 @@ const OrdersPage = () => {
 
     const filteredOrders = orders.filter(order => {
         if (filter === 'ALL') return true;
-        if (filter === 'CANCELLED') return order.PaymentStatus === 'CANCELLED';
+        if (filter === 'CANCELLED') return order.Status === 'CANCELLED' || order.PaymentStatus === 'CANCELLED';
         return order.PaymentStatus === filter;
     });
 
     const getStatusCount = (status) => {
         if (status === 'ALL') return orders.length;
-        if (status === 'CANCELLED') return orders.filter(o => o.PaymentStatus === 'CANCELLED').length;
+        if (status === 'CANCELLED') return orders.filter(o => o.Status === 'CANCELLED' || o.PaymentStatus === 'CANCELLED').length;
         return orders.filter(o => o.PaymentStatus === status).length;
     };
 
