@@ -1,6 +1,7 @@
 const userModel = require('../models/user.model');
 const nodemailer = require('nodemailer');
 const transporter = require('../config/mailer');
+const jwt = require('jsonwebtoken');
 
 const login = async (req, res) => {
     const { email, password } = req.body;
@@ -10,9 +11,16 @@ const login = async (req, res) => {
         if (user && user.Password === password) {
             const { Password, ...userInfos } = user;
 
+            const token = jwt.sign(
+                { userId: user.UserID, roleId: user.RoleID },
+                process.env.JWT_SECRET || 'SWP392_SECRET_KEY',
+                { expiresIn: '1d' }
+            );
+
             return res.status(200).json({
                 success: true,
                 message: "Đăng nhập thành công",
+                token: token,
                 user: userInfos
             });
         }
