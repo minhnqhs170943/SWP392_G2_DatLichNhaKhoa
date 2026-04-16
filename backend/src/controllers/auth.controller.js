@@ -5,15 +5,13 @@ const login = async (req, res) => {
     try {
         const user = await userModel.findUserByEmail(email);
 
-        // So sánh password với PasswordHash trong DB của bạn
         if (user && user.PasswordHash === password) {
-            // Loại bỏ mật khẩu trước khi gửi về Client
             const { PasswordHash, ...userInfos } = user;
             
             return res.status(200).json({
                 success: true,
                 message: "Đăng nhập thành công",
-                user: userInfos // Bao gồm RoleID, FullName, v.v.
+                user: userInfos
             });
         }
 
@@ -24,4 +22,34 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { login };
+const register = async (req, res) => {
+    const { fullName, email, password, phone, address } = req.body;
+
+    try {
+        const existingUser = await userModel.findUserByEmail(email);
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: "Email này đã được sử dụng!" });
+        }
+
+        const username = email.split('@')[0];
+
+        const newUser = {
+            username: username,
+            passwordHash: password,
+            fullName: fullName,
+            email: email,
+            phone: phone || '',
+            address: address || ''
+        };
+
+        await userModel.createUser(newUser);
+
+        res.status(201).json({ success: true, message: "Đăng ký tài khoản thành công!" });
+
+    } catch (error) {
+        console.error("Lỗi đăng ký:", error);
+        res.status(500).json({ success: false, message: "Lỗi hệ thống khi đăng ký" });
+    }
+};
+
+module.exports = { login, register };

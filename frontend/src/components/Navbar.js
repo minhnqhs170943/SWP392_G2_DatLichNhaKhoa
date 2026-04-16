@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
+import { fetchCart } from '../services/cartApi';
 import './../styles/Navbar.css';
 
 const Navbar = () => {
@@ -7,6 +8,8 @@ const Navbar = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const [showDropdown, setShowDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [cartCount, setCartCount] = useState(0);
+    const [cartGlow, setCartGlow] = useState(false);
     const dropdownRef = useRef(null);
     const notifRef = useRef(null);
 
@@ -62,6 +65,37 @@ const Navbar = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        let mounted = true;
+        const loadCartCount = async () => {
+            if (!user) {
+                if (mounted) setCartCount(0);
+                return;
+            }
+            try {
+                const rows = await fetchCart();
+                const total = (rows || []).reduce((sum, item) => sum + (Number(item.Quantity) || 0), 0);
+                if (mounted) setCartCount(total);
+            } catch {
+                if (mounted) setCartCount(0);
+            }
+        };
+
+        const handleCartUpdated = () => {
+            loadCartCount();
+            setCartGlow(true);
+            window.setTimeout(() => setCartGlow(false), 500);
+        };
+
+        loadCartCount();
+        window.addEventListener('cart:updated', handleCartUpdated);
+
+        return () => {
+            mounted = false;
+            window.removeEventListener('cart:updated', handleCartUpdated);
+        };
+    }, [user]);
+
     const handleLogout = () => {
         localStorage.removeItem('user');
         alert("Đã đăng xuất");
@@ -91,7 +125,7 @@ const Navbar = () => {
                         <Link to="/product" className="custom-nav-link">
                             Sản Phẩm
                         </Link>
-                        <Link to="/gioi-thieu" className="custom-nav-link">
+                        <Link to="/doctor" className="custom-nav-link">
                             Giới thiệu
                         </Link>
                         <Link to="/lien-he" className="custom-nav-link">
@@ -257,8 +291,9 @@ const Navbar = () => {
                                 </div>
 
                                 {/* Cart Icon */}
-                                <Link to="/cart" className="custom-nav-link" style={{ fontSize: '20px' }}>
+                                <Link to="/cart" className={`custom-nav-link cart-link ${cartGlow ? 'cart-glow' : ''}`} style={{ fontSize: '20px', position: 'relative' }}>
                                     🛒
+                                    {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                                 </Link>
                             </>
                         )}

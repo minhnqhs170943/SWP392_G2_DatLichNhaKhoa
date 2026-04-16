@@ -2,10 +2,12 @@
 import { useState, useEffect } from "react";
 import { ShoppingCart, Package } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { addToCart } from "../../utils/cart";
+import { addCartItem } from "../../services/cartApi";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { fetchProducts } from "../../services/productApi";
+
+
 
 const styles = {
     page: { padding: "96px 56px 40px", background: "#f5f6fa", minHeight: "100vh" },
@@ -116,13 +118,25 @@ export default function Product() {
         loadProducts();
     }, []);
 
-    const handleAddToCart = (product) => {
-        addToCart(product);
+    const handleAddToCart = async (product) => {
+        try {
+            await addCartItem(product.id, 1);
+            window.dispatchEvent(new Event("cart:updated"));
+        } catch (e) {
+            alert(e.message);
+            if (e.message.includes("đăng nhập")) navigate("/login");
+        }
     };
 
-    const handleBuyNow = (product) => {
-        addToCart(product);
-        navigate("/cart");
+    const handleBuyNow = async (product) => {
+        try {
+            await addCartItem(product.id, 1);
+            window.dispatchEvent(new Event("cart:updated"));
+            navigate("/cart");
+        } catch (e) {
+            alert(e.message);
+            if (e.message.includes("đăng nhập")) navigate("/login");
+        }
     };
 
     const filtered = products.filter((p) =>
@@ -183,7 +197,14 @@ export default function Product() {
                     {displayedProducts.map((p) => (
                         <div key={p.id} style={styles.card}>
                             <div style={styles.cardImg}>
-                                <Package size={58} color="#9ca3af" />
+                                {
+                                    p.image ? (
+                                        <img src={p.image} alt={p.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                                    ) : (
+                                        <Package size={58} color="#9ca3af" />
+                                    )
+                                }
+                               
                             </div>
                             <div style={styles.cardBody}>
                                 <div style={styles.brand}>{p.brand}</div>
