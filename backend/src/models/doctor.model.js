@@ -3,36 +3,22 @@ const { sql } = require('../config/db');
 const findAllDoctors = async () => {
     const request = new sql.Request();
     const result = await request.query(`
-        SELECT 
-            DoctorID,
-            FullName,
-            Specialty,
-            ExperienceYears,
-            Bio,
-            AvatarURL,
-            IsActive
-        FROM dbo.Doctors
-        WHERE IsActive = 1
-        ORDER BY DoctorID DESC
+        SELECT d.DoctorID, u.FullName, u.Email, u.Phone, u.Address, u.AvatarURL, d.Specialty, d.ExperienceYears, d.Bio
+        FROM Doctors d
+        JOIN Users u ON d.UserID = u.UserID
+        WHERE d.IsActive = 1 AND u.IsActive = 1
     `);
     return result.recordset;
-};
+}
 
 const findDoctorById = async (doctorId) => {
     const request = new sql.Request();
     request.input('doctorId', sql.Int, doctorId);
     const result = await request.query(`
-        SELECT 
-            DoctorID,
-            FullName,
-            Specialty,
-            Description,
-            ExperienceYears,
-            Bio,
-            AvatarURL,
-            IsActive
-        FROM Doctors
-        WHERE DoctorID = @doctorId AND IsActive = 1
+        SELECT d.DoctorID, u.FullName, u.Email, u.Phone, u.Address, u.AvatarURL, d.Specialty, d.ExperienceYears, d.Bio
+        FROM Doctors d
+        JOIN Users u ON d.UserID = u.UserID
+        WHERE d.DoctorID = @doctorId AND d.IsActive = 1 AND u.IsActive = 1
     `);
     return result.recordset[0];
 };

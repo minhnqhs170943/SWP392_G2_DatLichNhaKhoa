@@ -1,4 +1,5 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import AdminProduct from './pages/Admin/AdminProduct';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
 import Profile from './pages/Auth/Profile';
@@ -10,14 +11,12 @@ import Doctor from './pages/Market/Doctor';
 import DoctorDetail from './pages/Market/DoctorDetail';
 import Product from './pages/Market/Product';
 import ProductDetail from './pages/Market/ProductDetail';
+import Review from './pages/Market/Review';
+import NotificationsPage from './pages/NotificationsPage';
 import OrdersPage from './pages/OrdersPage';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
-import OrdersPage from './pages/OrdersPage';
-import NotificationsPage from './pages/NotificationsPage';
-import Review from './pages/Market/Review';
-import AdminProduct from './pages/Admin/AdminProduct';
 
 
 
