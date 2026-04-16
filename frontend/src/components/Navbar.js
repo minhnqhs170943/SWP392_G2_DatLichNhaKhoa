@@ -20,24 +20,21 @@ const Navbar = () => {
             title: 'Đơn hàng #123 đã được xác nhận',
             message: 'Đơn hàng đang được chuẩn bị',
             time: '2 giờ trước',
-            isRead: false,
-            icon: '📦'
+            isRead: false
         },
         {
             id: 2,
             title: 'Thanh toán thành công',
             message: 'Đơn hàng #122 - 150.000đ',
             time: '5 giờ trước',
-            isRead: false,
-            icon: '💳'
+            isRead: false
         },
         {
             id: 3,
             title: 'Khuyến mãi đặc biệt',
             message: 'Giảm giá 20% tất cả sản phẩm',
             time: '1 ngày trước',
-            isRead: true,
-            icon: '🎉'
+            isRead: true
         }
     ]);
 
@@ -222,19 +219,29 @@ const Navbar = () => {
                                                         borderBottom: '1px solid #f3f4f6',
                                                         cursor: 'pointer',
                                                         background: notif.isRead ? 'white' : '#eff6ff',
-                                                        transition: 'background 0.2s'
+                                                        transition: 'background 0.2s',
+                                                        position: 'relative'
                                                     }}
                                                     onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
                                                     onMouseLeave={(e) => e.currentTarget.style.background = notif.isRead ? 'white' : '#eff6ff'}
                                                 >
-                                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                                        <div style={{ fontSize: '20px' }}>{notif.icon}</div>
+                                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                                                        {/* Icon chấm tròn */}
+                                                        <div style={{
+                                                            width: '8px',
+                                                            height: '8px',
+                                                            background: notif.isRead ? '#d1d5db' : '#3b82f6',
+                                                            borderRadius: '50%',
+                                                            marginTop: '6px',
+                                                            flexShrink: 0
+                                                        }} />
+                                                        
                                                         <div style={{ flex: 1 }}>
                                                             <div style={{
                                                                 fontSize: '13px',
                                                                 fontWeight: '500',
                                                                 color: '#1f2937',
-                                                                marginBottom: '2px'
+                                                                marginBottom: '4px'
                                                             }}>
                                                                 {notif.title}
                                                             </div>
@@ -252,15 +259,6 @@ const Navbar = () => {
                                                                 {notif.time}
                                                             </div>
                                                         </div>
-                                                        {!notif.isRead && (
-                                                            <div style={{
-                                                                width: '8px',
-                                                                height: '8px',
-                                                                background: '#3b82f6',
-                                                                borderRadius: '50%',
-                                                                marginTop: '4px'
-                                                            }} />
-                                                        )}
                                                     </div>
                                                 </div>
                                             ))}

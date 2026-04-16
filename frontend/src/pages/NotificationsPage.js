@@ -15,8 +15,7 @@ const NotificationsPage = () => {
             title: 'Đơn hàng #123 đã được xác nhận',
             message: 'Đơn hàng của bạn đang được chuẩn bị và sẽ sớm được giao',
             time: '2 giờ trước',
-            isRead: false,
-            icon: '📦'
+            isRead: false
         },
         {
             id: 2,
@@ -24,8 +23,7 @@ const NotificationsPage = () => {
             title: 'Thanh toán thành công',
             message: 'Bạn đã thanh toán thành công đơn hàng #122 với số tiền 150.000đ',
             time: '5 giờ trước',
-            isRead: false,
-            icon: '💳'
+            isRead: false
         },
         {
             id: 3,
@@ -33,8 +31,7 @@ const NotificationsPage = () => {
             title: 'Khuyến mãi đặc biệt',
             message: 'Giảm giá 20% cho tất cả sản phẩm chăm sóc răng miệng',
             time: '1 ngày trước',
-            isRead: true,
-            icon: '🎉'
+            isRead: true
         },
         {
             id: 4,
@@ -42,8 +39,7 @@ const NotificationsPage = () => {
             title: 'Đơn hàng #121 đã giao thành công',
             message: 'Cảm ơn bạn đã mua hàng. Đánh giá sản phẩm để nhận ưu đãi',
             time: '2 ngày trước',
-            isRead: true,
-            icon: '✅'
+            isRead: true
         },
         {
             id: 5,
@@ -51,8 +47,7 @@ const NotificationsPage = () => {
             title: 'Cập nhật hệ thống',
             message: 'Hệ thống đã được cập nhật với nhiều tính năng mới',
             time: '3 ngày trước',
-            isRead: true,
-            icon: '🔔'
+            isRead: true
         }
     ]);
 
@@ -213,7 +208,6 @@ const NotificationsPage = () => {
                             textAlign: 'center',
                             boxShadow: '0 1px 2px rgba(0,0,0,0.08)'
                         }}>
-                            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔔</div>
                             <h3 style={{ color: '#1f2937', marginBottom: '6px', fontSize: '16px' }}>
                                 Không có thông báo
                             </h3>
@@ -253,37 +247,29 @@ const NotificationsPage = () => {
                                         }} />
                                     )}
                                     
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <div style={{
-                                            fontSize: '32px',
-                                            lineHeight: 1
+                                    <div>
+                                        <h3 style={{
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            color: '#1f2937',
+                                            marginBottom: '6px'
                                         }}>
-                                            {notif.icon}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <h3 style={{
-                                                fontSize: '14px',
-                                                fontWeight: '600',
-                                                color: '#1f2937',
-                                                marginBottom: '4px'
-                                            }}>
-                                                {notif.title}
-                                            </h3>
-                                            <p style={{
-                                                fontSize: '13px',
-                                                color: '#6b7280',
-                                                marginBottom: '8px',
-                                                lineHeight: '1.5'
-                                            }}>
-                                                {notif.message}
-                                            </p>
-                                            <span style={{
-                                                fontSize: '12px',
-                                                color: '#9ca3af'
-                                            }}>
-                                                {notif.time}
-                                            </span>
-                                        </div>
+                                            {notif.title}
+                                        </h3>
+                                        <p style={{
+                                            fontSize: '13px',
+                                            color: '#6b7280',
+                                            marginBottom: '8px',
+                                            lineHeight: '1.5'
+                                        }}>
+                                            {notif.message}
+                                        </p>
+                                        <span style={{
+                                            fontSize: '12px',
+                                            color: '#9ca3af'
+                                        }}>
+                                            {notif.time}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
