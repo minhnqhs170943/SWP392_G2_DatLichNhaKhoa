@@ -1,18 +1,19 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
+import Profile from './pages/Auth/Profile';
 import Register from './pages/Auth/Register';
+import CheckoutPage from './pages/CheckoutPage';
 import HomePage from './pages/Homepage';
+import Cart from './pages/Market/Cart';
+import Doctor from './pages/Market/Doctor';
+import DoctorDetail from './pages/Market/DoctorDetail';
 import Product from './pages/Market/Product';
 import ProductDetail from './pages/Market/ProductDetail';
-import Cart from './pages/Market/Cart'
-import Doctor from './pages/Market/Doctor';
-import CheckoutPage from './pages/CheckoutPage';
-import DoctorDetail from './pages/Market/DoctorDetail';
-import PaymentSuccess from './pages/PaymentSuccess';
+import OrdersPage from './pages/OrdersPage';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
-import OrdersPage from './pages/OrdersPage';
-
+import PaymentSuccess from './pages/PaymentSuccess';
 
 
 function App() {
@@ -36,6 +37,8 @@ function App() {
         <Route path='/payment/success' element={<PaymentSuccess />} />
         <Route path='/payment/cancel' element={<PaymentCancel />} />
         <Route path='/orders' element={<OrdersPage />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </Router>
   );

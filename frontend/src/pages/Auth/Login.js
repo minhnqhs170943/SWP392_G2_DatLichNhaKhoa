@@ -16,10 +16,10 @@ const Login = () => {
 
             if (data.user.RoleID === 1) {
                 alert("Đăng nhập với tư cách admin thành công");
-                navigate('/admin-dashboard');
+                navigate('/admin-analytics');
             } else if (data.user.RoleID === 2) {
                 alert("Đăng nhập với tư cách nhân viên thành công");
-                navigate('/doctor-dashboard');
+                navigate('/staff-dashboard');
             } else {
                 alert("Đăng nhập thành công!");
                 navigate('/home');
@@ -99,6 +99,12 @@ const Login = () => {
                         Đăng nhập
                     </button>
                 </form>
+
+                <div className="text-center mt-3">
+                    <Link to="/forgot-password" className="text-decoration-none text-muted">
+                        Quên mật khẩu?
+                    </Link>
+                </div>
 
                 <div className="d-flex align-items-center my-4">
                     <hr className="flex-grow-1" style={{ borderColor: '#e0e0e0' }} />

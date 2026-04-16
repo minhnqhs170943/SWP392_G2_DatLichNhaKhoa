@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
-import { clearCart, getCart, removeFromCart, updateQtyInCart } from "../../utils/cart";
-import { Trash2, ShieldCheck, RotateCcw, Truck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { RotateCcw, ShieldCheck, Trash2, Truck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
+import { clearCart, getCart, removeFromCart, updateQtyInCart } from "../../utils/cart";
 
 function formatPrice(n) {
     const value = Number(n) || 0;
