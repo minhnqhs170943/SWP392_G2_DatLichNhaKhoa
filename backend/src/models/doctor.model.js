@@ -37,4 +37,17 @@ const findDoctorById = async (doctorId) => {
     return result.recordset[0];
 };
 
-module.exports = { findAllDoctors, findDoctorById };
+const getAllServices = async () => {
+    const request = new sql.Request();
+    const result = await request.query(`
+        SELECT 
+            s.ServiceName, 
+            s.[Description], 
+            s.Price  
+        from [dbo].[Services] s
+        where s.IsActive =  1
+    `);
+    return result.recordset;
+};
+
+module.exports = { findAllDoctors, findDoctorById, getAllServices };

@@ -9,7 +9,6 @@ const findAllProducts = async () => {
             Brand,
             Description,
             Price,
-            StockQuantity,
             ImageURL,
             IsActive
         FROM [dbo].[Products] 
@@ -29,7 +28,6 @@ const findProductById = async (productId) => {
             Brand,
             Description,
             Price,
-            StockQuantity,
             ImageURL,
             IsActive
         FROM [dbo].[Products]
