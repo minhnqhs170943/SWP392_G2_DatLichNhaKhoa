@@ -101,7 +101,6 @@ export default function Product() {
                         desc: p.Description || "Đang cập nhật thông tin sản phẩm.",
                         price: priceNumber.toLocaleString("vi-VN") + " ₫",
                         priceNumber,
-                        stockQuantity: p.StockQuantity,
                         image: p.ImageURL,
                     };
                 });

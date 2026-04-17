@@ -8,7 +8,7 @@ const serviceRoutes = require('./service.routes');
 const cartRoutes = require('./cart.routes');
 const uploadRoutes = require("./upload.routes");
 const reviewRoutes = require('./review.routes');
-const serviceRoutes =  require('./service.routes');
+
 
 
 router.use("/upload", uploadRoutes);
