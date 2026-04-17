@@ -33,3 +33,72 @@ export const registerApi = async (userData) => {
         return { success: false, message: "Không thể kết nối đến máy chủ" };
     }
 };
+
+export const getProfileApi = async (userId) => {
+    try {
+        const response = await fetch(`${API_URL}/profile/${userId}`);
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi gọi API lấy thông tin người dùng:", error);
+        return { success: false, message: "Không thể kết nối đến máy chủ" };
+    }
+};
+
+export const updateProfileApi = async (userId, profileData) => {
+    try {
+        const response = await fetch(`${API_URL}/profile/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+
+            body: JSON.stringify(profileData),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi gọi API cập nhật thông tin người dùng:", error);
+        return { success: false, message: "Không thể kết nối đến máy chủ" };
+    }
+};
+
+export const changePasswordApi = async (userId, newPassword) => {
+    try {
+        const response = await fetch(`${API_URL}/change-password/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ newPassword }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Lỗi gọi API đổi mật khẩu:", error);
+        return { success: false, message: "Không thể kết nối đến máy chủ" };
+    }
+};
+
+export const forgotPasswordApi = async (email) => {
+    try {
+        const response = await fetch(`${API_URL}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        return await response.json();
+    } catch (error) {
+        return { success: false, message: "Lỗi kết nối máy chủ" };
+    }
+};
+
+export const resetPasswordApi = async (email, otp, newPassword) => {
+    try {
+        const response = await fetch(`${API_URL}/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp, newPassword }),
+        });
+        return await response.json();
+    } catch (error) {
+        return { success: false, message: "Lỗi kết nối máy chủ" };
+    }
+};

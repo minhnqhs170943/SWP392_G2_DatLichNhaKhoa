@@ -7,7 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
-function formatPrice(n) {
+function formatPrice(n) { 
     const value = Number(n) || 0;
     return value.toLocaleString("vi-VN") + " ₫";
 }

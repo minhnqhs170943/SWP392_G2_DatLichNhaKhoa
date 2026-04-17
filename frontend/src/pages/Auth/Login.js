@@ -12,17 +12,28 @@ const Login = () => {
         const data = await loginApi(email, password);
 
         if (data.success) {
+            localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
-            if (data.user.RoleID === 1) {
-                alert("Đăng nhập với tư cách admin thành công");
-                navigate('/admin-dashboard');
-            } else if (data.user.RoleID === 2) {
-                alert("Đăng nhập với tư cách nhân viên thành công");
-                navigate('/doctor-dashboard');
-            } else {
-                alert("Đăng nhập thành công!");
-                navigate('/home');
+            switch (data.user.RoleID) {
+                case 1: // Admin
+                    alert("Chào Admin!");
+                    navigate('/admin-analytics');
+                    break;
+                case 2: // Staff
+                    alert("Chào Bác sĩ!");
+                    navigate('/doctor-dashboard');
+                    break;
+                case 3: // Doctor
+                    alert("Chào Nhân viên!");
+                    navigate('/staff-dashboard');
+                    break;
+                case 4: // Patient/User
+                    alert("Đăng nhập thành công!");
+                    navigate('/home');
+                    break;
+                default:
+                    navigate('/home');
             }
         } else {
             alert(data.message);
@@ -34,7 +45,7 @@ const Login = () => {
             className="d-flex justify-content-center align-items-center min-vh-100"
             style={{ backgroundColor: '#e8f0fe' }}
         >
-            
+
             <div
                 className="bg-white rounded-4 p-4 p-md-5 shadow-sm"
                 style={{ width: '100%', maxWidth: '420px' }}
@@ -99,6 +110,12 @@ const Login = () => {
                         Đăng nhập
                     </button>
                 </form>
+
+                <div className="text-center mt-3">
+                    <Link to="/forgot-password" className="text-decoration-none text-muted">
+                        Quên mật khẩu?
+                    </Link>
+                </div>
 
                 <div className="d-flex align-items-center my-4">
                     <hr className="flex-grow-1" style={{ borderColor: '#e0e0e0' }} />

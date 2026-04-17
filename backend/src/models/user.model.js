@@ -8,22 +8,53 @@ const findUserByEmail = async (email) => {
 };
 
 const createUser = async (userData) => {
-    const { username, passwordHash, fullName, email, phone, address } = userData;
+    const { password, fullName, email, phone, address } = userData;
     const request = new sql.Request();
     
-    request.input('roleId', sql.Int, 3);
-    request.input('username', sql.VarChar, username);
-    request.input('passwordHash', sql.VarChar, passwordHash);
+    request.input('roleId', sql.Int, 4);
+    request.input('password', sql.VarChar, password);
     request.input('fullName', sql.NVarChar, fullName);
     request.input('email', sql.VarChar, email);
     request.input('phone', sql.VarChar, phone);
     request.input('address', sql.NVarChar, address);
 
-    // Dùng INSERT INTO
     await request.query(`
-        INSERT INTO Users (RoleID, Username, PasswordHash, FullName, Email, Phone, Address) 
-        VALUES (@roleId, @username, @passwordHash, @fullName, @email, @phone, @address)
+        INSERT INTO Users (RoleID, Password, FullName, Email, Phone, Address, IsActive, CreatedAt)
+        VALUES (@roleId, @password, @fullName, @email, @phone, @address, 1, GETDATE())
     `);
 };
 
-module.exports = { findUserByEmail, createUser };
+const getUserById = async (userId) => {
+    const request = new sql.Request();
+    request.input('userId', sql.Int, userId);
+    const result = await request.query('SELECT * FROM Users WHERE UserID = @userId');
+    return result.recordset[0];
+};
+
+const updateUserProfile = async (userId, data) => {
+    const request = new sql.Request();
+    request.input('userId', sql.Int, parseInt(userId));
+    request.input('fullName', sql.NVarChar, data.fullName);
+    request.input('phone', sql.VarChar, data.phone);
+    request.input('address', sql.NVarChar, data.address);
+
+    await request.query(`
+        UPDATE Users
+        SET FullName = @fullName, Phone = @phone, Address = @address
+        WHERE UserID = @userId
+    `);
+};
+
+const changePassword = async (userId, newPassword) => {
+    const request = new sql.Request();
+    request.input('userId', sql.Int, parseInt(userId));
+    request.input('newPassword', sql.VarChar, newPassword);
+    
+    await request.query(`
+        UPDATE Users
+        SET Password = @newPassword
+        WHERE UserID = @userId
+    `);
+};
+
+module.exports = { findUserByEmail, createUser, getUserById, updateUserProfile, changePassword };
