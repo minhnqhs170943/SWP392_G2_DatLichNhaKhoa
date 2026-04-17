@@ -21,14 +21,13 @@ export default function DoctorDetail() {
 
 
                 const d = {
-                    id: row.DoctorID,
+                    id: row.UserID,
                     name: row.FullName,
-                    specialty: row.Specialty || "Nha khoa",
-                    exp: row.ExperienceYears || 0,
-                    active: row.IsActive,
-                    bio: row.Bio || "Đang cập nhật thông tin bác sĩ.",
-                    avt: row.AvatarURL || "https://via.placeholder.com/360x340?text=Doctor",
-                    desc: row.Description || row.Bio || "Đang cập nhật thông tin bác sĩ.",
+                    phone : row.Phone,
+                    email: row.Email,
+                    address: row.Address,
+                    avt: row.AvatarURL,
+                    active: row.IsActive
                 };
 
                 setDoctor(d);
@@ -77,12 +76,13 @@ export default function DoctorDetail() {
                 }
                 <div className="row g-4">
                     <div className="col-md-5">
+                        {console.log(doctor)}
                         <div
                             className="card border d-flex align-items-center justify-content-center"
                             style={{ height: 340, borderRadius: 16, borderColor: "#eee", background: "#f0f2f5" }}
                         >
                             <img
-                                src={doctor.AvatarURL || "https://via.placeholder.com/360x340?text=Doctor"}
+                                src={doctor.avt || "https://via.placeholder.com/360x340?text=Doctor"}
                                 alt={doctor.FullName || "Doctor"}
                                 style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }}
                             />
@@ -129,9 +129,9 @@ export default function DoctorDetail() {
 
                 <div className="row g-4 mt-1">
                     {[
-                        { title: "Giới thiệu", content: doctor.desc || "Đang cập nhập" },
-                        { title: "Kinh nghiệm", content: `${doctor.exp} năm`|| "Đang cập nhập" },
-                        { title: "Dịch Vụ CHuyên Môn", content: doctor.specialty|| "Đang cập nhập" },
+                        { title: "Email", content: doctor.email || "Đang cập nhập" },
+                        { title: "Số Điện Thoại", content: doctor.phone || "Đang cập nhập" },
+                        { title: "Địa Chỉ", content: doctor.address || "Đang cập nhập" },
                         { title: "Trạng thái", content: doctor.active ? " 🟢 Đang hoạt động" : " 🔴 Không hoạt động" || "Đang cập nhập" },
                     ].map((section, i) => (
                         <div key={i} className="col-md-6">

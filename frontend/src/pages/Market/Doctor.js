@@ -102,10 +102,12 @@ export default function Doctor() {
                 const rows = await fetchDoctors();
 
                 const mapped = rows.map((d) => ({
-                    id: d.DoctorID,
+                    id: d.UserID,
                     name: d.FullName,
-                    specialty: d.Specialty || "Nha khoa",
-                    desc: d.Description || d.Bio || "Đang cập nhật thông tin bác sĩ.",
+                    phone : d.Phone,
+                    email: d.Email,
+                    avt: d.AvatarURL,
+                    isActive: d.IsActive
                 }));
 
                 setDoctors(mapped);
@@ -183,12 +185,15 @@ export default function Doctor() {
                                     <Stethoscope size={58} color="#9ca3af" />
                                 </div>
                                 <div style={styles.cardBody}>
-                                    <div style={styles.specialty}>{doctor.specialty}</div>
+                                    
                                     <div style={styles.doctorName}>
                                         <Link to={`/doctor-detail/${doctor.id}`} style={{ textDecoration: "none", color: "#111" }}>
                                             {doctor.name}
                                         </Link>
                                     </div>
+                                    <div style={styles.specialty}> SĐT: {doctor.phone}</div>
+                                    <div style={styles.specialty}> Email: {doctor.email}</div>
+                                    {console.log(doctor)}
                                     <div style={styles.doctorDesc}>{doctor.desc}</div>
                                 </div>
                                 <div style={styles.cardActions}>
@@ -216,8 +221,7 @@ export default function Doctor() {
                                     <div style={styles.serviceDesc}>{service.desc}</div>
                                 </div>
                                 <div style={styles.cardActions}>
-                                    {console.log(service)
-                                    }
+
                                     <button style={styles.btnDetail}>
                                         {formatPrice(service.price)}
                                     </button>
