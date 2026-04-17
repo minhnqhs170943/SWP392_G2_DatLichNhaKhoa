@@ -3,10 +3,11 @@ import { fetchCart, updateCartItem, removeCartItem, clearCartItems } from "../..
 import { Trash2, ShieldCheck, RotateCcw, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+ 
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
-function formatPrice(n) {
+function formatPrice(n) { 
     const value = Number(n) || 0;
     return value.toLocaleString("vi-VN") + " ₫";
 }
