@@ -107,16 +107,16 @@ const Navbar = () => {
                         <div className="brand-logo">
                             <span>🦷</span>
                         </div>
-                        <Link to="/home" className="brand-name">
+                        <span className="brand-name">
                             SMILE SYNC
-                        </Link>
+                        </span>
                     </Link>
 
                     <div className="d-none d-lg-flex align-items-center gap-4">
                         <Link to="/home" className="custom-nav-link">
                             Trang chủ
                         </Link>
-                        <Link to="/phong-kham" className="custom-nav-link">
+                        <Link to="/booking" className="custom-nav-link">
                             Đặt Lịch
                         </Link>
                         <Link to="/product" className="custom-nav-link">
@@ -124,9 +124,6 @@ const Navbar = () => {
                         </Link>
                         <Link to="/doctor" className="custom-nav-link">
                             Giới thiệu
-                        </Link>
-                        <Link to="/lien-he" className="custom-nav-link">
-                            Liên hệ
                         </Link>
                     </div>
 
@@ -348,6 +345,23 @@ const Navbar = () => {
                                             📦 Đơn hàng của tôi
                                         </Link>
                                         <Link
+                                            to="/my-appointments"
+                                            onClick={() => setShowDropdown(false)}
+                                            style={{
+                                                display: 'block',
+                                                padding: '12px 16px',
+                                                color: '#374151',
+                                                textDecoration: 'none',
+                                                fontSize: '14px',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                        >
+                                            🗓️ Lịch hẹn của tôi
+                                        </Link>
+                                        <Link
                                             to="/profile"
                                             onClick={() => setShowDropdown(false)}
                                             style={{
@@ -364,9 +378,47 @@ const Navbar = () => {
                                         >
                                             👤 Thông tin cá nhân
                                         </Link>
+                                        {(user.RoleID === 1 || user.RoleID === 2) && (
+                                            <Link
+                                                to="/staff/dashboard"
+                                                onClick={() => setShowDropdown(false)}
+                                                style={{
+                                                    display: 'block',
+                                                    padding: '12px 16px',
+                                                    color: '#374151',
+                                                    textDecoration: 'none',
+                                                    fontSize: '14px',
+                                                    borderBottom: '1px solid #f3f4f6',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                                onMouseLeave={(e) => e.target.style.background = 'white'}
+                                            >
+                                                📊 Dashboard
+                                            </Link>
+                                        )}
+                                        {(user.RoleID === 1 || user.RoleID === 2) && (
+                                            <Link
+                                                to="/staff/appointments"
+                                                onClick={() => setShowDropdown(false)}
+                                                style={{
+                                                    display: 'block',
+                                                    padding: '12px 16px',
+                                                    color: '#374151',
+                                                    textDecoration: 'none',
+                                                    fontSize: '14px',
+                                                    borderBottom: '1px solid #f3f4f6',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                                onMouseLeave={(e) => e.target.style.background = 'white'}
+                                            >
+                                                📋 Quản lý lịch hẹn
+                                            </Link>
+                                        )}
                                         {user.RoleID === 1 && (
                                             <Link
-                                                to="/admin"
+                                                to="/admin/products"
                                                 onClick={() => setShowDropdown(false)}
                                                 style={{
                                                     display: 'block',

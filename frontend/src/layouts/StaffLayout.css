@@ -1,0 +1,17 @@
+.staff-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f8fafc;
+}
+
+.staff-content {
+    flex: 1;
+    margin-left: 260px; /* Same width as sidebar */
+    min-width: 0;
+    transition: all 0.3s ease;
+}
+
+/* Base adjustment for staff dashboard header to match layout padding if needed. Let's add some core padding */
+.staff-content-inner {
+    padding: 24px;
+}
