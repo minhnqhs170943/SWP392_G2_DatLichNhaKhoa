@@ -3,6 +3,7 @@ const Order = require('../models/order.model');
 const Payment = require('../models/payment.model');
 const Invoice = require('../models/invoice.model');
 const OrderDetail = require('../models/orderDetail.model');
+const Notification = require('../models/notification.model');
 
 class PaymentController {
     // Tạo link thanh toán PayOS
@@ -64,6 +65,14 @@ class PaymentController {
                 // Cập nhật order status
                 await Order.updateStatus(order.OrderID, 'SUCCESS');
 
+                // Tạo thông báo cho user
+                await Notification.createNotification({
+                    userId,
+                    type: 'ORDER',
+                    title: `Đơn hàng #${order.OrderID} đã được đặt thành công`,
+                    message: `Đơn hàng của bạn đã được xác nhận. Vui lòng chuẩn bị ${totalAmount.toLocaleString('vi-VN')}đ để thanh toán khi nhận hàng.`
+                });
+
                 return res.status(200).json({
                     success: true,
                     message: 'Tạo đơn hàng COD thành công',
@@ -109,6 +118,14 @@ class PaymentController {
 
             // Cập nhật order status
             await Order.updateStatus(order.OrderID, 'SUCCESS');
+
+            // Tạo thông báo cho user
+            await Notification.createNotification({
+                userId,
+                type: 'PAYMENT',
+                title: `Thanh toán thành công đơn hàng #${order.OrderID}`,
+                message: `Bạn đã thanh toán thành công ${totalAmount.toLocaleString('vi-VN')}đ. Đơn hàng đang được xử lý và sẽ sớm được giao đến bạn.`
+            });
 
             res.status(200).json({
                 success: true,

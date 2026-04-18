@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { fetchCart } from '../services/cartApi';
+import { getUserNotifications, getUnreadCount, markAsRead as markNotificationAsRead } from '../services/notificationApi';
 import './../styles/Navbar.css';
 
 const Navbar = () => {
@@ -10,42 +11,51 @@ const Navbar = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [cartCount, setCartCount] = useState(0);
     const [cartGlow, setCartGlow] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
     const notifRef = useRef(null);
 
-    // Mock notifications - sẽ thay bằng API sau
-    const [notifications, setNotifications] = useState([
-        {
-            id: 1,
-            title: 'Đơn hàng #123 đã được xác nhận',
-            message: 'Đơn hàng đang được chuẩn bị',
-            time: '2 giờ trước',
-            isRead: false
-        },
-        {
-            id: 2,
-            title: 'Thanh toán thành công',
-            message: 'Đơn hàng #122 - 150.000đ',
-            time: '5 giờ trước',
-            isRead: false
-        },
-        {
-            id: 3,
-            title: 'Khuyến mãi đặc biệt',
-            message: 'Giảm giá 20% tất cả sản phẩm',
-            time: '1 ngày trước',
-            isRead: true
+    const markAsRead = async (id) => {
+        try {
+            await markNotificationAsRead(id);
+            setNotifications(prev =>
+                prev.map(notif =>
+                    notif.NotificationID === id ? { ...notif, IsRead: true } : notif
+                )
+            );
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
         }
-    ]);
+    };
 
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const loadNotifications = async () => {
+        if (!user) return;
+        try {
+            const [notifData, count] = await Promise.all([
+                getUserNotifications(),
+                getUnreadCount()
+            ]);
+            setNotifications(notifData || []);
+            setUnreadCount(count || 0);
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+        }
+    };
 
-    const markAsRead = (id) => {
-        setNotifications(prev =>
-            prev.map(notif =>
-                notif.id === id ? { ...notif, isRead: true } : notif
-            )
-        );
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Vừa xong';
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        return `${diffDays} ngày trước`;
     };
 
     useEffect(() => {
@@ -85,11 +95,19 @@ const Navbar = () => {
         };
 
         loadCartCount();
+        loadNotifications();
+        
         window.addEventListener('cart:updated', handleCartUpdated);
+
+        // Poll notifications every 30 seconds
+        const notifInterval = setInterval(() => {
+            if (user) loadNotifications();
+        }, 30000);
 
         return () => {
             mounted = false;
             window.removeEventListener('cart:updated', handleCartUpdated);
+            clearInterval(notifInterval);
         };
     }, [user]);
 
@@ -215,25 +233,25 @@ const Navbar = () => {
 
                                             {notifications.slice(0, 3).map(notif => (
                                                 <div
-                                                    key={notif.id}
-                                                    onClick={() => markAsRead(notif.id)}
+                                                    key={notif.NotificationID}
+                                                    onClick={() => markAsRead(notif.NotificationID)}
                                                     style={{
                                                         padding: '12px 16px',
                                                         borderBottom: '1px solid #f3f4f6',
                                                         cursor: 'pointer',
-                                                        background: notif.isRead ? 'white' : '#eff6ff',
+                                                        background: notif.IsRead ? 'white' : '#eff6ff',
                                                         transition: 'background 0.2s',
                                                         position: 'relative'
                                                     }}
                                                     onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-                                                    onMouseLeave={(e) => e.currentTarget.style.background = notif.isRead ? 'white' : '#eff6ff'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = notif.IsRead ? 'white' : '#eff6ff'}
                                                 >
                                                     <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                                                         {/* Icon chấm tròn */}
                                                         <div style={{
                                                             width: '8px',
                                                             height: '8px',
-                                                            background: notif.isRead ? '#d1d5db' : '#3b82f6',
+                                                            background: notif.IsRead ? '#d1d5db' : '#3b82f6',
                                                             borderRadius: '50%',
                                                             marginTop: '6px',
                                                             flexShrink: 0
@@ -246,20 +264,20 @@ const Navbar = () => {
                                                                 color: '#1f2937',
                                                                 marginBottom: '4px'
                                                             }}>
-                                                                {notif.title}
+                                                                {notif.Title}
                                                             </div>
                                                             <div style={{
                                                                 fontSize: '12px',
                                                                 color: '#6b7280',
                                                                 marginBottom: '4px'
                                                             }}>
-                                                                {notif.message}
+                                                                {notif.Message}
                                                             </div>
                                                             <div style={{
                                                                 fontSize: '11px',
                                                                 color: '#9ca3af'
                                                             }}>
-                                                                {notif.time}
+                                                                {formatTime(notif.CreatedAt)}
                                                             </div>
                                                         </div>
                                                     </div>
