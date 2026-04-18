@@ -140,9 +140,9 @@ const StaffAppointments = () => {
         <div style={{ display: 'flex' }}>
         <Sidebar />
         <div className="staff-appointments" style={{ flex: 1, marginLeft: '260px', width: 'calc(100% - 260px)' }}>
-            <div className="page-header">
-                <h2>Quản Lý Đặt Lịch</h2>
-                <p>Xem, thanh toán và quản lý lịch hẹn — Thanh toán xong tự động xác nhận</p>
+            <div className="page-header" style={{ marginBottom: '24px' }}>
+                <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', color: '#1e293b' }}>Quản Lý Đặt Lịch</h2>
+                <p style={{ margin: 0, color: '#64748b' }}>Xem, thanh toán và quản lý lịch hẹn — Thanh toán xong tự động xác nhận</p>
             </div>
 
             <div className="filters-wrapper">

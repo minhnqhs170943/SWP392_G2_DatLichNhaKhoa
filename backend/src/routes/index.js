@@ -10,6 +10,7 @@ const uploadRoutes = require("./upload.routes");
 const reviewRoutes = require('./review.routes');
 const dashboardRoutes = require('./dashboardRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
+const blogRoutes = require('./blog.routes');
 
 router.use("/upload", uploadRoutes);
 router.use('/auth', authRoutes);
@@ -21,5 +22,6 @@ router.use('/cart', cartRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/appointments', appointmentRoutes);
+router.use('/blogs', blogRoutes);
 
 module.exports = router;

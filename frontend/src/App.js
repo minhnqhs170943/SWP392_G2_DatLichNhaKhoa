@@ -1,5 +1,7 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import RoleRoute from './components/RoleRoute';
+import AdminLayout from './layouts/AdminLayout';
+import AdminBlog from './pages/Admin/AdminBlog';
 import AdminProduct from './pages/Admin/AdminProduct';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
@@ -23,6 +25,9 @@ import OrdersPage from './pages/OrdersPage';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
+import BlogListPage from './pages/BlogListPage';
+import BlogDetailPage from './pages/BlogDetailPage';
+import ContactPage from './pages/ContactPage';
 
 // RoleID từ DB: 1-Admin, 2-Staff, 3-Doctor, 4-Patient
 function App() {
@@ -40,6 +45,9 @@ function App() {
         <Route path="/doctor-detail/:id" element={<DoctorDetail />} />
         <Route path="/product-detail/:id" element={<ProductDetail />} />
         <Route path="/review" element={<Review />} />
+        <Route path="/blogs" element={<BlogListPage />} />
+        <Route path="/blogs/:slug" element={<BlogDetailPage />} />
+        <Route path="/contact" element={<ContactPage />} />
 
         {/* Customer Booking */}
         <Route path="/booking" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><BookingPage /></RoleRoute>} />
@@ -56,8 +64,10 @@ function App() {
         <Route path="/notifications" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><NotificationsPage /></RoleRoute>} />
         
         {/* Admin */}
-        <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminProduct /></RoleRoute>} />
-        <Route path="/admin/users" element={<RoleRoute allowedRoles={[1]}><UserManagement /></RoleRoute>} />
+        <Route path="/admin" element={<Navigate to="/admin/products" />} />
+        <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminProduct /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/blogs" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminBlog /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/users" element={<RoleRoute allowedRoles={[1]}><AdminLayout><UserManagement /></AdminLayout></RoleRoute>} />
 
         {/* Staff Dashboard */}
         <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 2]}><StaffDashboard /></RoleRoute>} />

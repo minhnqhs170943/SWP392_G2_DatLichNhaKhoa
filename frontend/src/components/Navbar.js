@@ -125,6 +125,12 @@ const Navbar = () => {
                         <Link to="/doctor" className="custom-nav-link">
                             Giới thiệu
                         </Link>
+                        <Link to="/blogs" className="custom-nav-link">
+                            Bài viết
+                        </Link>
+                        <Link to="/contact" className="custom-nav-link">
+                            Liên hệ
+                        </Link>
                     </div>
 
                     <div className="d-flex align-items-center gap-3">
@@ -417,23 +423,42 @@ const Navbar = () => {
                                             </Link>
                                         )}
                                         {user.RoleID === 1 && (
-                                            <Link
-                                                to="/admin/products"
-                                                onClick={() => setShowDropdown(false)}
-                                                style={{
-                                                    display: 'block',
-                                                    padding: '12px 16px',
-                                                    color: '#374151',
-                                                    textDecoration: 'none',
-                                                    fontSize: '14px',
-                                                    borderBottom: '1px solid #f3f4f6',
-                                                    transition: 'background 0.2s'
-                                                }}
-                                                onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
-                                                onMouseLeave={(e) => e.target.style.background = 'white'}
-                                            >
-                                                ⚙️ Quản lý
-                                            </Link>
+                                            <>
+                                                <Link
+                                                    to="/admin/products"
+                                                    onClick={() => setShowDropdown(false)}
+                                                    style={{
+                                                        display: 'block',
+                                                        padding: '12px 16px',
+                                                        color: '#374151',
+                                                        textDecoration: 'none',
+                                                        fontSize: '14px',
+                                                        borderBottom: '1px solid #f3f4f6',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                                    onMouseLeave={(e) => e.target.style.background = 'white'}
+                                                >
+                                                    ⚙️ Quản lý sản phẩm
+                                                </Link>
+                                                <Link
+                                                    to="/admin/blogs"
+                                                    onClick={() => setShowDropdown(false)}
+                                                    style={{
+                                                        display: 'block',
+                                                        padding: '12px 16px',
+                                                        color: '#374151',
+                                                        textDecoration: 'none',
+                                                        fontSize: '14px',
+                                                        borderBottom: '1px solid #f3f4f6',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                                    onMouseLeave={(e) => e.target.style.background = 'white'}
+                                                >
+                                                    📝 Quản lý blog
+                                                </Link>
+                                            </>
                                         )}
                                         <button
                                             onClick={() => {
