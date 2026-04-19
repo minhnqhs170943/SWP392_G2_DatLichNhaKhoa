@@ -56,7 +56,6 @@ export default function ProductDetail() {
                     rating: 0,
                     reviews: 0,
                     specialty: "Đang cập nhật",
-                    warning: row.StockQuantity?.toString() || "0",
                 };
 
 

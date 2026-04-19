@@ -1,0 +1,130 @@
+.blog-list-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 120px 20px 40px 20px;
+    min-height: 60vh;
+}
+
+.blog-list-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.blog-list-header h1 {
+    font-size: 2.5rem;
+    color: #1e293b;
+    margin-bottom: 10px;
+}
+
+.blog-list-header p {
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+.blog-loading,
+.blog-empty {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+.blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+}
+
+.blog-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.blog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.blog-card-image {
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+}
+
+.blog-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.blog-card:hover .blog-card-image img {
+    transform: scale(1.05);
+}
+
+.blog-card-content {
+    padding: 20px;
+}
+
+.blog-category {
+    display: inline-block;
+    background: #3b82f6;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.blog-card-title {
+    font-size: 1.4rem;
+    color: #1e293b;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.blog-card-summary {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.blog-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.blog-card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.blog-card-meta i {
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .blog-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .blog-list-header h1 {
+        font-size: 2rem;
+    }
+}

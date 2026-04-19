@@ -3,13 +3,29 @@ import { Stethoscope, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { fetchDoctors } from "../../services/doctorApi";
+import { fetchDoctors, fetchAllServices } from "../../services/doctorApi";
+
+
+function formatPrice(value) {
+    const normalized = Number(String(value).replace(/[^\d.-]/g, "")) || 0;
+    return normalized.toLocaleString("vi-VN") + " ₫";
+}
+
+ 
 
 const styles = {
     page: { padding: "88px 56px 36px", background: "#f5f6fa", minHeight: "100vh" },
     container: { maxWidth: 1360, margin: "0 auto" },
     title: { fontSize: "clamp(28px, 2.6vw, 40px)", fontWeight: 750, color: "#0f172a", marginBottom: 6, letterSpacing: "-0.2px" },
     subtitle: { fontSize: 15, color: "#334155", marginBottom: 18 },
+    sectionTitle: {
+        marginTop: 28,
+        marginBottom: 14,
+        fontSize: 24,
+        fontWeight: 750,
+        color: "#0f172a",
+        letterSpacing: "-0.2px",
+    },
     searchInput: {
         width: "100%",
         maxWidth: 620,
@@ -48,6 +64,8 @@ const styles = {
     specialty: { fontSize: 13, color: "#3b82f6", fontWeight: 500 },
     doctorName: { fontSize: 16, fontWeight: 800, color: "#0f172a", lineHeight: 1.35, minHeight: 64 },
     doctorDesc: { fontSize: 13, color: "#334155", lineHeight: 1.45, flex: 1 },
+    serviceName: { fontSize: 16, fontWeight: 800, color: "#0f172a", lineHeight: 1.35, minHeight: 44 },
+    serviceDesc: { fontSize: 13, color: "#334155", lineHeight: 1.45, flex: 1 },
     cardActions: { display: "flex", gap: 10, padding: "0 18px 18px" },
     btnIcon: {
         width: 72, height: 42, border: "2px solid #3b82f6",
@@ -60,6 +78,11 @@ const styles = {
         fontSize: 15, fontWeight: 700, display: "flex",
         alignItems: "center", justifyContent: "center", textDecoration: "none",
     },
+    stateText: {
+        marginBottom: 16,
+        fontSize: 14,
+        fontWeight: 600,
+    },
 };
 
 
@@ -69,6 +92,7 @@ export default function Doctor() {
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
     const [doctors, setDoctors] = useState([]);
+    const [services, setService] = useState([]);
 
 
     useEffect(() => {
@@ -78,10 +102,12 @@ export default function Doctor() {
                 const rows = await fetchDoctors();
 
                 const mapped = rows.map((d) => ({
-                    id: d.DoctorID,
+                    id: d.UserID,
                     name: d.FullName,
-                    specialty: d.Specialty || "Nha khoa",
-                    desc: d.Description || d.Bio || "Đang cập nhật thông tin bác sĩ.",
+                    phone : d.Phone,
+                    email: d.Email,
+                    avt: d.AvatarURL,
+                    isActive: d.IsActive
                 }));
 
                 setDoctors(mapped);
@@ -96,10 +122,39 @@ export default function Doctor() {
         loadDoctors();
     }, []);
 
+        useEffect(() => {
+        const loadServices = async () => {
+            try {
+                setLoading(true);
+                const rows = await fetchAllServices();
+
+                const mapped = rows.map((d) => ({
+                    name: d.ServiceName,
+                    price: d.Price || "Đang cập nhật giá",
+                    desc: d.Description || "Đang cập nhật thông tin.",
+                }));
+
+                setService(mapped);
+                setError("");
+            } catch (e) {
+                setError(e.message || "Không tải được danh sách bác sĩ");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadServices();
+    }, []);
+
     const filtered = doctors.filter(
         (d) =>
             d.name.toLowerCase().includes(search.toLowerCase()) ||
             d.specialty.toLowerCase().includes(search.toLowerCase())
+    );
+    const filteredServices = services.filter(
+        (s) =>
+            s.name.toLowerCase().includes(search.toLowerCase()) ||
+            s.specialty.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -108,14 +163,20 @@ export default function Doctor() {
             <div style={styles.page}>
                 <div style={styles.container}>
                     <h1 style={styles.title}>Bác Sĩ Nha Khoa</h1>
-                    <p style={styles.subtitle}>Danh sach bac si va chuyen khoa tai phong kham</p>
+                    <p style={styles.subtitle}>Danh sách bác sĩ và dịch vụ tại phòng khám</p>
                     <input
                         style={styles.searchInput}
                         type="text"
-                        placeholder="Tim kiem bac si hoac chuyen khoa..."
+                        placeholder="Tìm kiếm bác sĩ, dịch vụ hoặc chuyên khoa..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
+                    {loading && (
+                        <div style={{ ...styles.stateText, color: "#475569" }}>Đang tải danh sách bác sĩ...</div>
+                    )}
+                    {!!error && (
+                        <div style={{ ...styles.stateText, color: "#dc2626" }}>{error}</div>
+                    )}
 
                     <div style={styles.grid}>
                         {filtered.map((doctor) => (
@@ -124,21 +185,46 @@ export default function Doctor() {
                                     <Stethoscope size={58} color="#9ca3af" />
                                 </div>
                                 <div style={styles.cardBody}>
-                                    <div style={styles.specialty}>{doctor.specialty}</div>
+                                    
                                     <div style={styles.doctorName}>
                                         <Link to={`/doctor-detail/${doctor.id}`} style={{ textDecoration: "none", color: "#111" }}>
                                             {doctor.name}
                                         </Link>
                                     </div>
+                                    <div style={styles.specialty}> SĐT: {doctor.phone}</div>
+                                    <div style={styles.specialty}> Email: {doctor.email}</div>
+                                    {console.log(doctor)}
                                     <div style={styles.doctorDesc}>{doctor.desc}</div>
                                 </div>
                                 <div style={styles.cardActions}>
-                                    <button style={styles.btnIcon}>
-                                        <UserRound size={20} />
-                                    </button>
                                     <Link to={`/doctor-detail/${doctor.id}`} style={styles.btnDetail}>
                                         Chi tiết
                                     </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <h2 style={styles.sectionTitle}>Danh sách dịch vụ</h2>
+                    <div style={styles.grid}>
+                         {console.log(doctors)
+                                }
+                        {filteredServices.map((service) => (
+                            <div key={service.id} style={styles.card}>
+                               
+                                <div style={styles.cardImg}>
+                                    <Stethoscope size={58} color="#9ca3af" />
+                                </div>
+                                <div style={styles.cardBody}>
+                                    <div style={styles.specialty}>{service.specialty}</div>
+                                    <div style={styles.serviceName}>{service.name}</div>
+                                    <div style={styles.serviceDesc}>{service.desc}</div>
+                                </div>
+                                <div style={styles.cardActions}>
+
+                                    <button style={styles.btnDetail}>
+                                        {formatPrice(service.price)}
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -150,4 +236,3 @@ export default function Doctor() {
 
     );
 }
-

@@ -33,4 +33,18 @@ const getDoctorById = async (req, res) => {
     }
 };
 
-module.exports = { getDoctors, getDoctorById };
+const getServices = async (req, res) => {
+    try {
+        const services = await doctorModel.getAllServices();
+        return res.status(200).json({
+            success: true,
+            message: 'Lấy danh sách bác sĩ thành công',
+            data: services
+        });
+    } catch (error) {
+        console.error('Get Doctors Error:', error);
+        return res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
+    }
+};
+
+module.exports = { getDoctors, getDoctorById, getServices };

@@ -26,8 +26,8 @@ const createUser = async (userData) => {
     request.input('address', sql.NVarChar, address);
 
     await request.query(`
-        INSERT INTO Users (RoleID, Password, FullName, Email, Phone, Address)
-        VALUES (@roleId, @password, @fullName, @email, @phone, @address)
+        INSERT INTO Users (RoleID, Password, FullName, Email, Phone, Address, IsActive, CreatedAt)
+        VALUES (@roleId, @password, @fullName, @email, @phone, @address, 1, GETDATE())
     `);
 };
 
@@ -48,7 +48,7 @@ const updateUserProfile = async (userId, data) => {
     await request.query(`
         UPDATE Users
         SET FullName = @fullName, Phone = @phone, Address = @address
-        WHERE UserId = @userId
+        WHERE UserID = @userId
     `);
 };
 
@@ -60,7 +60,7 @@ const changePassword = async (userId, newPassword) => {
     await request.query(`
         UPDATE Users
         SET Password = @newPassword
-        WHERE UserId = @userId
+        WHERE UserID = @userId
     `);
 };
 

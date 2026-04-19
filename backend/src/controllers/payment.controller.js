@@ -1,7 +1,9 @@
 const payos = require('../config/payos');
 const Order = require('../models/order.model');
 const Payment = require('../models/payment.model');
+const Invoice = require('../models/invoice.model');
 const OrderDetail = require('../models/orderDetail.model');
+const Notification = require('../models/notification.model');
 
 class PaymentController {
     // Tạo link thanh toán PayOS
@@ -29,9 +31,8 @@ class PaymentController {
             const order = await Order.create({
                 userId,
                 totalAmount,
-                paymentMethod: finalPaymentMethod,
-                paymentStatus: finalPaymentMethod === 'COD' ? 'SUCCESS' : 'PENDING',
-                shippingAddress
+                shippingAddress,
+                status: 'Pending'
             });
 
             // Tạo order details
@@ -45,17 +46,32 @@ class PaymentController {
 
             // Nếu là COD, không cần tạo payment link
             if (finalPaymentMethod === 'COD') {
-                // Lưu thông tin payment với status SUCCESS
-                await Payment.create({
+                // Tạo invoice
+                const invoice = await Invoice.create({
                     orderId: order.OrderID,
+                    totalAmount,
+                    status: 'SUCCESS'
+                });
+
+                // Tạo payment
+                await Payment.create({
+                    invoiceId: invoice.InvoiceID,
                     transactionId: `COD-${order.OrderID}`,
                     amount: totalAmount,
                     paymentMethod: 'COD',
                     status: 'SUCCESS'
                 });
 
-                // Cập nhật order status thành SUCCESS
-                await Order.updatePaymentStatus(order.OrderID, 'SUCCESS');
+                // Cập nhật order status
+                await Order.updateStatus(order.OrderID, 'SUCCESS');
+
+                // Tạo thông báo cho user
+                await Notification.createNotification({
+                    userId,
+                    type: 'ORDER',
+                    title: `Đơn hàng #${order.OrderID} đã được đặt thành công`,
+                    message: `Đơn hàng của bạn đã được xác nhận. Vui lòng chuẩn bị ${totalAmount.toLocaleString('vi-VN')}đ để thanh toán khi nhận hàng.`
+                });
 
                 return res.status(200).json({
                     success: true,
@@ -65,7 +81,8 @@ class PaymentController {
                     }
                 });
             }
-            
+
+            // Tạo payment link với PayOS
             const orderCode = Math.floor(100000 + Math.random() * 900000);
             const paymentData = {
                 orderCode: orderCode,
@@ -82,17 +99,33 @@ class PaymentController {
 
             const paymentLinkResponse = await payos.paymentRequests.create(paymentData);
 
-            // Lưu thông tin payment với status SUCCESS luôn (vì không có webhook)
-            await Payment.create({
+            // Tạo invoice
+            const invoice = await Invoice.create({
                 orderId: order.OrderID,
+                totalAmount,
+                paymentLinkId: orderCode.toString(),
+                status: 'SUCCESS' // Giả lập đã thanh toán (vì không có webhook)
+            });
+
+            // Tạo payment
+            await Payment.create({
+                invoiceId: invoice.InvoiceID,
                 transactionId: orderCode.toString(),
                 amount: totalAmount,
                 paymentMethod: 'PAYOS',
-                status: 'SUCCESS'
+                status: 'SUCCESS' // Giả lập đã thanh toán
             });
 
-            // Cập nhật order status thành SUCCESS luôn
-            await Order.updatePaymentStatus(order.OrderID, 'SUCCESS');
+            // Cập nhật order status
+            await Order.updateStatus(order.OrderID, 'SUCCESS');
+
+            // Tạo thông báo cho user
+            await Notification.createNotification({
+                userId,
+                type: 'PAYMENT',
+                title: `Thanh toán thành công đơn hàng #${order.OrderID}`,
+                message: `Bạn đã thanh toán thành công ${totalAmount.toLocaleString('vi-VN')}đ. Đơn hàng đang được xử lý và sẽ sớm được giao đến bạn.`
+            });
 
             res.status(200).json({
                 success: true,
@@ -172,13 +205,14 @@ class PaymentController {
                 });
             }
 
-            const payment = await Payment.findByOrderId(orderId);
+            const invoice = await Invoice.findByOrderId(orderId);
+            const payment = invoice ? await Payment.findByInvoiceId(invoice.InvoiceID) : null;
 
             res.status(200).json({
                 success: true,
                 data: {
                     orderId: order.OrderID,
-                    paymentStatus: order.PaymentStatus,
+                    paymentStatus: invoice ? invoice.Status : 'Unpaid',
                     totalAmount: order.TotalAmount,
                     payment: payment
                 }
@@ -208,15 +242,18 @@ class PaymentController {
                 });
             }
 
-            const payment = await Payment.findByOrderId(orderId);
+            const invoice = await Invoice.findByOrderId(orderId);
             
-            if (payment) {
-                // Cập nhật trạng thái payment
-                await Payment.updateStatus(payment.PaymentID, 'CANCELLED');
+            if (invoice) {
+                await Invoice.updateStatus(invoice.InvoiceID, 'CANCELLED');
+                
+                const payment = await Payment.findByInvoiceId(invoice.InvoiceID);
+                if (payment) {
+                    await Payment.updateStatus(payment.PaymentID, 'CANCELLED');
+                }
             }
             
-            // Cập nhật trạng thái order
-            await Order.updatePaymentStatus(orderId, 'CANCELLED');
+            await Order.updateStatus(orderId, 'CANCELLED');
 
             res.status(200).json({
                 success: true,
@@ -270,13 +307,15 @@ class PaymentController {
             }
 
             const orderDetails = await OrderDetail.getByOrderId(orderId);
-            const payment = await Payment.findByOrderId(orderId);
+            const invoice = await Invoice.findByOrderId(orderId);
+            const payment = invoice ? await Payment.findByInvoiceId(invoice.InvoiceID) : null;
 
             res.status(200).json({
                 success: true,
                 data: {
                     order,
                     items: orderDetails,
+                    invoice,
                     payment
                 }
             });

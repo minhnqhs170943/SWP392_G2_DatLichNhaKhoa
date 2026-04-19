@@ -128,10 +128,11 @@ export default function AdminProduct() {
   };
 
   return (
-    <div style={{ padding: "24px", background: "#f8fafc", minHeight: "100vh" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <h2 style={{ marginBottom: 12 }}>Quản lý sản phẩm</h2>
-        <p style={{ marginTop: 0, color: "#475569" }}>Trang admin CRUD sản phẩm.</p>
+    <div style={{ background: "#fff", borderRadius: "12px", padding: "24px" }}>
+      <div style={{ marginBottom: "24px" }}>
+        <h2 style={{ margin: "0 0 8px 0", fontSize: "24px", color: "#1e293b" }}>Quản lý sản phẩm</h2>
+        <p style={{ margin: 0, color: "#64748b" }}>Thêm, sửa, xóa sản phẩm trong hệ thống</p>
+      </div>
 
         <form
           onSubmit={onSubmit}
@@ -251,6 +252,5 @@ export default function AdminProduct() {
           </table>
         </div>
       </div>
-    </div>
   );
 }

@@ -1,81 +1,66 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { getUserNotifications, markAsRead as markNotificationAsRead, markAllAsRead as markAllNotificationsAsRead } from '../services/notificationApi';
 
 const NotificationsPage = () => {
     const navigate = useNavigate();
     const [filter, setFilter] = useState('ALL'); // ALL, UNREAD, READ
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data - sẽ thay bằng API sau
-    const [notifications, setNotifications] = useState([
-        {
-            id: 1,
-            type: 'ORDER',
-            title: 'Đơn hàng #123 đã được xác nhận',
-            message: 'Đơn hàng của bạn đang được chuẩn bị và sẽ sớm được giao',
-            time: '2 giờ trước',
-            isRead: false
-        },
-        {
-            id: 2,
-            type: 'PAYMENT',
-            title: 'Thanh toán thành công',
-            message: 'Bạn đã thanh toán thành công đơn hàng #122 với số tiền 150.000đ',
-            time: '5 giờ trước',
-            isRead: false
-        },
-        {
-            id: 3,
-            type: 'PROMOTION',
-            title: 'Khuyến mãi đặc biệt',
-            message: 'Giảm giá 20% cho tất cả sản phẩm chăm sóc răng miệng',
-            time: '1 ngày trước',
-            isRead: true
-        },
-        {
-            id: 4,
-            type: 'ORDER',
-            title: 'Đơn hàng #121 đã giao thành công',
-            message: 'Cảm ơn bạn đã mua hàng. Đánh giá sản phẩm để nhận ưu đãi',
-            time: '2 ngày trước',
-            isRead: true
-        },
-        {
-            id: 5,
-            type: 'SYSTEM',
-            title: 'Cập nhật hệ thống',
-            message: 'Hệ thống đã được cập nhật với nhiều tính năng mới',
-            time: '3 ngày trước',
-            isRead: true
+    useEffect(() => {
+        loadNotifications();
+    }, []);
+
+    const loadNotifications = async () => {
+        try {
+            setLoading(true);
+            const data = await getUserNotifications();
+            setNotifications(data || []);
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+        } finally {
+            setLoading(false);
         }
-    ]);
-
-    const markAsRead = (id) => {
-        setNotifications(prev =>
-            prev.map(notif =>
-                notif.id === id ? { ...notif, isRead: true } : notif
-            )
-        );
     };
 
-    const markAllAsRead = () => {
-        setNotifications(prev =>
-            prev.map(notif => ({ ...notif, isRead: true }))
-        );
+    const markAsRead = async (id) => {
+        try {
+            await markNotificationAsRead(id);
+            setNotifications(prev =>
+                prev.map(notif =>
+                    notif.NotificationID === id ? { ...notif, IsRead: true } : notif
+                )
+            );
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await markAllNotificationsAsRead();
+            setNotifications(prev =>
+                prev.map(notif => ({ ...notif, IsRead: true }))
+            );
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
     };
 
     const filteredNotifications = notifications.filter(notif => {
         if (filter === 'ALL') return true;
-        if (filter === 'UNREAD') return !notif.isRead;
-        if (filter === 'READ') return notif.isRead;
+        if (filter === 'UNREAD') return !notif.IsRead;
+        if (filter === 'READ') return notif.IsRead;
         return true;
     });
 
     const getFilterCount = (filterType) => {
         if (filterType === 'ALL') return notifications.length;
-        if (filterType === 'UNREAD') return notifications.filter(n => !n.isRead).length;
-        if (filterType === 'READ') return notifications.filter(n => n.isRead).length;
+        if (filterType === 'UNREAD') return notifications.filter(n => !n.IsRead).length;
+        if (filterType === 'READ') return notifications.filter(n => n.IsRead).length;
         return 0;
     };
 
@@ -87,6 +72,20 @@ const NotificationsPage = () => {
             case 'SYSTEM': return '#6b7280';
             default: return '#6b7280';
         }
+    };
+
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Vừa xong';
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        return `${diffDays} ngày trước`;
     };
 
     return (
@@ -200,7 +199,17 @@ const NotificationsPage = () => {
                     </div>
 
                     {/* Notifications List */}
-                    {filteredNotifications.length === 0 ? (
+                    {loading ? (
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '6px',
+                            padding: '50px 20px',
+                            textAlign: 'center',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.08)'
+                        }}>
+                            <p style={{ color: '#6b7280', fontSize: '13px' }}>Đang tải...</p>
+                        </div>
+                    ) : filteredNotifications.length === 0 ? (
                         <div style={{
                             background: 'white',
                             borderRadius: '6px',
@@ -219,15 +228,15 @@ const NotificationsPage = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {filteredNotifications.map(notif => (
                                 <div
-                                    key={notif.id}
-                                    onClick={() => markAsRead(notif.id)}
+                                    key={notif.NotificationID}
+                                    onClick={() => markAsRead(notif.NotificationID)}
                                     style={{
                                         background: 'white',
                                         borderRadius: '6px',
                                         padding: '16px',
                                         boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-                                        border: `1px solid ${notif.isRead ? '#e5e7eb' : '#3b82f6'}`,
-                                        borderLeft: `4px solid ${getTypeColor(notif.type)}`,
+                                        border: `1px solid ${notif.IsRead ? '#e5e7eb' : '#3b82f6'}`,
+                                        borderLeft: `4px solid ${getTypeColor(notif.Type)}`,
                                         cursor: 'pointer',
                                         transition: 'all 0.2s',
                                         position: 'relative'
@@ -235,7 +244,7 @@ const NotificationsPage = () => {
                                     onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.12)'}
                                     onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.08)'}
                                 >
-                                    {!notif.isRead && (
+                                    {!notif.IsRead && (
                                         <div style={{
                                             position: 'absolute',
                                             top: '16px',
@@ -254,7 +263,7 @@ const NotificationsPage = () => {
                                             color: '#1f2937',
                                             marginBottom: '6px'
                                         }}>
-                                            {notif.title}
+                                            {notif.Title}
                                         </h3>
                                         <p style={{
                                             fontSize: '13px',
@@ -262,13 +271,13 @@ const NotificationsPage = () => {
                                             marginBottom: '8px',
                                             lineHeight: '1.5'
                                         }}>
-                                            {notif.message}
+                                            {notif.Message}
                                         </p>
                                         <span style={{
                                             fontSize: '12px',
                                             color: '#9ca3af'
                                         }}>
-                                            {notif.time}
+                                            {formatTime(notif.CreatedAt)}
                                         </span>
                                     </div>
                                 </div>

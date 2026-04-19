@@ -7,7 +7,11 @@ const productRoutes = require('./product.routes');
 const serviceRoutes = require('./service.routes');
 const cartRoutes = require('./cart.routes');
 const uploadRoutes = require("./upload.routes");
-
+const reviewRoutes = require('./review.routes');
+const dashboardRoutes = require('./dashboardRoutes');
+const appointmentRoutes = require('./appointmentRoutes');
+const blogRoutes = require('./blog.routes');
+const notificationRoutes = require('./notification.routes');
 
 router.use("/upload", uploadRoutes);
 router.use('/auth', authRoutes);
@@ -16,5 +20,10 @@ router.use('/doctors', doctorRoutes);
 router.use('/products', productRoutes);
 router.use('/services', serviceRoutes);
 router.use('/cart', cartRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/appointments', appointmentRoutes);
+router.use('/blogs', blogRoutes);
+router.use('/notifications', notificationRoutes);
 
 module.exports = router;
