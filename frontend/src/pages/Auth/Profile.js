@@ -2,18 +2,23 @@ import { useEffect, useState } from 'react';
 import Footer from '../../components/Footer';
 import Navbar from '../../components/Navbar';
 import { changePasswordApi, getProfileApi, updateProfileApi } from '../../services/authService';
+import '../../styles/Profile.css';
 
 const Profile = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [isEditing, setIsEditing] = useState(false);
 
-    const [profile, setProfile] = useState({
-        username: '',
-        fullName: '',
-        email: '',
-        phone: '',
-        address: ''
-    });
+    const [profile, setProfile] = useState({ username: '', fullName: '', email: '', phone: '', address: '' });
+    
+    const [savedProfile, setSavedProfile] = useState({ username: '', fullName: '', email: '', phone: '', address: '' });
+
+    const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
+
+    const [profileErrors, setProfileErrors] = useState({});
+    const [profileMsg, setProfileMsg] = useState({ type: '', text: '' }); 
+    const [passErrors, setPassErrors] = useState({});
+    const [passMsg, setPassMsg] = useState({ type: '', text: '' });
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -23,15 +28,15 @@ const Profile = () => {
                 const data = await getProfileApi(storedUser.UserID);
 
                 if (data.success && data.user) {
-                    setProfile({
+                    const fetchedData = {
                         username: data.user.Username || '',
                         fullName: data.user.FullName || '',
                         email: data.user.Email || '',
                         phone: data.user.Phone || '',
                         address: data.user.Address || ''
-                    });
-                } else {
-                    console.error("Lỗi lấy data:", data.message);
+                    };
+                    setProfile(fetchedData);
+                    setSavedProfile(fetchedData); 
                 }
             }
         };
@@ -39,134 +44,148 @@ const Profile = () => {
         fetchUserData();
     }, []);
 
-    const [passwords, setPasswords] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
-
-    const [showPasswords, setShowPasswords] = useState({
-        current: false,
-        new: false,
-        confirm: false
-    });
-
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
-        setProfile(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setProfile(prev => ({ ...prev, [name]: value }));
     };
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
-        setPasswords(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setPasswords(prev => ({ ...prev, [name]: value }));
+    };
+
+    const togglePasswordVisibility = (field) => {
+        setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
+    };
+
+    const validateProfile = () => {
+        let tempErrors = {};
+        let isValid = true;
+        const nameRegex = /^[\p{L}\s]+$/u;
+        const trimmedName = profile.fullName.trim();
+        const trimmedAddress = profile.address.trim();
+
+        if (!trimmedName) {
+            tempErrors.fullName = 'Họ và tên không được để trống';
+            isValid = false;
+        } else if (trimmedName.length > 255) {
+            tempErrors.fullName = 'Họ và tên không vượt quá 255 ký tự';
+            isValid = false;
+        } else if (!nameRegex.test(trimmedName)) {
+            tempErrors.fullName = 'Họ và tên không được chứa số hoặc ký tự đặc biệt';
+            isValid = false;
+        }
+
+        if (!trimmedAddress) {
+            tempErrors.address = 'Địa chỉ không được để trống';
+            isValid = false;
+        } else if (trimmedAddress.length > 255) {
+            tempErrors.address = 'Địa chỉ không vượt quá 255 ký tự';
+            isValid = false;
+        }
+
+        setProfileErrors(tempErrors);
+        return { isValid, trimmedName, trimmedAddress };
     };
 
     const handleSaveProfile = async (e) => {
         e.preventDefault();
+        setProfileErrors({});
+        setProfileMsg({ type: '', text: '' });
 
         const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (!storedUser || !storedUser.UserID) return;
 
-        if (!storedUser || !storedUser.UserID) {
-            alert("Lỗi: Không xác định được danh tính người dùng!");
-            return;
-        }
+        const { isValid, trimmedName, trimmedAddress } = validateProfile();
+        if (!isValid) return;
 
         const payload = {
-            fullName: profile.fullName,
-            phone: profile.phone,
-            address: profile.address
+            fullName: trimmedName,
+            address: trimmedAddress
         };
 
-        const data = await updateProfileApi(storedUser.UserID, payload);
+        try {
+            const data = await updateProfileApi(storedUser.UserID, payload);
 
-        if (data.success) {
-            const updatedUser = {
-                ...storedUser,
-                FullName: profile.fullName,
-                Phone: profile.phone,
-                Address: profile.address
-            };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            if (data.success) {
+                const updatedUser = { ...storedUser, FullName: trimmedName, Address: trimmedAddress };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            setIsEditing(false);
-            alert('Thông tin cá nhân đã được cập nhật thành công!');
-        } else {
-            alert(data.message || 'Cập nhật thất bại!');
+                setProfileMsg({ type: 'success', text: 'Thông tin cá nhân đã được cập nhật thành công!' });
+                setIsEditing(false);
+                setSavedProfile(prev => ({ ...prev, fullName: trimmedName, address: trimmedAddress }));
+            } else {
+                if (data.field) setProfileErrors({ [data.field]: data.message });
+                else setProfileMsg({ type: 'error', text: data.message || 'Cập nhật thất bại!' });
+            }
+        } catch (error) {
+            setProfileMsg({ type: 'error', text: 'Lỗi kết nối máy chủ!' });
         }
+    };
+
+    const validatePassword = () => {
+        let tempErrors = {};
+        let isValid = true;
+        const passRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+        
+        const oldP = passwords.currentPassword.trim();
+        const newP = passwords.newPassword.trim();
+        const confP = passwords.confirmPassword.trim();
+
+        if (!oldP) {
+            tempErrors.currentPassword = "Vui lòng nhập mật khẩu cũ"; isValid = false;
+        } else if (oldP.length < 6 || oldP.length > 36) {
+            tempErrors.currentPassword = "Mật khẩu cũ phải từ 6 đến 36 ký tự"; isValid = false;
+        }
+
+        if (!newP) {
+            tempErrors.newPassword = "Mật khẩu mới không được để trống"; isValid = false;
+        } else if (newP.length < 6 || newP.length > 36) {
+            tempErrors.newPassword = "Mật khẩu phải từ 6 đến 36 ký tự"; isValid = false;
+        } else if (!passRegex.test(newP)) {
+            tempErrors.newPassword = "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số"; isValid = false;
+        } else if (newP === oldP) {
+            tempErrors.newPassword = "Mật khẩu mới không được trùng mật khẩu cũ"; isValid = false;
+        }
+
+        if (!confP) {
+            tempErrors.confirmPassword = "Vui lòng xác nhận mật khẩu"; isValid = false;
+        } else if (newP !== confP) {
+            tempErrors.confirmPassword = "Mật khẩu xác nhận không khớp"; isValid = false;
+        }
+
+        setPassErrors(tempErrors);
+        return { isValid, oldP, newP };
     };
 
     const handleChangePassword = async (e) => {
         e.preventDefault();
-
-        if (passwords.newPassword !== passwords.confirmPassword) {
-            alert('Mật khẩu xác nhận không khớp!');
-            return;
-        }
-        if (passwords.newPassword.length < 6) {
-            alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
-            return;
-        }
+        setPassErrors({});
+        setPassMsg({ type: '', text: '' });
 
         const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (!storedUser || !storedUser.UserID) return;
 
-        if (!storedUser || !storedUser.UserID) {
-            alert("Lỗi: Không xác định được danh tính người dùng!");
-            return;
+        const { isValid, oldP, newP } = validatePassword();
+        if (!isValid) return;
+
+        try {
+            const data = await changePasswordApi(storedUser.UserID, { oldPassword: oldP, newPassword: newP });
+
+            if (data.success) {
+                setPassMsg({ type: 'success', text: 'Đổi mật khẩu thành công!' });
+                setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            } else {
+                if (data.field) {
+                    const errorField = data.field === 'oldPassword' ? 'currentPassword' : data.field;
+                    setPassErrors({ [errorField]: data.message });
+                } else {
+                    setPassMsg({ type: 'error', text: data.message || 'Đổi mật khẩu thất bại!' });
+                }
+            }
+        } catch (error) {
+            setPassMsg({ type: 'error', text: 'Lỗi kết nối máy chủ!' });
         }
-
-        const data = await changePasswordApi(storedUser.UserID, passwords.newPassword);
-
-        if (data.success) {
-            alert('Đổi mật khẩu thành công!');
-            setPasswords({
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            });
-        } else {
-            alert(data.message || 'Đổi mật khẩu thất bại!');
-        }
-    };
-
-    const togglePasswordVisibility = (field) => {
-        setShowPasswords(prev => ({
-            ...prev,
-            [field]: !prev[field]
-        }));
-    };
-
-    const styles = {
-        container: { minHeight: '100vh', backgroundColor: '#f8f9fa', paddingTop: '40px', paddingBottom: '40px' },
-        mainContent: { backgroundColor: '#f8f9fa', flex: 1, padding: '100px 0 100px 0' },
-        card: { backgroundColor: '#ffffff', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)', border: 'none', overflow: 'hidden' },
-        sidebar: { backgroundColor: '#f8f9fa', borderRight: '1px solid #e9ecef', padding: '30px 20px', height: '100%' },
-        avatar: { width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#4285f4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '48px', color: '#ffffff', fontWeight: '600' },
-        userName: { textAlign: 'center', fontSize: '18px', fontWeight: '600', color: '#1a1a2e', marginBottom: '5px' },
-        userEmail: { textAlign: 'center', fontSize: '14px', color: '#6c757d', marginBottom: '30px' },
-        navItem: { display: 'flex', alignItems: 'center', padding: '12px 20px', borderRadius: '10px', marginBottom: '8px', cursor: 'pointer', transition: 'all 0.3s ease', fontSize: '15px', fontWeight: '500' },
-        navItemActive: { backgroundColor: '#4285f4', color: '#ffffff' },
-        navItemInactive: { backgroundColor: 'transparent', color: '#6c757d' },
-        navIcon: { marginRight: '12px', fontSize: '18px' },
-        content: { padding: '40px' },
-        title: { fontSize: '24px', fontWeight: '700', color: '#1a1a2e', marginBottom: '10px' },
-        subtitle: { fontSize: '14px', color: '#6c757d', marginBottom: '30px' },
-        formGroup: { marginBottom: '24px' },
-        label: { fontSize: '14px', fontWeight: '600', color: '#1a1a2e', marginBottom: '8px', display: 'block' },
-        input: { width: '100%', padding: '12px 16px', fontSize: '15px', border: '1px solid #e0e0e0', borderRadius: '10px', transition: 'all 0.3s ease', backgroundColor: '#ffffff' },
-        inputDisabled: { backgroundColor: '#f8f9fa', color: '#6c757d' },
-        inputGroup: { position: 'relative' },
-        eyeButton: { position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6c757d', padding: '5px' },
-        btnPrimary: { backgroundColor: '#4285f4', color: '#ffffff', border: 'none', padding: '12px 30px', borderRadius: '10px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease' },
-        btnOutline: { backgroundColor: 'transparent', color: '#4285f4', border: '2px solid #4285f4', padding: '10px 25px', borderRadius: '10px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease', marginRight: '15px' },
-        row: { display: 'flex', flexWrap: 'wrap', margin: '0 -12px' },
-        col6: { flex: '0 0 50%', maxWidth: '50%', padding: '0 12px' },
-        col12: { flex: '0 0 100%', maxWidth: '100%', padding: '0 12px' }
     };
 
     const EyeIcon = () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>);
@@ -177,102 +196,109 @@ const Profile = () => {
     return (
         <div className="d-flex flex-column min-vh-100">
             <Navbar />
-            <main style={styles.mainContent}>
+            <main className="profile-main">
                 <div className="container">
-                    <div style={styles.card}>
+                    <div className="profile-card">
                         <div className="row g-0">
-                            {/* Sidebar Trái */}
+                            {/* Sidebar */}
                             <div className="col-md-3">
-                                <div style={styles.sidebar}>
-                                    <div style={styles.avatar}>
-                                        {profile.fullName ? profile.fullName.charAt(0).toUpperCase() : 'U'}
+                                <div className="profile-sidebar">
+                                    <div className="profile-avatar">
+                                        {savedProfile.fullName ? savedProfile.fullName.charAt(0).toUpperCase() : 'U'}
                                     </div>
-                                    <div style={styles.userName}>{profile.fullName}</div>
-                                    <div style={styles.userEmail}>{profile.email}</div>
+                                    <div className="profile-user-name">{savedProfile.fullName}</div>
+                                    <div className="profile-user-email">{savedProfile.email}</div>
 
                                     <div
-                                        style={{ ...styles.navItem, ...(activeTab === 'profile' ? styles.navItemActive : styles.navItemInactive) }}
-                                        onClick={() => setActiveTab('profile')}
+                                        className={`profile-nav-item ${activeTab === 'profile' ? 'active' : 'inactive'}`}
+                                        onClick={() => { setActiveTab('profile'); setProfileErrors({}); setProfileMsg({type:'', text:''}); }}
                                     >
-                                        <span style={styles.navIcon}><UserIcon /></span>
+                                        <span className="profile-nav-icon"><UserIcon /></span>
                                         Thông tin cá nhân
                                     </div>
 
                                     <div
-                                        style={{ ...styles.navItem, ...(activeTab === 'password' ? styles.navItemActive : styles.navItemInactive) }}
-                                        onClick={() => setActiveTab('password')}
+                                        className={`profile-nav-item ${activeTab === 'password' ? 'active' : 'inactive'}`}
+                                        onClick={() => { setActiveTab('password'); setPassErrors({}); setPassMsg({type:'', text:''}); }}
                                     >
-                                        <span style={styles.navIcon}><LockIcon /></span>
+                                        <span className="profile-nav-icon"><LockIcon /></span>
                                         Đổi mật khẩu
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Content Phải */}
+                            {/* Content */}
                             <div className="col-md-9">
-                                <div style={styles.content}>
+                                <div className="profile-content">
                                     {activeTab === 'profile' ? (
                                         <>
-                                            <h2 style={styles.title}>Thông tin cá nhân</h2>
-                                            <p style={styles.subtitle}>Quản lý thông tin cá nhân của bạn</p>
+                                            <h2 className="profile-title">Thông tin cá nhân</h2>
+                                            <p className="profile-subtitle">Quản lý thông tin cá nhân của bạn</p>
+
+                                            {profileMsg.text && (
+                                                <div className={`alert py-2 px-3 small mb-4 ${profileMsg.type === 'success' ? 'alert-success' : 'alert-danger'}`}>
+                                                    {profileMsg.text}
+                                                </div>
+                                            )}
 
                                             <form onSubmit={handleSaveProfile}>
-                                                <div style={styles.row}>
-                                                    <div style={styles.col12}>
-                                                        <div style={styles.formGroup}>
-                                                            <label style={styles.label}>Email</label>
+                                                <div className="row">
+                                                    <div className="col-12">
+                                                        <div className="profile-form-group">
+                                                            <label className="profile-label">Email (Không thể thay đổi)</label>
                                                             <input
                                                                 type="email"
                                                                 name="email"
                                                                 value={profile.email}
                                                                 disabled={true}
-                                                                style={{ ...styles.input, ...styles.inputDisabled }}
+                                                                className="profile-input"
                                                             />
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div style={styles.row}>
-                                                    <div style={styles.col6}>
-                                                        <div style={styles.formGroup}>
-                                                            <label style={styles.label}>Họ và tên</label>
+                                                <div className="row">
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label className="profile-label">Họ và tên <span className="text-danger">*</span></label>
                                                             <input
                                                                 type="text"
                                                                 name="fullName"
                                                                 value={profile.fullName}
                                                                 onChange={handleProfileChange}
                                                                 disabled={!isEditing}
-                                                                style={{ ...styles.input, ...(!isEditing ? styles.inputDisabled : {}) }}
+                                                                className={`profile-input ${profileErrors.fullName ? 'error' : ''}`}
                                                             />
+                                                            {profileErrors.fullName && <small className="profile-error-text">{profileErrors.fullName}</small>}
                                                         </div>
                                                     </div>
-                                                    <div style={styles.col6}>
-                                                        <div style={styles.formGroup}>
-                                                            <label style={styles.label}>Số điện thoại</label>
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label className="profile-label">Số điện thoại (Không thể thay đổi)</label>
                                                             <input
                                                                 type="tel"
                                                                 name="phone"
                                                                 value={profile.phone}
-                                                                onChange={handleProfileChange}
-                                                                disabled={!isEditing}
-                                                                style={{ ...styles.input, ...(!isEditing ? styles.inputDisabled : {}) }}
+                                                                disabled={true}
+                                                                className="profile-input"
                                                             />
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div style={styles.row}>
-                                                    <div style={styles.col12}>
-                                                        <div style={styles.formGroup}>
-                                                            <label style={styles.label}>Địa chỉ</label>
+                                                <div className="row">
+                                                    <div className="col-12">
+                                                        <div className="profile-form-group">
+                                                            <label className="profile-label">Địa chỉ <span className="text-danger">*</span></label>
                                                             <input
                                                                 type="text"
                                                                 name="address"
                                                                 value={profile.address}
                                                                 onChange={handleProfileChange}
                                                                 disabled={!isEditing}
-                                                                style={{ ...styles.input, ...(!isEditing ? styles.inputDisabled : {}) }}
+                                                                className={`profile-input ${profileErrors.address ? 'error' : ''}`}
                                                             />
+                                                            {profileErrors.address && <small className="profile-error-text">{profileErrors.address}</small>}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -280,83 +306,95 @@ const Profile = () => {
                                                 <div style={{ marginTop: '20px' }}>
                                                     {isEditing ? (
                                                         <>
-                                                            <button type="button" style={styles.btnOutline} onClick={() => setIsEditing(false)}>Hủy</button>
-                                                            <button type="submit" style={styles.btnPrimary}>Lưu thay đổi</button>
+                                                            <button type="button" className="profile-btn-outline" onClick={() => { 
+                                                                setIsEditing(false); 
+                                                                setProfileErrors({});
+                                                                setProfile(savedProfile);
+                                                            }}>Hủy</button>
+                                                            <button type="submit" className="profile-btn-primary">Lưu thay đổi</button>
                                                         </>
                                                     ) : (
-                                                        <button type="button" style={styles.btnPrimary} onClick={() => setIsEditing(true)}>Chỉnh sửa</button>
+                                                        <button type="button" className="profile-btn-primary" onClick={() => setIsEditing(true)}>Chỉnh sửa thông tin</button>
                                                     )}
                                                 </div>
                                             </form>
                                         </>
                                     ) : (
                                         <>
-                                            <h2 style={styles.title}>Đổi mật khẩu</h2>
-                                            <p style={styles.subtitle}>Cập nhật mật khẩu để bảo mật tài khoản</p>
+                                            <h2 className="profile-title">Đổi mật khẩu</h2>
+                                            <p className="profile-subtitle">Cập nhật mật khẩu để bảo mật tài khoản</p>
+
+                                            {passMsg.text && (
+                                                <div className={`alert py-2 px-3 small mb-4 ${passMsg.type === 'success' ? 'alert-success' : 'alert-danger'}`}>
+                                                    {passMsg.text}
+                                                </div>
+                                            )}
 
                                             <form onSubmit={handleChangePassword}>
-                                                <div style={styles.col12}>
-                                                    <div style={styles.formGroup}>
-                                                        <label style={styles.label}>Mật khẩu hiện tại</label>
-                                                        <div style={styles.inputGroup}>
-                                                            <input
-                                                                type={showPasswords.current ? 'text' : 'password'}
-                                                                name="currentPassword"
-                                                                value={passwords.currentPassword}
-                                                                onChange={handlePasswordChange}
-                                                                placeholder="Nhập mật khẩu hiện tại"
-                                                                style={styles.input}
-                                                                required
-                                                            />
-                                                            <button type="button" style={styles.eyeButton} onClick={() => togglePasswordVisibility('current')}>
-                                                                {showPasswords.current ? <EyeOffIcon /> : <EyeIcon />}
-                                                            </button>
+                                                <div className="row">
+                                                    <div className="col-12">
+                                                        <div className="profile-form-group">
+                                                            <label className="profile-label">Mật khẩu hiện tại <span className="text-danger">*</span></label>
+                                                            <div className="profile-input-group">
+                                                                <input
+                                                                    type={showPasswords.current ? 'text' : 'password'}
+                                                                    name="currentPassword"
+                                                                    value={passwords.currentPassword}
+                                                                    onChange={handlePasswordChange}
+                                                                    placeholder="Nhập mật khẩu hiện tại"
+                                                                    className={`profile-input ${passErrors.currentPassword ? 'error' : ''}`}
+                                                                />
+                                                                <button type="button" className="profile-eye-button" onClick={() => togglePasswordVisibility('current')}>
+                                                                    {showPasswords.current ? <EyeOffIcon /> : <EyeIcon />}
+                                                                </button>
+                                                            </div>
+                                                            {passErrors.currentPassword && <small className="profile-error-text">{passErrors.currentPassword}</small>}
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div style={styles.col12}>
-                                                    <div style={styles.formGroup}>
-                                                        <label style={styles.label}>Mật khẩu mới</label>
-                                                        <div style={styles.inputGroup}>
-                                                            <input
-                                                                type={showPasswords.new ? 'text' : 'password'}
-                                                                name="newPassword"
-                                                                value={passwords.newPassword}
-                                                                onChange={handlePasswordChange}
-                                                                placeholder="Nhập mật khẩu mới"
-                                                                style={styles.input}
-                                                                required
-                                                            />
-                                                            <button type="button" style={styles.eyeButton} onClick={() => togglePasswordVisibility('new')}>
-                                                                {showPasswords.new ? <EyeOffIcon /> : <EyeIcon />}
-                                                            </button>
+                                                    <div className="col-12">
+                                                        <div className="profile-form-group">
+                                                            <label className="profile-label">Mật khẩu mới <span className="text-danger">*</span></label>
+                                                            <div className="profile-input-group">
+                                                                <input
+                                                                    type={showPasswords.new ? 'text' : 'password'}
+                                                                    name="newPassword"
+                                                                    value={passwords.newPassword}
+                                                                    onChange={handlePasswordChange}
+                                                                    placeholder="Nhập mật khẩu mới"
+                                                                    className={`profile-input ${passErrors.newPassword ? 'error' : ''}`}
+                                                                />
+                                                                <button type="button" className="profile-eye-button" onClick={() => togglePasswordVisibility('new')}>
+                                                                    {showPasswords.new ? <EyeOffIcon /> : <EyeIcon />}
+                                                                </button>
+                                                            </div>
+                                                            {passErrors.newPassword && <small className="profile-error-text">{passErrors.newPassword}</small>}
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div style={styles.col12}>
-                                                    <div style={styles.formGroup}>
-                                                        <label style={styles.label}>Xác nhận mật khẩu mới</label>
-                                                        <div style={styles.inputGroup}>
-                                                            <input
-                                                                type={showPasswords.confirm ? 'text' : 'password'}
-                                                                name="confirmPassword"
-                                                                value={passwords.confirmPassword}
-                                                                onChange={handlePasswordChange}
-                                                                placeholder="Nhập lại mật khẩu mới"
-                                                                style={styles.input}
-                                                                required
-                                                            />
-                                                            <button type="button" style={styles.eyeButton} onClick={() => togglePasswordVisibility('confirm')}>
-                                                                {showPasswords.confirm ? <EyeOffIcon /> : <EyeIcon />}
-                                                            </button>
+                                                    <div className="col-12">
+                                                        <div className="profile-form-group">
+                                                            <label className="profile-label">Xác nhận mật khẩu mới <span className="text-danger">*</span></label>
+                                                            <div className="profile-input-group">
+                                                                <input
+                                                                    type={showPasswords.confirm ? 'text' : 'password'}
+                                                                    name="confirmPassword"
+                                                                    value={passwords.confirmPassword}
+                                                                    onChange={handlePasswordChange}
+                                                                    placeholder="Nhập lại mật khẩu mới"
+                                                                    className={`profile-input ${passErrors.confirmPassword ? 'error' : ''}`}
+                                                                />
+                                                                <button type="button" className="profile-eye-button" onClick={() => togglePasswordVisibility('confirm')}>
+                                                                    {showPasswords.confirm ? <EyeOffIcon /> : <EyeIcon />}
+                                                                </button>
+                                                            </div>
+                                                            {passErrors.confirmPassword && <small className="profile-error-text">{passErrors.confirmPassword}</small>}
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 <div style={{ marginTop: '20px' }}>
-                                                    <button type="submit" style={styles.btnPrimary}>Cập nhật mật khẩu</button>
+                                                    <button type="submit" className="profile-btn-primary">Cập nhật mật khẩu</button>
                                                 </div>
                                             </form>
                                         </>
