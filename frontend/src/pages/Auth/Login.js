@@ -5,38 +5,87 @@ import { loginApi } from '../../services/authService';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [errors, setErrors] = useState({ email: '', password: '', general: '' });
     const navigate = useNavigate();
+
+    const validate = () => {
+        let tempErrors = { email: '', password: '', general: '' };
+        let isValid = true;
+
+        const trimmedEmail = email.trim();
+        const trimmedPassword = password.trim();
+
+        // Regex: Email hợp lệ
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Regex: Mật khẩu có ít nhất 1 chữ cái và 1 chữ số
+        const passRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+
+        if (!trimmedEmail) {
+            tempErrors.email = 'Email không được để trống';
+            isValid = false;
+        } else if (!emailRegex.test(trimmedEmail)) {
+            tempErrors.email = 'Định dạng email không hợp lệ';
+            isValid = false;
+        }
+
+        if (!trimmedPassword) {
+            tempErrors.password = 'Mật khẩu không được để trống';
+            isValid = false;
+        } else if (trimmedPassword.length < 6 || trimmedPassword.length > 36) {
+            tempErrors.password = 'Mật khẩu phải từ 6 đến 36 ký tự';
+            isValid = false;
+        } else if (!passRegex.test(trimmedPassword)) {
+            tempErrors.password = 'Mật khẩu phải chứa cả chữ cái và chữ số';
+            isValid = false;
+        }
+
+        setErrors(tempErrors);
+        return { isValid, trimmedEmail, trimmedPassword };
+    };
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        const data = await loginApi(email, password);
+        setErrors({ email: '', password: '', general: '' });
 
-        if (data.success) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+        const { isValid, trimmedEmail, trimmedPassword } = validate();
+        if (!isValid) return;
 
-            switch (data.user.RoleID) {
-                case 1: // Admin
-                    alert("Chào Admin!");
-                    navigate('/admin-analytics');
-                    break;
-                case 2: // Staff
-                    alert("Chào Bác sĩ!");
-                    navigate('/doctor-dashboard');
-                    break;
-                case 3: // Doctor
-                    alert("Chào Nhân viên!");
-                    navigate('/staff-dashboard');
-                    break;
-                case 4: // Patient/User
-                    alert("Đăng nhập thành công!");
-                    navigate('/home');
-                    break;
-                default:
-                    navigate('/home');
+        const data = await loginApi(trimmedEmail, trimmedPassword);
+        try {
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                switch (data.user.RoleID) {
+                    case 1: // Admin
+                        alert("Chào Admin!");
+                        navigate('/admin-analytics');
+                        break;
+                    case 2: // Staff
+                        alert("Chào Bác sĩ!");
+                        navigate('/doctor/dashboard');
+                        break;
+                    case 3: // Doctor
+                        alert("Chào Nhân viên!");
+                        navigate('/staff-dashboard');
+                        break;
+                    case 4: // Patient/User
+                        alert("Đăng nhập thành công!");
+                        navigate('/home');
+                        break;
+                    default:
+                        navigate('/home');
+                }
+            } else {
+                if (data.field) {
+                    setErrors(prev => ({ ...prev, [data.field]: data.message }));
+                } else {
+                    setErrors(prev => ({ ...prev, general: data.message }));
+                }
             }
-        } else {
-            alert(data.message);
+        } catch (error) {
+            setErrors(prev => ({ ...prev, general: "Không thể kết nối đến máy chủ" }));
         }
     };
 
@@ -63,38 +112,34 @@ const Login = () => {
                 </div>
 
                 <form onSubmit={handleLogin}>
+                    {errors.general && (
+                        <div className="alert alert-danger py-2 px-3 small text-center mb-3">
+                            {errors.general}
+                        </div>
+                    )}
+
                     <div className="mb-3">
-                        <label className="form-label text-muted small">Email</label>
+                        <label className="form-label text-muted small">Email <span className="text-danger">*</span></label>
                         <input
-                            type="email"
-                            className="form-control form-control-lg"
-                            placeholder="your@email.com"
+                            type="text"
+                            className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            required
-                            style={{
-                                borderRadius: '8px',
-                                border: '1px solid #e0e0e0',
-                                padding: '12px 16px',
-                            }}
+                            placeholder="your@email.com"
                         />
+                        {errors.email && <small className="text-danger mt-1 d-block">{errors.email}</small>}
                     </div>
 
                     <div className="mb-4">
-                        <label className="form-label text-muted small">Mật khẩu</label>
+                        <label className="form-label text-muted small">Mật khẩu <span className="text-danger">*</span></label>
                         <input
                             type="password"
-                            className="form-control form-control-lg"
-                            placeholder="••••••••"
+                            className={`form-control ${errors.password ? 'is-invalid' : ''}`}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            required
-                            style={{
-                                borderRadius: '8px',
-                                border: '1px solid #e0e0e0',
-                                padding: '12px 16px',
-                            }}
+                            placeholder="••••••••"
                         />
+                        {errors.password && <small className="text-danger mt-1 d-block">{errors.password}</small>}
                     </div>
 
                     <button

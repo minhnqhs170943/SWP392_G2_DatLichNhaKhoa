@@ -7,6 +7,13 @@ const findUserByEmail = async (email) => {
     return result.recordset[0];
 };
 
+const findUserByPhone = async (phone) => {
+    const request = new sql.Request();
+    request.input('phone', sql.VarChar, phone);
+    const result = await request.query('SELECT * FROM Users WHERE Phone = @phone');
+    return result.recordset[0];
+};
+
 const createUser = async (userData) => {
     const { password, fullName, email, phone, address } = userData;
     const request = new sql.Request();
@@ -57,4 +64,4 @@ const changePassword = async (userId, newPassword) => {
     `);
 };
 
-module.exports = { findUserByEmail, createUser, getUserById, updateUserProfile, changePassword };
+module.exports = { findUserByEmail, findUserByPhone, createUser, getUserById, updateUserProfile, changePassword };

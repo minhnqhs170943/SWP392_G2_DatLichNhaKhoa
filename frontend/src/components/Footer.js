@@ -29,7 +29,7 @@ const Footer = () => {
                         <h4 className="footer-heading">Liên kết</h4>
                         <ul className="footer-link-list">
                             <li className="footer-link-item">
-                                <Link to="/" className="footer-link">Trang chủ</Link>
+                                <Link to="/home" className="footer-link">Trang chủ</Link>
                             </li>
                             <li className="footer-link-item">
                                 <Link to="/phong-kham" className="footer-link">Phòng khám</Link>
