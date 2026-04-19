@@ -60,15 +60,15 @@ const Login = () => {
                 switch (data.user.RoleID) {
                     case 1: // Admin
                         alert("Chào Admin!");
-                        navigate('/admin-analytics');
+                        navigate('/admin');
                         break;
-                    case 2: // Staff
+                    case 2: // Doctor
                         alert("Chào Bác sĩ!");
                         navigate('/doctor/dashboard');
                         break;
-                    case 3: // Doctor
+                    case 3: // Staff
                         alert("Chào Nhân viên!");
-                        navigate('/staff-dashboard');
+                        navigate('/staff/dashboard');
                         break;
                     case 4: // Patient/User
                         alert("Đăng nhập thành công!");
