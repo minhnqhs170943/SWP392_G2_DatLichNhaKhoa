@@ -38,7 +38,7 @@ const DoctorSidebar = () => {
             <hr className="border-white opacity-10 mx-3 mb-4" />
 
             <ul className="nav nav-pills flex-column mb-auto gap-3 px-2">
-                <li className="nav-item">
+                <li>
                     <Link to="/doctor/dashboard" className={`nav-link d-flex align-items-center gap-3 px-4 py-3 rounded-4 text-white nav-item-glass ${path === '/doctor/dashboard' ? 'active' : ''}`}>
                         <i className="bi bi-grid-1x2-fill fs-5 nav-icon"></i>
                         <span className="fw-semibold">Tổng quan</span>

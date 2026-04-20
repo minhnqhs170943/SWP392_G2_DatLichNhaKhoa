@@ -13,6 +13,8 @@ import CheckoutPage from './pages/CheckoutPage';
 import StaffAppointments from './pages/Dashboard/StaffAppointments';
 import StaffDashboard from './pages/Dashboard/StaffDashboard';
 import UserManagement from './pages/Dashboard/UserManagement';
+import DoctorDashboard from './pages/Doctor/DoctorDashboard';
+import DoctorPending from './pages/Doctor/DoctorPending';
 import HomePage from './pages/Homepage';
 import Cart from './pages/Market/Cart';
 import Doctor from './pages/Market/Doctor';
@@ -25,11 +27,10 @@ import OrdersPage from './pages/OrdersPage';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
-import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 
 // RoleID từ DB: 1-Admin, 2-Doctor, 3-Staff, 4-User
-import BlogListPage from './pages/BlogListPage';
 import BlogDetailPage from './pages/BlogDetailPage';
+import BlogListPage from './pages/BlogListPage';
 import ContactPage from './pages/ContactPage';
 
 // RoleID từ DB: 1-Admin, 2-Staff, 3-Doctor, 4-Patient
@@ -66,13 +67,12 @@ function App() {
         <Route path="/profile" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><Profile /></RoleRoute>} />
         <Route path="/notifications" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><NotificationsPage /></RoleRoute>} />
 
-        //Admin
         <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminProduct /></RoleRoute>} />
 
-        //Doctor
+        {/* Doctor */}
         <Route path="/doctor/dashboard" element={<RoleRoute allowedRoles={[2]}><DoctorDashboard /></RoleRoute>} />
+        <Route path="/doctor/pending" element={<RoleRoute allowedRoles={[2]}><DoctorPending /></RoleRoute>} />
 
-        
         {/* Admin */}
         <Route path="/admin" element={<Navigate to="/admin/products" />} />
         <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminProduct /></AdminLayout></RoleRoute>} />

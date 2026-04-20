@@ -12,6 +12,8 @@ const dashboardRoutes = require('./dashboardRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
 const blogRoutes = require('./blog.routes');
 const notificationRoutes = require('./notification.routes');
+const doctorDashboard = require('../routes/Doctor/doctorDashboard.routes');
+const doctorPending = require('../routes/Doctor/doctorPending.routes');
 
 router.use("/upload", uploadRoutes);
 router.use('/auth', authRoutes);
@@ -25,5 +27,9 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/blogs', blogRoutes);
 router.use('/notifications', notificationRoutes);
+
+// Doctor
+router.use('/doctor-dashboard', doctorDashboard);
+router.use('/doctor-pending', doctorPending);
 
 module.exports = router;
