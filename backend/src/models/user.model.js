@@ -10,7 +10,7 @@ const findUserByEmail = async (email) => {
 const createUser = async (userData) => {
     const { password, fullName, email, phone, address } = userData;
     const request = new sql.Request();
-    
+
     request.input('roleId', sql.Int, 4);
     request.input('password', sql.VarChar, password);
     request.input('fullName', sql.NVarChar, fullName);
@@ -19,7 +19,7 @@ const createUser = async (userData) => {
     request.input('address', sql.NVarChar, address);
 
     await request.query(`
-        INSERT INTO Users (RoleID, Password, FullName, Email, Phone, Address, IsActive, CreatedAt)
+        INSERT INTO Users (RoleID, PasswordHash, FullName, Email, Phone, Address, IsActive, CreatedAt)
         VALUES (@roleId, @password, @fullName, @email, @phone, @address, 1, GETDATE())
     `);
 };
@@ -49,10 +49,10 @@ const changePassword = async (userId, newPassword) => {
     const request = new sql.Request();
     request.input('userId', sql.Int, parseInt(userId));
     request.input('newPassword', sql.VarChar, newPassword);
-    
+
     await request.query(`
         UPDATE Users
-        SET Password = @newPassword
+        SET PasswordHash = @newPassword
         WHERE UserID = @userId
     `);
 };

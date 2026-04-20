@@ -2,7 +2,10 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 import RoleRoute from './components/RoleRoute';
 import AdminLayout from './layouts/AdminLayout';
 import AdminBlog from './pages/Admin/AdminBlog';
-import AdminProduct from './pages/Admin/AdminProduct';
+import ProductManagement from './pages/Admin/ProductManagement';
+import AdminServices from './pages/Admin/AdminServices';
+import AdminAppointments from './pages/Admin/AdminAppointments';
+import AdminAnalytics from './pages/Admin/AdminAnalytics';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
 import Profile from './pages/Auth/Profile';
@@ -64,10 +67,13 @@ function App() {
         <Route path="/notifications" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><NotificationsPage /></RoleRoute>} />
         
         {/* Admin */}
-        <Route path="/admin" element={<Navigate to="/admin/products" />} />
-        <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminProduct /></AdminLayout></RoleRoute>} />
+        <Route path="/admin" element={<Navigate to="/admin/stats" />} />
+        <Route path="/admin/stats" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminAnalytics /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminLayout><ProductManagement /></AdminLayout></RoleRoute>} />
         <Route path="/admin/blogs" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminBlog /></AdminLayout></RoleRoute>} />
         <Route path="/admin/users" element={<RoleRoute allowedRoles={[1]}><AdminLayout><UserManagement /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/services" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminServices /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/appointments" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminAppointments /></AdminLayout></RoleRoute>} />
 
         {/* Staff Dashboard */}
         <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 2]}><StaffDashboard /></RoleRoute>} />
