@@ -17,6 +17,7 @@ const initialForm = {
   thumbnailFile: null,
   authorName: "",
   category: "",
+  categoryName: "",
   tags: "",
   isPublished: true,
 };
@@ -35,7 +36,6 @@ export default function AdminBlog() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [uploading, setUploading] = useState(false);
 
   const submitLabel = useMemo(() => (editingId ? "Cập nhật blog" : "Thêm blog"), [editingId]);
 
@@ -132,6 +132,7 @@ export default function AdminBlog() {
         thumbnailURL: imageUrl,
         authorName: form.authorName.trim(),
         category: form.category.trim(),
+        categoryName: form.categoryName.trim(),
         tags: form.tags.trim(),
         isPublished: form.isPublished,
       };
@@ -168,6 +169,7 @@ export default function AdminBlog() {
       thumbnailURL: b.ThumbnailURL || "",
       authorName: b.AuthorName || "",
       category: b.Category || "",
+      categoryName: b.CategoryName || "",
       tags: b.Tags || "",
       isPublished: Boolean(b.IsPublished),
     });
@@ -281,12 +283,12 @@ export default function AdminBlog() {
             />
           </div>
           <div className="form-group">
-            <label>Danh mục</label>
+            <label>Tên danh mục</label>
             <input 
               type="text"
               placeholder="Ví dụ: Chăm sóc răng miệng" 
-              value={form.category} 
-              onChange={(e) => onChange("category", e.target.value)} 
+              value={form.categoryName} 
+              onChange={(e) => onChange("categoryName", e.target.value)} 
             />
           </div>
         </div>
@@ -386,7 +388,7 @@ export default function AdminBlog() {
                 <th>ID</th>
                 <th>Ảnh</th>
                 <th>Tiêu đề</th>
-                <th>Danh mục</th>
+                <th>Tên danh mục</th>
                 <th>Lượt xem</th>
                 <th>Trạng thái</th>
                 <th>Ngày xuất bản</th>
@@ -417,7 +419,7 @@ export default function AdminBlog() {
                       <div className="blog-title">{b.Title}</div>
                       <div className="blog-slug">{b.Slug}</div>
                     </td>
-                    <td>{b.Category || "-"}</td>
+                    <td>{b.CategoryName || "-"}</td>
                     <td>{b.ViewCount || 0}</td>
                     <td>
                       <span className={`status-badge ${b.IsPublished ? 'published' : 'draft'}`}>

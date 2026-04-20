@@ -1,20 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getUserNotifications, markAsRead as markNotificationAsRead, markAllAsRead as markAllNotificationsAsRead } from '../services/notificationApi';
 
 const NotificationsPage = () => {
-    const navigate = useNavigate();
     const [filter, setFilter] = useState('ALL'); // ALL, UNREAD, READ
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadNotifications();
-    }, []);
-
-    const loadNotifications = async () => {
+    const loadNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const data = await getUserNotifications();
@@ -24,7 +19,11 @@ const NotificationsPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadNotifications();
+    }, [loadNotifications]);
 
     const markAsRead = async (id) => {
         try {

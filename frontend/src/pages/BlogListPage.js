@@ -67,8 +67,8 @@ const BlogListPage = () => {
                                     </div>
                                 )}
                                 <div className="blog-card-content">
-                                    {blog.Category && (
-                                        <span className="blog-category">{blog.Category}</span>
+                                    {blog.CategoryName && (
+                                        <span className="blog-category">{blog.CategoryName}</span>
                                     )}
                                     <h3 className="blog-card-title">{blog.Title}</h3>
                                     {blog.Summary && (

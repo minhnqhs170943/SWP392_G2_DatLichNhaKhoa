@@ -12,6 +12,7 @@ const findAllBlogs = async () => {
             ThumbnailURL,
             AuthorName,
             Category,
+            CategoryName,
             Tags,
             ViewCount,
             IsPublished,
@@ -87,6 +88,7 @@ const findAllBlogsForAdmin = async () => {
             ThumbnailURL,
             AuthorName,
             Category,
+            CategoryName,
             Tags,
             ViewCount,
             IsPublished,
@@ -99,7 +101,7 @@ const findAllBlogsForAdmin = async () => {
     return result.recordset;
 };
 
-const createBlog = async ({ title, slug, summary, content, thumbnailURL, authorName, category, tags, isPublished }) => {
+const createBlog = async ({ title, slug, summary, content, thumbnailURL, authorName, category, categoryName, tags, isPublished }) => {
     const request = new sql.Request();
     request.input('title', sql.NVarChar(500), title);
     request.input('slug', sql.VarChar(500), slug);
@@ -108,6 +110,7 @@ const createBlog = async ({ title, slug, summary, content, thumbnailURL, authorN
     request.input('thumbnailURL', sql.VarChar(sql.MAX), thumbnailURL || null);
     request.input('authorName', sql.NVarChar(100), authorName || null);
     request.input('category', sql.NVarChar(100), category || null);
+    request.input('categoryName', sql.NVarChar(100), categoryName || null);
     request.input('tags', sql.NVarChar(255), tags || null);
     request.input('isPublished', sql.Bit, isPublished ? 1 : 0);
     request.input('publishedDate', sql.DateTime, isPublished ? new Date() : null);
@@ -115,13 +118,13 @@ const createBlog = async ({ title, slug, summary, content, thumbnailURL, authorN
     const result = await request.query(`
         INSERT INTO [dbo].[Blogs] (
             Title, Slug, Summary, Content, ThumbnailURL, 
-            AuthorName, Category, Tags, ViewCount, 
+            AuthorName, Category, CategoryName, Tags, ViewCount, 
             IsPublished, PublishedDate, CreatedAt, UpdatedAt
         )
         OUTPUT INSERTED.BlogID
         VALUES (
             @title, @slug, @summary, @content, @thumbnailURL,
-            @authorName, @category, @tags, 0,
+            @authorName, @category, @categoryName, @tags, 0,
             @isPublished, @publishedDate, GETDATE(), GETDATE()
         )
     `);
@@ -129,7 +132,7 @@ const createBlog = async ({ title, slug, summary, content, thumbnailURL, authorN
     return result.recordset[0]?.BlogID;
 };
 
-const updateBlog = async (blogId, { title, slug, summary, content, thumbnailURL, authorName, category, tags, isPublished }) => {
+const updateBlog = async (blogId, { title, slug, summary, content, thumbnailURL, authorName, category, categoryName, tags, isPublished }) => {
     const request = new sql.Request();
     request.input('blogId', sql.Int, blogId);
     request.input('title', sql.NVarChar(500), title);
@@ -139,6 +142,7 @@ const updateBlog = async (blogId, { title, slug, summary, content, thumbnailURL,
     request.input('thumbnailURL', sql.VarChar(sql.MAX), thumbnailURL || null);
     request.input('authorName', sql.NVarChar(100), authorName || null);
     request.input('category', sql.NVarChar(100), category || null);
+    request.input('categoryName', sql.NVarChar(100), categoryName || null);
     request.input('tags', sql.NVarChar(255), tags || null);
     request.input('isPublished', sql.Bit, isPublished ? 1 : 0);
 
@@ -152,6 +156,7 @@ const updateBlog = async (blogId, { title, slug, summary, content, thumbnailURL,
             ThumbnailURL = @thumbnailURL,
             AuthorName = @authorName,
             Category = @category,
+            CategoryName = @categoryName,
             Tags = @tags,
             IsPublished = @isPublished,
             PublishedDate = CASE 
