@@ -49,12 +49,11 @@ export default function ProductDetail() {
 
                 const d = {
                     id: row.ProductID,
+                    img: row.ImageURL,
                     name: row.ProductName,
                     brand: row.Brand || "Nhãn hiệu",
                     desc: row.Description || "Đang cập nhật thông tin sản phẩm.",
                     price: row.Price,
-                    rating: 0,
-                    reviews: 0,
                     specialty: "Đang cập nhật",
                 };
 
@@ -125,10 +124,18 @@ export default function ProductDetail() {
                             className="card border d-flex align-items-center justify-content-center"
                             style={{ height: 340, borderRadius: 16, borderColor: "#eee", background: "#f0f2f5" }}
                         >
-                            <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M9 3h6M9 3v7l-4 8a2 2 0 0 0 1.8 2.9h10.4A2 2 0 0 0 19 18l-4-8V3" />
-                                <line x1="6.5" y1="14" x2="17.5" y2="14" />
-                            </svg>
+                            {product.img ? (
+                                <img
+                                    src={product.img}
+                                    alt={product.name}
+                                    style={{ width: "100%", height: "100%", objectFit: "contain", padding: 12 }}
+                                />
+                            ) : (
+                                <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M9 3h6M9 3v7l-4 8a2 2 0 0 0 1.8 2.9h10.4A2 2 0 0 0 19 18l-4-8V3" />
+                                    <line x1="6.5" y1="14" x2="17.5" y2="14" />
+                                </svg>
+                            )}
                         </div>
                     </div>
 
@@ -185,9 +192,9 @@ export default function ProductDetail() {
                 <div className="row g-4 mt-1">
                     {[
                         { title: "Mô tả chi tiết", content: product.desc },
-                        { title: "Cách dùng", content: product.specialty },
+ 
                         { title: "Nhãn hiệu", content: product.brand },
-                        { title: "Kho", content: product.warning },
+ 
                     ].map((section, i) => (
                         <div key={i} className="col-md-6">
                             <div className="card border p-3" style={{ borderRadius: 12, borderColor: "#eee" }}>

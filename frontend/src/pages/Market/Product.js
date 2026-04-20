@@ -64,6 +64,35 @@ const styles = {
     prodDesc: { fontSize: 13, color: "#334155", lineHeight: 1.45, flex: 1 },
     price: { fontSize: 17, fontWeight: 800, color: "#3b82f6" },
     cardActions: { display: "flex", gap: 10, padding: "0 18px 18px" },
+    pagination: {
+        marginTop: 24,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        flexWrap: "wrap",
+    },
+    pageBtn: {
+        minWidth: 38,
+        height: 38,
+        borderRadius: 10,
+        border: "1px solid #cbd5e1",
+        background: "#fff",
+        color: "#0f172a",
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: "pointer",
+        padding: "0 10px",
+    },
+    pageBtnActive: {
+        background: "#3b82f6",
+        color: "#fff",
+        border: "1px solid #3b82f6",
+    },
+    pageBtnDisabled: {
+        opacity: 0.45,
+        cursor: "not-allowed",
+    },
     btnCart: {
         width: 72, height: 42, border: "2px solid #3b82f6",
         borderRadius: 12, background: "#fff", color: "#3b82f6",
@@ -83,6 +112,8 @@ export default function Product() {
     const [error, setError] = useState("");
     const [priceOrder, setPriceOrder] = useState("none");
     const [nameOrder, setNameOrder] = useState("none");
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 8;
     const navigate = useNavigate();
 
 
@@ -155,6 +186,18 @@ export default function Product() {
         return 0;
     });
 
+    const totalPages = Math.max(1, Math.ceil(displayedProducts.length / itemsPerPage));
+    const startIndex = (page - 1) * itemsPerPage;
+    const paginatedProducts = displayedProducts.slice(startIndex, startIndex + itemsPerPage);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search, priceOrder, nameOrder]);
+
+    useEffect(() => {
+        if (page > totalPages) setPage(totalPages);
+    }, [page, totalPages]);
+
     return (
         <div>
             <Navbar />
@@ -193,7 +236,7 @@ export default function Product() {
                 </div>
 
                 <div style={styles.grid}>
-                    {displayedProducts.map((p) => (
+                    {paginatedProducts.map((p) => (
                         <div key={p.id} style={styles.card}>
                             <div style={styles.cardImg}>
                                 {
@@ -229,6 +272,36 @@ export default function Product() {
                         </div>
                     ))}
                 </div>
+                {displayedProducts.length > 0 && (
+                    <div style={styles.pagination}>
+                        <button
+                            style={{ ...styles.pageBtn, ...(page === 1 ? styles.pageBtnDisabled : {}) }}
+                            disabled={page === 1}
+                            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                        >
+                            Trước
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                            <button
+                                key={pageNum}
+                                style={{
+                                    ...styles.pageBtn,
+                                    ...(pageNum === page ? styles.pageBtnActive : {}),
+                                }}
+                                onClick={() => setPage(pageNum)}
+                            >
+                                {pageNum}
+                            </button>
+                        ))}
+                        <button
+                            style={{ ...styles.pageBtn, ...(page === totalPages ? styles.pageBtnDisabled : {}) }}
+                            disabled={page === totalPages}
+                            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                        >
+                            Sau
+                        </button>
+                    </div>
+                )}
                 </div>
             </div>
             <Footer/>
