@@ -67,8 +67,8 @@ const BlogDetailPage = () => {
                 </button>
 
                 <article className="blog-detail-article">
-                    {blog.Category && (
-                        <span className="blog-detail-category">{blog.Category}</span>
+                    {blog.CategoryName && (
+                        <span className="blog-detail-category">{blog.CategoryName}</span>
                     )}
                     
                     <h1 className="blog-detail-title">{blog.Title}</h1>

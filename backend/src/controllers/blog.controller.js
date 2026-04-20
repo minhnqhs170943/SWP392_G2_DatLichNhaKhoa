@@ -74,7 +74,7 @@ const getBlogsForAdmin = async (req, res) => {
 
 const createBlog = async (req, res) => {
     try {
-        const { title, slug, summary, content, thumbnailURL, authorName, category, tags, isPublished } = req.body;
+        const { title, slug, summary, content, thumbnailURL, authorName, category, categoryName, tags, isPublished } = req.body;
         
         if (!title || !slug || !content) {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
@@ -88,6 +88,7 @@ const createBlog = async (req, res) => {
             thumbnailURL: thumbnailURL ? String(thumbnailURL).trim() : null,
             authorName: authorName ? String(authorName).trim() : null,
             category: category ? String(category).trim() : null,
+            categoryName: categoryName ? String(categoryName).trim() : null,
             tags: tags ? String(tags).trim() : null,
             isPublished: Boolean(isPublished)
         });
@@ -106,7 +107,7 @@ const createBlog = async (req, res) => {
 const updateBlog = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, slug, summary, content, thumbnailURL, authorName, category, tags, isPublished } = req.body;
+        const { title, slug, summary, content, thumbnailURL, authorName, category, categoryName, tags, isPublished } = req.body;
         
         if (!title || !slug || !content) {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
@@ -120,6 +121,7 @@ const updateBlog = async (req, res) => {
             thumbnailURL: thumbnailURL ? String(thumbnailURL).trim() : null,
             authorName: authorName ? String(authorName).trim() : null,
             category: category ? String(category).trim() : null,
+            categoryName: categoryName ? String(categoryName).trim() : null,
             tags: tags ? String(tags).trim() : null,
             isPublished: Boolean(isPublished)
         });
