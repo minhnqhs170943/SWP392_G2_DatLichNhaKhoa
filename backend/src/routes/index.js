@@ -3,7 +3,8 @@ const router = express.Router();
 const authRoutes = require('./auth.routes');
 const paymentRoutes = require('./payment.routes');
 const doctorRoutes = require('./doctor.routes');
-const productRoutes = require('./product.routes');
+const productRoutesFile = require('./product.routes');
+const adminProductRoutes = require('./productRoutes');
 const serviceRoutes = require('./service.routes');
 const cartRoutes = require('./cart.routes');
 const uploadRoutes = require("./upload.routes");
@@ -19,7 +20,8 @@ router.use("/upload", uploadRoutes);
 router.use('/auth', authRoutes);
 router.use('/payment', paymentRoutes);
 router.use('/doctors', doctorRoutes);
-router.use('/products', productRoutes);
+router.use('/products', productRoutesFile);
+router.use('/admin/products', adminProductRoutes);
 router.use('/services', serviceRoutes);
 router.use('/cart', cartRoutes);
 router.use('/reviews', reviewRoutes);
@@ -27,6 +29,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/blogs', blogRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/admin/analytics', require('./adminStatsRoutes'));
 
 // Doctor
 router.use('/doctor-dashboard', doctorDashboard);

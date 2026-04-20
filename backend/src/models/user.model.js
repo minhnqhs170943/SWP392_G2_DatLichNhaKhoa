@@ -17,7 +17,7 @@ const findUserByPhone = async (phone) => {
 const createUser = async (userData) => {
     const { password, fullName, email, phone, address } = userData;
     const request = new sql.Request();
-    
+
     request.input('roleId', sql.Int, 4);
     request.input('password', sql.VarChar, password);
     request.input('fullName', sql.NVarChar, fullName);
@@ -56,7 +56,7 @@ const changePassword = async (userId, newPassword) => {
     const request = new sql.Request();
     request.input('userId', sql.Int, parseInt(userId));
     request.input('newPassword', sql.VarChar, newPassword);
-    
+
     await request.query(`
         UPDATE Users
         SET Password = @newPassword
