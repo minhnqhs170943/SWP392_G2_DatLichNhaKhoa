@@ -27,7 +27,11 @@ export default function DoctorDetail() {
                     email: row.Email,
                     address: row.Address,
                     avt: row.AvatarURL,
-                    active: row.IsActive
+                    active: row.IsActive,
+                    specialy: row.Specialty,
+                    exp: row.ExperienceYears,
+                    bio: row.Bio,
+                    des: row.Description
                 };
 
                 setDoctor(d);
@@ -83,7 +87,7 @@ export default function DoctorDetail() {
                         >
                             <img
                                 src={doctor.avt || "https://via.placeholder.com/360x340?text=Doctor"}
-                                alt={doctor.FullName || "Doctor"}
+                                alt={doctor.name || "Doctor"}
                                 style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }}
                             />
                         </div>
@@ -91,20 +95,36 @@ export default function DoctorDetail() {
 
                     <div className="col-md-7">
                         <div className="card border h-100 p-4" style={{ borderRadius: 16, borderColor: "#eee" }}>
-                            <div style={{ fontSize: 12, color: "#1DA0E0", fontWeight: 600 }} className="mb-1">
-                                {doctor.Specialty}
-                            </div>
+                            
                             <h2 className="fw-bold mb-2" style={{ fontSize: 20 }}>
                                 {doctor.name}
                             </h2>
+                            <div
+                                className="mb-2"
+                                style={{
+                                    display: "inline-block",
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    color: "#0f766e",
+                                    background: "#ccfbf1",
+                                    border: "1px solid #99f6e4",
+                                    borderRadius: 10,
+                                    padding: "8px 10px",
+                                }}
+                            >
+                                Mã bác sĩ: #{doctor.id}
+                            </div>
+
+                            <div style={{ fontSize: 12, color: "#1DA0E0", fontWeight: 600 }} className="mb-1">
+                               {doctor.specialy? `Chuyên Khoa ${doctor.specialy}`  : "Đang cập nhập"}
+                            </div>
 
                             <p className="text-muted mb-3" style={{ fontSize: 14, lineHeight: 1.7 }}>
-                                {doctor.bio}
+                                {doctor.bio? doctor.bio : "Đang cập nhập"}
                             </p>
-
                             <div>
                             <p className=" mb-3" style={{ fontSize: 14, lineHeight: 1.7 }}>
-                                {doctor.desc}
+                                {doctor.des}
                             </p>
                             </div>
                             <div className="row g-2">
@@ -131,7 +151,7 @@ export default function DoctorDetail() {
                     {[
                         { title: "Email", content: doctor.email || "Đang cập nhập" },
                         { title: "Số Điện Thoại", content: doctor.phone || "Đang cập nhập" },
-                        { title: "Địa Chỉ", content: doctor.address || "Đang cập nhập" },
+                        { title: "Năm Kinh Nghiệm", content: doctor.exp ? `${doctor.exp} năm` : "Đang cập nhật" },
                         { title: "Trạng thái", content: doctor.active ? " 🟢 Đang hoạt động" : " 🔴 Không hoạt động" || "Đang cập nhập" },
                     ].map((section, i) => (
                         <div key={i} className="col-md-6">
@@ -139,7 +159,7 @@ export default function DoctorDetail() {
                                 <div className="fw-bold mb-2" style={{ fontSize: 14 }}>
                                     {section.title}
                                 </div>
-                                <p className="text-muted mb-0" style={{ fontSize: 13, lineHeight: 1.7 }}>
+                                <p className=" mb-0" style={{ fontSize: 13, lineHeight: 1.7 }}>
                                     {section.content}
                                 </p>
                             </div>

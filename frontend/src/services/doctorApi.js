@@ -17,6 +17,6 @@ export async function fetchDoctorById(id) {
 export async function fetchAllServices() {
   const res = await fetch(`${API_BASE}/services`);
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Lỗi lấy danh sách bác sĩ");
-  return data.data || [];
+  if (!res.ok) throw new Error(data.message || "Lỗi lấy danh sách dịch vụ");
+  return data.services || data.data || [];
 }

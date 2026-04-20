@@ -18,6 +18,8 @@ function Stars({ value }) {
 }
 
 export default function Review() {
+  const MIN_COMMENT_LENGTH = 10;
+  const MAX_COMMENT_LENGTH = 500;
   const [tab, setTab] = useState("all");
   const [rating, setRating] = useState(0);
   const [reviews, setReviews] = useState([]);
@@ -28,6 +30,7 @@ export default function Review() {
   const [appointmentInfo, setAppointmentInfo] = useState([]);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   const getUserId = () => {
     try {
@@ -87,10 +90,28 @@ export default function Review() {
 
   const submitReview = async (e) => {
     e.preventDefault();
-    if (!selectedVisit || !rating || !formComment.trim()) {
+    const trimmedComment = formComment.trim();
+
+    if (!selectedVisit || !rating) {
       alert("Vui lòng nhập đủ số sao và nhận xét.");
       return;
     }
+
+    if (!trimmedComment) {
+      setCommentError("Vui lòng nhập nhận xét.");
+      return;
+    }
+
+    if (trimmedComment.length < MIN_COMMENT_LENGTH) {
+      setCommentError(`Nhận xét phải có ít nhất ${MIN_COMMENT_LENGTH} ký tự.`);
+      return;
+    }
+
+    if (trimmedComment.length > MAX_COMMENT_LENGTH) {
+      setCommentError(`Nhận xét tối đa ${MAX_COMMENT_LENGTH} ký tự.`);
+      return;
+    }
+
     if (!selectedVisit.canReviewOrEdit) {
       alert("Bạn đã dùng hết số lần chỉnh sửa đánh giá.");
       return;
@@ -107,19 +128,20 @@ export default function Review() {
         await updateReview(selectedVisit.id, {
           userId,
           rating,
-          comment: formComment.trim(),
+          comment: trimmedComment,
         });
       } else {
         await createReview({
           appointmentId: selectedVisit.id,
           userId,
           rating,
-          comment: formComment.trim(),
+          comment: trimmedComment,
         });
       }
       await Promise.all([loadLatest(), loadEligible()]);
       setSubmitSuccess(true);
       setError("");
+      setCommentError("");
     } catch (err) {
       setError(err.message || "Gửi đánh giá thất bại");
       setSubmitSuccess(false);
@@ -132,6 +154,7 @@ export default function Review() {
     setSelectedVisit(visit);
     setRating(visit.reviewed ? visit.previousRating : 0);
     setFormComment(visit.reviewed ? visit.previousComment : "");
+    setCommentError("");
     setSubmitSuccess(false);
   };
 
@@ -272,9 +295,21 @@ export default function Review() {
                         rows="5"
                         placeholder="Viết cảm nhận của bạn về buổi thăm khám..."
                         value={formComment}
+                        maxLength={MAX_COMMENT_LENGTH}
                         readOnly={selectedVisit.reviewed && !selectedVisit.canReviewOrEdit}
-                        onChange={(e) => setFormComment(e.target.value)}
+                        onChange={(e) => {
+                          setFormComment(e.target.value);
+                          if (commentError) setCommentError("");
+                        }}
                       />
+                      {!!commentError && (
+                        <div className="text-danger mt-1" style={{ fontSize: 13 }}>
+                          {commentError}
+                        </div>
+                      )}
+                      <div className="text-muted mt-1" style={{ fontSize: 12 }}>
+                        {formComment.trim().length}/{MAX_COMMENT_LENGTH} ký tự (tối thiểu {MIN_COMMENT_LENGTH})
+                      </div>
                     </div>
 
                     <div className="d-flex gap-2">

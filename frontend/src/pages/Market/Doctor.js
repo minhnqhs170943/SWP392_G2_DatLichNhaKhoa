@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Stethoscope, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
@@ -9,6 +10,10 @@ import { fetchDoctors, fetchAllServices } from "../../services/doctorApi";
 function formatPrice(value) {
     const normalized = Number(String(value).replace(/[^\d.-]/g, "")) || 0;
     return normalized.toLocaleString("vi-VN") + " ₫";
+}
+
+function normalizeText(value) {
+    return String(value ?? "").toLowerCase();
 }
 
  
@@ -60,9 +65,26 @@ const styles = {
         alignItems: "center",
         justifyContent: "center",
     },
+    cardAvatar: {
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+    },
+    infoLine: {
+        fontSize: 13,
+        color: "#334155",
+        lineHeight: 1.45,
+    },
+    bioText: {
+        fontSize: 13,
+        color: "#1e293b",
+        lineHeight: 1.5,
+        flex: 1,
+        marginTop: 2,
+    },
     cardBody: { padding: 18, flex: 1, display: "flex", flexDirection: "column", gap: 8 },
     specialty: { fontSize: 13, color: "#3b82f6", fontWeight: 500 },
-    doctorName: { fontSize: 16, fontWeight: 800, color: "#0f172a", lineHeight: 1.35, minHeight: 64 },
+    doctorName: { fontSize: 16, fontWeight: 800, color: "#0f172a", lineHeight: 1.35 },
     doctorDesc: { fontSize: 13, color: "#334155", lineHeight: 1.45, flex: 1 },
     serviceName: { fontSize: 16, fontWeight: 800, color: "#0f172a", lineHeight: 1.35, minHeight: 44 },
     serviceDesc: { fontSize: 13, color: "#334155", lineHeight: 1.45, flex: 1 },
@@ -83,6 +105,35 @@ const styles = {
         fontSize: 14,
         fontWeight: 600,
     },
+    pagination: {
+        marginTop: 20,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        flexWrap: "wrap",
+    },
+    pageBtn: {
+        minWidth: 38,
+        height: 38,
+        borderRadius: 10,
+        border: "1px solid #cbd5e1",
+        background: "#fff",
+        color: "#0f172a",
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: "pointer",
+        padding: "0 10px",
+    },
+    pageBtnActive: {
+        background: "#3b82f6",
+        color: "#fff",
+        border: "1px solid #3b82f6",
+    },
+    pageBtnDisabled: {
+        opacity: 0.45,
+        cursor: "not-allowed",
+    },
 };
 
 
@@ -93,6 +144,10 @@ export default function Doctor() {
     const [search, setSearch] = useState("");
     const [doctors, setDoctors] = useState([]);
     const [services, setService] = useState([]);
+    const [doctorPage, setDoctorPage] = useState(1);
+    const doctorsPerPage = 6;
+    const servicesLimit = 6;
+    const navigate = useNavigate();
 
 
     useEffect(() => {
@@ -104,10 +159,10 @@ export default function Doctor() {
                 const mapped = rows.map((d) => ({
                     id: d.UserID,
                     name: d.FullName,
-                    phone : d.Phone,
-                    email: d.Email,
                     avt: d.AvatarURL,
-                    isActive: d.IsActive
+                    bio: d.Bio,
+                    experience: d.ExperienceYears,
+                    specialty: d.Specialty
                 }));
 
                 setDoctors(mapped);
@@ -129,9 +184,12 @@ export default function Doctor() {
                 const rows = await fetchAllServices();
 
                 const mapped = rows.map((d) => ({
+                    id: d.ServiceID,
                     name: d.ServiceName,
                     price: d.Price || "Đang cập nhật giá",
                     desc: d.Description || "Đang cập nhật thông tin.",
+                    active: d.IsActive,
+                    img: d.ImageURL
                 }));
 
                 setService(mapped);
@@ -146,16 +204,28 @@ export default function Doctor() {
         loadServices();
     }, []);
 
+    const keyword = normalizeText(search);
     const filtered = doctors.filter(
         (d) =>
-            d.name.toLowerCase().includes(search.toLowerCase()) ||
-            d.specialty.toLowerCase().includes(search.toLowerCase())
+            normalizeText(d.name).includes(keyword) ||
+            normalizeText(d.specialty).includes(keyword)
     );
     const filteredServices = services.filter(
         (s) =>
-            s.name.toLowerCase().includes(search.toLowerCase()) ||
-            s.specialty.toLowerCase().includes(search.toLowerCase())
+            normalizeText(s.name).includes(keyword) ||
+            normalizeText(s.desc).includes(keyword)
     );
+    const doctorTotalPages = Math.max(1, Math.ceil(filtered.length / doctorsPerPage));
+    const paginatedDoctors = filtered.slice((doctorPage - 1) * doctorsPerPage, doctorPage * doctorsPerPage);
+    const visibleServices = filteredServices.slice(0, servicesLimit);
+
+    useEffect(() => {
+        setDoctorPage(1);
+    }, [search]);
+
+    useEffect(() => {
+        if (doctorPage > doctorTotalPages) setDoctorPage(doctorTotalPages);
+    }, [doctorPage, doctorTotalPages]);
 
     return (
         <div>
@@ -179,22 +249,24 @@ export default function Doctor() {
                     )}
 
                     <div style={styles.grid}>
-                        {filtered.map((doctor) => (
+                        {paginatedDoctors.map((doctor) => (
                             <div key={doctor.id} style={styles.card}>
                                 <div style={styles.cardImg}>
-                                    <Stethoscope size={58} color="#9ca3af" />
+                                    {doctor.avt ? (
+                                        <img src={doctor.avt} alt={doctor.name} style={styles.cardAvatar} />
+                                    ) : (
+                                        <UserRound size={58} color="#9ca3af" />
+                                    )}
                                 </div>
                                 <div style={styles.cardBody}>
-                                    
                                     <div style={styles.doctorName}>
                                         <Link to={`/doctor-detail/${doctor.id}`} style={{ textDecoration: "none", color: "#111" }}>
                                             {doctor.name}
                                         </Link>
                                     </div>
-                                    <div style={styles.specialty}> SĐT: {doctor.phone}</div>
-                                    <div style={styles.specialty}> Email: {doctor.email}</div>
-                                    {console.log(doctor)}
-                                    <div style={styles.doctorDesc}>{doctor.desc}</div>
+                                    <div style={styles.specialty}>{doctor.specialty}</div>
+                                    <div style={styles.infoLine}>Kinh nghiệm: {doctor.experience ?? 0} năm</div>
+                                    <div style={styles.bioText}>{doctor.bio || "Chưa có thông tin giới thiệu."}</div>
                                 </div>
                                 <div style={styles.cardActions}>
                                     <Link to={`/doctor-detail/${doctor.id}`} style={styles.btnDetail}>
@@ -204,25 +276,53 @@ export default function Doctor() {
                             </div>
                         ))}
                     </div>
+                    {filtered.length > 0 && (
+                        <div style={styles.pagination}>
+                            <button
+                                style={{ ...styles.pageBtn, ...(doctorPage === 1 ? styles.pageBtnDisabled : {}) }}
+                                disabled={doctorPage === 1}
+                                onClick={() => setDoctorPage((prev) => Math.max(1, prev - 1))}
+                            >
+                                Trước
+                            </button>
+                            {Array.from({ length: doctorTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                                <button
+                                    key={pageNum}
+                                    style={{ ...styles.pageBtn, ...(pageNum === doctorPage ? styles.pageBtnActive : {}) }}
+                                    onClick={() => setDoctorPage(pageNum)}
+                                >
+                                    {pageNum}
+                                </button>
+                            ))}
+                            <button
+                                style={{ ...styles.pageBtn, ...(doctorPage === doctorTotalPages ? styles.pageBtnDisabled : {}) }}
+                                disabled={doctorPage === doctorTotalPages}
+                                onClick={() => setDoctorPage((prev) => Math.min(doctorTotalPages, prev + 1))}
+                            >
+                                Sau
+                            </button>
+                        </div>
+                    )}
 
                     <h2 style={styles.sectionTitle}>Danh sách dịch vụ</h2>
                     <div style={styles.grid}>
-                         {console.log(doctors)
-                                }
-                        {filteredServices.map((service) => (
+                        {visibleServices.map((service) => (
                             <div key={service.id} style={styles.card}>
                                
                                 <div style={styles.cardImg}>
-                                    <Stethoscope size={58} color="#9ca3af" />
+                                    {service.img ? (
+                                        <img src={service.img} alt={service.name} style={styles.cardAvatar} />
+                                    ) : (
+                                        <UserRound size={58} color="#9ca3af" />
+                                    )}
                                 </div>
                                 <div style={styles.cardBody}>
-                                    <div style={styles.specialty}>{service.specialty}</div>
                                     <div style={styles.serviceName}>{service.name}</div>
-                                    <div style={styles.serviceDesc}>{service.desc}</div>
+                                    <div style={styles.serviceDesc}>{service.desc?service.desc: "Đang cập nhật"}</div>
                                 </div>
                                 <div style={styles.cardActions}>
 
-                                    <button style={styles.btnDetail}>
+                                    <button style={styles.btnDetail} onClick={() => navigate(`/booking`)}>
                                         {formatPrice(service.price)}
                                     </button>
                                 </div>
