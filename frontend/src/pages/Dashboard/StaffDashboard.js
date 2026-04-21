@@ -28,6 +28,11 @@ const monthOptions = [
     { value: '12', label: 'Tháng 12' },
 ];
 
+const dayOptions = [
+    { value: '', label: 'Tất cả ngày' },
+    ...Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: `Ngày ${i + 1}` }))
+];
+
 const StaffDashboard = () => {
     const [stats, setStats] = useState({
         totalPatients: 0,
@@ -35,12 +40,14 @@ const StaffDashboard = () => {
         countAppointments: 0,
         revenueByMonth: [],
         appointmentsStatus: [],
+        appointmentsByDay: [],
         topServices: [],
         topDoctors: []
     });
     const [loading, setLoading] = useState(true);
 
     // Filter state
+    const [selectedDay, setSelectedDay] = useState('');
     const [selectedMonth, setSelectedMonth] = useState('');
     const [selectedYear, setSelectedYear] = useState(String(currentYear));
 
@@ -50,6 +57,9 @@ const StaffDashboard = () => {
             let url = `http://localhost:5001/api/dashboard/stats?year=${selectedYear}`;
             if (selectedMonth) {
                 url += `&month=${selectedMonth}`;
+            }
+            if (selectedDay) {
+                url += `&day=${selectedDay}`;
             }
             const response = await fetch(url);
             const data = await response.json();
@@ -61,18 +71,22 @@ const StaffDashboard = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedMonth, selectedYear]);
+    }, [selectedDay, selectedMonth, selectedYear]);
 
     useEffect(() => {
         fetchStats();
     }, [fetchStats]);
 
     const handleReset = () => {
+        setSelectedDay('');
         setSelectedMonth('');
         setSelectedYear(String(currentYear));
     };
 
     const getFilterLabel = () => {
+        if (selectedDay && selectedMonth) {
+            return `Ngày ${selectedDay}/${selectedMonth}/${selectedYear}`;
+        }
         if (selectedMonth) {
             return `Tháng ${selectedMonth}/${selectedYear}`;
         }
@@ -118,6 +132,17 @@ const StaffDashboard = () => {
                         </select>
                         <select 
                             className="filter-select"
+                            value={selectedDay} 
+                            onChange={(e) => setSelectedDay(e.target.value)}
+                            disabled={!selectedMonth}
+                            title={!selectedMonth ? "Chọn tháng trước để lọc theo ngày" : ""}
+                        >
+                            {dayOptions.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                        <select 
+                            className="filter-select"
                             value={selectedYear} 
                             onChange={(e) => setSelectedYear(e.target.value)}
                         >
@@ -152,7 +177,9 @@ const StaffDashboard = () => {
 
                     <div className="col-md-4">
                         <div className="saas-card stat-wrapper">
-                            <span className="stat-title">{selectedMonth ? `LỊCH KHÁM THÁNG ${selectedMonth}` : 'LỊCH KHÁM HÔM NAY'}</span>
+                            <span className="stat-title">
+                                {selectedDay ? `LỊCH KHÁM NGÀY ${selectedDay}` : selectedMonth ? `LỊCH KHÁM THÁNG ${selectedMonth}` : 'LỊCH KHÁM HÔM NAY'}
+                            </span>
                             <span className="stat-value">{stats.countAppointments} <span style={{fontSize:'1rem', color:'#64748b', fontWeight:'500'}}>Ca</span></span>
                         </div>
                     </div>
@@ -206,7 +233,27 @@ const StaffDashboard = () => {
                     </div>
                 </div>
 
-                {/* Charts Row 2 (Services & Doctors) */}
+                {/* Charts Row 2 (Daily Stats) */}
+                <div className="row">
+                    <div className="col-lg-12">
+                        <div className="saas-card" style={{ height: '380px' }}>
+                            <div className="chart-title">
+                                XU HƯỚNG LỊCH HẸN THEO NGÀY — {getFilterLabel().toUpperCase()}
+                            </div>
+                            <ResponsiveContainer width="100%" height="85%">
+                                <LineChart data={stats.appointmentsByDay} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                                    <XAxis dataKey="name" stroke="#94a3b8" tick={{fontSize: 12}} />
+                                    <YAxis stroke="#94a3b8" tick={{fontSize: 12}} allowDecimals={false} />
+                                    <Tooltip cursor={{fill: '#f1f5f9'}} />
+                                    <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={4} activeDot={{ r: 8 }} name="Số Lịch Hẹn" />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Charts Row 3 (Services & Doctors) */}
                 <div className="row">
                     {/* Top Services Line Chart */}
                     <div className="col-lg-6">
@@ -218,7 +265,7 @@ const StaffDashboard = () => {
                                     <XAxis dataKey="name" stroke="#94a3b8" tick={{fontSize: 12}} />
                                     <YAxis stroke="#94a3b8" tick={{fontSize: 12}} />
                                     <Tooltip cursor={{fill: '#f1f5f9'}} />
-                                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={4} activeDot={{ r: 8 }} name="Lượt Sử Dụng" />
+                                    <Line type="monotone" dataKey="value" stroke="#ef4444" strokeWidth={4} activeDot={{ r: 8 }} name="Lượt Sử Dụng" />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
