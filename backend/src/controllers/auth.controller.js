@@ -19,22 +19,8 @@ const login = async (req, res) => {
     try {
         const user = await userModel.findUserByEmail(email);
 
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                field: 'email',
-                message: "Email này không tồn tại trong hệ thống"
-            });
-        }
-
-        if (user.Password !== password) {
-            return res.status(401).json({
-                success: false,
-                field: 'password',
-                message: "Mật khẩu không chính xác"
-            });
-        } else {
-            const { Password, ...userInfos } = user;
+        if (user && user.PasswordHash === password) {
+            const { PasswordHash, ...userInfos } = user;
 
             const token = jwt.sign(
                 { userId: user.UserID, roleId: user.RoleID },
@@ -190,8 +176,9 @@ const changePassword = async (req, res) => {
         const user = await userModel.getUserById(userId);
         if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
 
-        if (user.Password !== oldPassword) {
-            return res.status(400).json({ success: false, field: 'oldPassword', message: "Mật khẩu cũ không chính xác" });
+        const currentPassword = user.PasswordHash;
+        if (currentPassword === newPassword) {
+            return res.status(400).json({ success: false, message: "Mật khẩu mới không được trùng với mật khẩu cũ" });
         }
 
         await userModel.changePassword(userId, newPassword);
