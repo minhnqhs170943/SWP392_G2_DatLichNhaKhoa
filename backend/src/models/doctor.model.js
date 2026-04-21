@@ -25,7 +25,7 @@ const findAllDoctors = async () => {
 const findAvailableDoctors = async (date, time) => {
     const request = new sql.Request();
     request.input('AppointmentDate', sql.Date, date);
-    request.input('AppointmentTime', sql.VarChar, time);
+    request.input('AppointmentTime', sql.Time, time);
     // Find all active doctors except those who have an appointment at the exact given date and time
     // that is NOT cancelled or completed (meaning it's Pending, Confirmed, Assigned).
     const result = await request.query(`
