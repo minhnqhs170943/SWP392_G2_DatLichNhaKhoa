@@ -2,39 +2,88 @@ const userModel = require('../models/user.model');
 const nodemailer = require('nodemailer');
 const transporter = require('../config/mailer');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10;
 
 const login = async (req, res) => {
-    let { email, password } = req.body;
+    const { Email, Password, email, password } = req.body;
+    const finalEmail = (Email || email || "").trim();
+    const finalPassword = (Password || password || "").trim();
 
-    email = email ? email.trim() : '';
-    password = password ? password.trim() : '';
+    console.log(`[Login Request] Email: ${finalEmail}`);
 
-    if (!email) {
+    if (!finalEmail) {
         return res.status(400).json({ success: false, field: 'email', message: "Email không được để trống" });
     }
-    if (!password) {
+    if (!finalPassword) {
         return res.status(400).json({ success: false, field: 'password', message: "Mật khẩu không được để trống" });
     }
 
     try {
-        const user = await userModel.findUserByEmail(email);
+        const user = await userModel.findUserByEmail(finalEmail);
 
-        if (user && user.PasswordHash === password) {
-            const { PasswordHash, ...userInfos } = user;
-
-            const token = jwt.sign(
-                { userId: user.UserID, roleId: user.RoleID },
-                process.env.JWT_SECRET || 'SWP392_SECRET_KEY',
-                { expiresIn: '1d' }
-            );
-
-            return res.status(200).json({
-                success: true,
-                message: "Đăng nhập thành công",
-                token: token,
-                user: userInfos
+        if (!user) {
+            console.log(`[Login] User not found: ${finalEmail}`);
+            return res.status(404).json({
+                success: false,
+                field: 'email',
+                message: "Email này không tồn tại trong hệ thống"
             });
         }
+
+        console.log(`[Login] Found user: ${user.Email}, UserID: ${user.UserID}, IsActive: ${user.IsActive}`);
+
+        if (!user.IsActive) {
+            console.log(`[Login] User ${user.Email} is not active.`);
+            return res.status(403).json({ success: false, message: 'Tài khoản đã bị khoá. Vui lòng liên hệ admin.' });
+        }
+
+        // Hỗ trợ cả password plain text (dữ liệu cũ) và bcrypt hash (dữ liệu mới)
+        const storedPassword = user.Password ? user.Password.trim() : "";
+        const isBcryptHash = storedPassword && (storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2a$'));
+
+        let isMatch = false;
+        if (isBcryptHash) {
+            isMatch = await bcrypt.compare(finalPassword, storedPassword);
+            console.log(`[Login] Bcrypt comparison. Match: ${isMatch}`);
+        } else {
+            // Plain text comparison cho dữ liệu seed cũ
+            isMatch = (finalPassword === storedPassword);
+            console.log(`[Login] Plain text comparison. Match: ${isMatch}. Input: [${finalPassword}], Stored: [${storedPassword}]`);
+        }
+
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                field: 'password',
+                message: "Mật khẩu không chính xác"
+            });
+        }
+        // Tự động nâng cấp plain text password lên bcrypt hash
+        if (!isBcryptHash) {
+            console.log(`[Login] Upgrading plain text password to bcrypt for ${user.Email}`);
+            const hashedPassword = await bcrypt.hash(finalPassword, SALT_ROUNDS);
+            const { sql } = require('../config/db');
+            const request = new sql.Request();
+            request.input('HashedPwd', sql.VarChar, hashedPassword);
+            request.input('UID', sql.Int, user.UserID);
+            await request.query('UPDATE Users SET Password = @HashedPwd WHERE UserID = @UID');
+        }
+
+        const { Password: _, ...userInfos } = user;
+
+        const token = jwt.sign(
+            { userId: user.UserID, roleId: user.RoleID },
+            process.env.JWT_SECRET || 'SWP392_SECRET_KEY',
+            { expiresIn: '1d' }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Đăng nhập thành công",
+            token: token,
+            user: userInfos
+        });
     } catch (error) {
         console.error("Login Error:", error);
         res.status(500).json({ success: false, message: "Lỗi hệ thống" });
@@ -42,52 +91,53 @@ const login = async (req, res) => {
 };
 
 const register = async (req, res) => {
-    let { fullName, email, password, phone, address } = req.body;
-
-    fullName = fullName ? fullName.trim() : '';
-    email = email ? email.trim() : '';
-    password = password ? password.trim() : '';
-    phone = phone ? phone.trim() : '';
-    address = address ? address.trim() : '';
+    const { FullName, Email, Password, Phone, Address, fullName, email, password, phone, address } = req.body;
+    const finalFullName = (FullName || fullName || "").trim();
+    const finalEmail = (Email || email || "").trim();
+    const finalPassword = (Password || password || "").trim();
+    const finalPhone = (Phone || phone || "").trim();
+    const finalAddress = (Address || address || "").trim();
 
     const nameRegex = /^[\p{L}\s]+$/u;
-    if (!fullName) return res.status(400).json({ success: false, field: 'fullName', message: "Họ và tên không được để trống" });
-    if (fullName.length > 255) return res.status(400).json({ success: false, field: 'fullName', message: "Họ và tên không vượt quá 255 ký tự" });
-    if (!nameRegex.test(fullName)) return res.status(400).json({ success: false, field: 'fullName', message: "Họ và tên không được chứa số hoặc ký tự đặc biệt" });
+    if (!finalFullName) return res.status(400).json({ success: false, field: 'fullName', message: "Họ và tên không được để trống" });
+    if (finalFullName.length > 255) return res.status(400).json({ success: false, field: 'fullName', message: "Họ và tên không vượt quá 255 ký tự" });
+    if (!nameRegex.test(finalFullName)) return res.status(400).json({ success: false, field: 'fullName', message: "Họ và tên không được chứa số hoặc ký tự đặc biệt" });
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) return res.status(400).json({ success: false, field: 'email', message: "Email không được để trống" });
-    if (!emailRegex.test(email)) return res.status(400).json({ success: false, field: 'email', message: "Định dạng email không hợp lệ" });
+    if (!finalEmail) return res.status(400).json({ success: false, field: 'email', message: "Email không được để trống" });
+    if (!emailRegex.test(finalEmail)) return res.status(400).json({ success: false, field: 'email', message: "Định dạng email không hợp lệ" });
 
     const phoneRegex = /^0\d{9}$/;
-    if (!phone) return res.status(400).json({ success: false, field: 'phone', message: "Số điện thoại không được để trống" });
-    if (!phoneRegex.test(phone)) return res.status(400).json({ success: false, field: 'phone', message: "Số điện thoại không hợp lệ" });
+    if (!finalPhone) return res.status(400).json({ success: false, field: 'phone', message: "Số điện thoại không được để trống" });
+    if (!phoneRegex.test(finalPhone)) return res.status(400).json({ success: false, field: 'phone', message: "Số điện thoại không hợp lệ" });
 
-    if (!address) return res.status(400).json({ success: false, field: 'address', message: "Địa chỉ không được để trống" });
-    if (address.length > 255) return res.status(400).json({ success: false, field: 'address', message: "Địa chỉ không vượt quá 255 ký tự" });
+    if (!finalAddress) return res.status(400).json({ success: false, field: 'address', message: "Địa chỉ không được để trống" });
+    if (finalAddress.length > 255) return res.status(400).json({ success: false, field: 'address', message: "Địa chỉ không vượt quá 255 ký tự" });
 
     const passRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
-    if (!password) return res.status(400).json({ success: false, field: 'password', message: "Mật khẩu không được để trống" });
-    if (password.length < 6 || password.length > 36) return res.status(400).json({ success: false, field: 'password', message: "Mật khẩu phải từ 6 đến 36 ký tự" });
-    if (!passRegex.test(password)) return res.status(400).json({ success: false, field: 'password', message: "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số" });
+    if (!finalPassword) return res.status(400).json({ success: false, field: 'password', message: "Mật khẩu không được để trống" });
+    if (finalPassword.length < 6 || finalPassword.length > 36) return res.status(400).json({ success: false, field: 'password', message: "Mật khẩu phải từ 6 đến 36 ký tự" });
+    if (!passRegex.test(finalPassword)) return res.status(400).json({ success: false, field: 'password', message: "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số" });
 
     try {
-        const existingUser = await userModel.findUserByEmail(email);
+        const existingUser = await userModel.findUserByEmail(finalEmail);
         if (existingUser) {
             return res.status(400).json({ success: false, field: 'email', message: "Email này đã được sử dụng!" });
         }
 
-        const existingPhone = await userModel.findUserByPhone(phone);
+        const existingPhone = await userModel.findUserByPhone(finalPhone);
         if (existingPhone) {
             return res.status(400).json({ success: false, field: 'phone', message: "Số điện thoại này đã được sử dụng!" });
         }
 
+        const hashedPassword = await bcrypt.hash(finalPassword, SALT_ROUNDS);
+
         const newUser = {
-            password: password,
-            fullName: fullName,
-            email: email,
-            phone: phone,
-            address: address
+            password: hashedPassword,
+            fullName: finalFullName,
+            email: finalEmail,
+            phone: finalPhone,
+            address: finalAddress
         };
 
         await userModel.createUser(newUser);
