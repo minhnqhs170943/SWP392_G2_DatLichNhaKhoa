@@ -140,7 +140,7 @@ exports.confirmAppointment = async (req, res) => {
                 // Hệ thống tự tìm bác sĩ rảnh
                 const availableResult = await pool.request()
                     .input('appDate', sql.Date, appointment.AppointmentDate)
-                    .input('appTime', sql.Time, appointment.AppointmentTime)
+                    .input('appTime', sql.NVarChar, appointment.AppointmentTime)
                     .query(`
                         SELECT TOP 1 d.DoctorID
                         FROM Doctors d
@@ -149,7 +149,7 @@ exports.confirmAppointment = async (req, res) => {
                         AND d.DoctorID NOT IN (
                             SELECT DoctorID FROM Appointments
                             WHERE AppointmentDate = @appDate
-                              AND AppointmentTime = @appTime
+                              AND AppointmentTime = CAST(@appTime AS TIME)
                               AND Status NOT IN ('Cancelled', 'Completed')
                               AND DoctorID IS NOT NULL
                         )
@@ -306,11 +306,11 @@ exports.createAppointment = async (req, res) => {
             .input('patientId', sql.Int, patientId)
             .input('doctorId', sql.Int, doctorId || null)
             .input('appointmentDate', sql.Date, appointmentDate)
-            .input('appointmentTime', sql.Time, appointmentTime)
+            .input('appointmentTime', sql.NVarChar, appointmentTime)
             .input('note', sql.NVarChar, note || null)
             .query(`
                 INSERT INTO Appointments (PatientID, DoctorID, AppointmentDate, AppointmentTime, Status, Note, CreatedAt, UpdatedAt)
-                VALUES (@patientId, @doctorId, @appointmentDate, @appointmentTime, 'Pending', @note, GETDATE(), GETDATE());
+                VALUES (@patientId, @doctorId, @appointmentDate, CAST(@appointmentTime AS TIME), 'Pending', @note, GETDATE(), GETDATE());
                 SELECT SCOPE_IDENTITY() AS AppointmentID;
             `);
         
