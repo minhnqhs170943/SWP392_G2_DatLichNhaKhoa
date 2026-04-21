@@ -29,6 +29,7 @@ import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard';
+ 
 
 // RoleID từ DB: 1-Admin, 2-Doctor, 3-Staff, 4-User
 import BlogListPage from './pages/BlogListPage';
@@ -70,7 +71,7 @@ function App() {
         <Route path="/notifications" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><NotificationsPage /></RoleRoute>} />
 
         //Admin
-        <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminProduct /></RoleRoute>} />
+        <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><ProductManagement /></RoleRoute>} />
 
         //Doctor
         <Route path="/doctor/dashboard" element={<RoleRoute allowedRoles={[2]}><DoctorDashboard /></RoleRoute>} />
