@@ -75,6 +75,7 @@ export default function AdminProduct() {
         stockQuantity: Number(form.stockQuantity),
         imageURL: form.imageURL.trim(),
         isActive: form.isActive,
+
       };
 
       if (!payload.productName || Number.isNaN(payload.price) || Number.isNaN(payload.stockQuantity)) {
@@ -147,6 +148,8 @@ export default function AdminProduct() {
         >
           <input placeholder="Tên sản phẩm" value={form.productName} onChange={(e) => onChange("productName", e.target.value)} />
           <input placeholder="Thương hiệu" value={form.brand} onChange={(e) => onChange("brand", e.target.value)} />
+ 
+
           <textarea placeholder="Mô tả" value={form.description} onChange={(e) => onChange("description", e.target.value)} />
           <input
             placeholder="Giá"

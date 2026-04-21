@@ -41,7 +41,6 @@ const getEligibleAppointmentsByUserId = async (userId) => {
             ISNULL(r.EditCount, 0) AS EditCount,
             CASE
                 WHEN r.ReviewID IS NULL THEN 1
-                WHEN ISNULL(r.EditCount, 0) < 1 THEN 1
                 ELSE 0
             END AS CanReviewOrEdit
         FROM Appointments a

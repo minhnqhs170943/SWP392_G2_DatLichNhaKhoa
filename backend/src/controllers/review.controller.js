@@ -1,5 +1,26 @@
 const reviewModel = require('../models/review.model');
 
+const MIN_COMMENT_LENGTH = 10;
+const MAX_COMMENT_LENGTH = 500;
+
+const normalizeAndValidateComment = (comment) => {
+    const normalizedComment = typeof comment === 'string' ? comment.trim() : '';
+
+    if (!normalizedComment) {
+        return { valid: false, message: 'Vui lòng nhập nhận xét.' };
+    }
+
+    if (normalizedComment.length < MIN_COMMENT_LENGTH) {
+        return { valid: false, message: `Nhận xét phải có ít nhất ${MIN_COMMENT_LENGTH} ký tự.` };
+    }
+
+    if (normalizedComment.length > MAX_COMMENT_LENGTH) {
+        return { valid: false, message: `Nhận xét tối đa ${MAX_COMMENT_LENGTH} ký tự.` };
+    }
+
+    return { valid: true, normalizedComment };
+};
+
 const getLatestReviews = async (req, res) => {
     try { 
         const reviews = await reviewModel.getLatestReviews( );
@@ -48,11 +69,16 @@ const createReview = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Rating phải từ 1 đến 5' });
         }
 
+        const commentCheck = normalizeAndValidateComment(comment);
+        if (!commentCheck.valid) {
+            return res.status(400).json({ success: false, message: commentCheck.message });
+        }
+
         const created = await reviewModel.createReview({
             appointmentId: parsedAppointmentId,
             userId: parsedUserId,
             rating: parsedRating,
-            comment
+            comment: commentCheck.normalizedComment
         });
 
         if (!created) {
@@ -87,11 +113,16 @@ const updateReview = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Rating phải từ 1 đến 5' });
         }
 
+        const commentCheck = normalizeAndValidateComment(comment);
+        if (!commentCheck.valid) {
+            return res.status(400).json({ success: false, message: commentCheck.message });
+        }
+
         const updated = await reviewModel.updateReviewByAppointment({
             appointmentId: parsedAppointmentId,
             userId: parsedUserId,
             rating: parsedRating,
-            comment
+            comment: commentCheck.normalizedComment
         });
 
         if (!updated) {
