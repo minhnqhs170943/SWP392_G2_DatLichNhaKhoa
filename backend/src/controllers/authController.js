@@ -41,7 +41,7 @@ const register = async (req, res) => {
         const PasswordHash = await bcrypt.hash(Password, SALT_ROUNDS);
 
         const result = await pool.request()
-            .input('RoleID', sql.Int, 3) // default: Patient
+            .input('RoleID', sql.Int, 4) // default: Patient
             .input('PasswordHash', sql.VarChar, PasswordHash)
             .input('FullName', sql.NVarChar, FullName)
             .input('Email', sql.VarChar, Email)

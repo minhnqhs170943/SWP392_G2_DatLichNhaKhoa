@@ -6,9 +6,9 @@ const API_URL = 'http://localhost:5001/api/admin/users';
 
 const ROLES = [
     { id: 1, name: 'Admin' },
-    { id: 2, name: 'Staff' },
-    { id: 3, name: 'Patient' },
-    { id: 4, name: 'Doctor' }
+    { id: 2, name: 'Doctor' },
+    { id: 3, name: 'Staff' },
+    { id: 4, name: 'Patient' }
 ];
 
 const UserManagement = () => {

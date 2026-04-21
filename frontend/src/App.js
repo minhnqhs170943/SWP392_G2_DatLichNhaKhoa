@@ -86,8 +86,8 @@ function App() {
         <Route path="/admin/appointments" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminAppointments /></AdminLayout></RoleRoute>} />
 
         {/* Staff Dashboard */}
-        <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 2]}><StaffDashboard /></RoleRoute>} />
-        <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[1, 2]}><StaffAppointments /></RoleRoute>} />
+        <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 3]}><StaffDashboard /></RoleRoute>} />
+        <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[1, 3]}><StaffAppointments /></RoleRoute>} />
       </Routes>
     </Router>
   );
