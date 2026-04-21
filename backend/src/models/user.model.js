@@ -26,7 +26,7 @@ const createUser = async (userData) => {
     request.input('address', sql.NVarChar, address);
 
     await request.query(`
-        INSERT INTO Users (RoleID, PasswordHash, FullName, Email, Phone, Address, IsActive, CreatedAt)
+        INSERT INTO Users (RoleID, Password, FullName, Email, Phone, Address, IsActive, CreatedAt)
         VALUES (@roleId, @password, @fullName, @email, @phone, @address, 1, GETDATE())
     `);
 };
@@ -59,7 +59,7 @@ const changePassword = async (userId, newPassword) => {
 
     await request.query(`
         UPDATE Users
-        SET PasswordHash = @newPassword
+        SET Password = @newPassword
         WHERE UserID = @userId
     `);
 };

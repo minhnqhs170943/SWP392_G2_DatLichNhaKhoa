@@ -85,14 +85,13 @@ exports.getDashboardStats = async (req, res) => {
         const appointmentStatusResult = await statusReq.query(statusQuery);
         const appointmentsStatus = appointmentStatusResult.recordset;
 
-        // 6. Top dịch vụ sử dụng - theo tháng + năm (qua AppointmentServices)
+        // 6. Top dịch vụ sử dụng - theo tháng + năm
         let servicesQuery = `
             SELECT TOP 5
                 s.ServiceName as name,
-                COUNT(aps.ServiceID) as value
+                COUNT(s.ServiceID) as value
             FROM Appointments a
-            JOIN AppointmentServices aps ON a.AppointmentID = aps.AppointmentID
-            JOIN Services s ON aps.ServiceID = s.ServiceID
+            JOIN Services s ON a.AppointmentID = s.AppointmentID
             WHERE YEAR(a.AppointmentDate) = @year
         `;
         if (filterMonth) servicesQuery += ` AND MONTH(a.AppointmentDate) = @month`;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Edit2, Trash2, X, Eye, Search, ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Eye, Search, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import './ProductManagement.css';
 
 const API_URL = 'http://localhost:5001/api/admin/products';
@@ -24,6 +24,13 @@ const ProductManagement = () => {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
     const fileInputRef = useRef(null);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
+    const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE) || 1;
+    const paginatedProducts = products.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const fetchProducts = useCallback(async (search = '') => {
         try {
@@ -192,7 +199,7 @@ const ProductManagement = () => {
                     className="pm-search-input"
                     placeholder="Tìm theo tên sản phẩm, thương hiệu..."
                     value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
+                    onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 />
                 {searchTerm && (
                     <button className="pm-clear-search-btn" onClick={() => setSearchTerm('')}><X size={16} /></button>
@@ -219,9 +226,9 @@ const ProductManagement = () => {
                         ) : products.length === 0 ? (
                             <tr><td colSpan="7" className="empty-cell">Không tìm thấy sản phẩm</td></tr>
                         ) : (
-                            products.map((product, index) => (
+                            paginatedProducts.map((product, index) => (
                                 <tr key={product.ProductID}>
-                                    <td>{index + 1}</td>
+                                    <td>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
                                     <td>
                                         {product.ImageURL ? (
                                             <img src={product.ImageURL} alt={product.ProductName}
@@ -259,6 +266,42 @@ const ProductManagement = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px', gap: '5px' }}>
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                        disabled={currentPage === 1}
+                        style={{ padding: '6px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button 
+                            key={page} 
+                            onClick={() => setCurrentPage(page)}
+                            style={{ 
+                                padding: '6px 12px', 
+                                background: currentPage === page ? '#3b82f6' : '#fff', 
+                                color: currentPage === page ? '#fff' : '#0f172a',
+                                border: '1px solid #e2e8f0', 
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                        disabled={currentPage === totalPages}
+                        style={{ padding: '6px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* Modal */}
             {isModalOpen && currentProduct && (

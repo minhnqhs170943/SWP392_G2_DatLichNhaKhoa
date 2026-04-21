@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Eye, X, CreditCard } from 'lucide-react';
+import { Search, Filter, Eye, X, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import '../Dashboard/StaffAppointments.css'; // Reusing staff appointments CSS
 
 const AdminAppointments = () => {
@@ -7,6 +7,8 @@ const AdminAppointments = () => {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
     
     // Modal state
     const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -84,6 +86,14 @@ const AdminAppointments = () => {
         return matchStatus && matchSearch;
     });
 
+    const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE) || 1;
+    const paginatedAppointments = filteredAppointments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    // Reset pagination when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterStatus]);
+
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0);
     };
@@ -147,8 +157,8 @@ const AdminAppointments = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredAppointments.length > 0 ? (
-                                filteredAppointments.map(app => (
+                            {paginatedAppointments.length > 0 ? (
+                                paginatedAppointments.map(app => (
                                     <tr key={app.AppointmentID}>
                                         <td>
                                             <div className="patient-info">
@@ -210,6 +220,42 @@ const AdminAppointments = () => {
                     </table>
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px', gap: '5px' }}>
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                        disabled={currentPage === 1}
+                        style={{ padding: '6px 10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button 
+                            key={page} 
+                            onClick={() => setCurrentPage(page)}
+                            style={{ 
+                                padding: '6px 12px', 
+                                background: currentPage === page ? '#3b82f6' : '#fff', 
+                                color: currentPage === page ? '#fff' : '#0f172a',
+                                border: '1px solid #e2e8f0', 
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                        disabled={currentPage === totalPages}
+                        style={{ padding: '6px 10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* ===== Chi Tiết Modal ===== */}
             {isModalOpen && selectedAppointment && (

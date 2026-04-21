@@ -77,20 +77,20 @@ const createUser = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Email này đã được đăng ký. Vui lòng dùng email khác.' });
         }
 
-        const PasswordHash = await bcrypt.hash(Password, SALT_ROUNDS);
+        const hashedPassword = await bcrypt.hash(Password, SALT_ROUNDS);
 
         const result = await pool.request()
             .input('RoleID', sql.Int, roleIdInt)
-            .input('PasswordHash', sql.VarChar, PasswordHash)
+            .input('Password', sql.VarChar, hashedPassword)
             .input('FullName', sql.NVarChar, FullName)
             .input('Email', sql.VarChar, Email)
             .input('Phone', sql.VarChar, Phone)
             .input('Address', sql.NVarChar, Address || null)
             .input('IsActive', sql.Bit, isActiveBit)
             .query(`
-                INSERT INTO Users (RoleID, PasswordHash, FullName, Email, Phone, Address, IsActive, CreatedAt)
+                INSERT INTO Users (RoleID, Password, FullName, Email, Phone, Address, IsActive, CreatedAt)
                 OUTPUT INSERTED.UserID, INSERTED.FullName, INSERTED.Email, INSERTED.Phone, INSERTED.Address, INSERTED.RoleID, INSERTED.IsActive, INSERTED.CreatedAt
-                VALUES (@RoleID, @PasswordHash, @FullName, @Email, @Phone, @Address, @IsActive, GETDATE())
+                VALUES (@RoleID, @Password, @FullName, @Email, @Phone, @Address, @IsActive, GETDATE())
             `);
 
         const newUser = result.recordset[0];
@@ -165,9 +165,9 @@ const updateUser = async (req, res) => {
 
         // Nếu có password mới thì cập nhật luôn
         if (Password && Password.trim() !== '') {
-            const PasswordHash = await bcrypt.hash(Password, SALT_ROUNDS);
-            request.input('PasswordHash', sql.VarChar, PasswordHash);
-            updateQuery += `, PasswordHash = @PasswordHash`;
+            const hashedPassword = await bcrypt.hash(Password, SALT_ROUNDS);
+            request.input('Password', sql.VarChar, hashedPassword);
+            updateQuery += `, Password = @Password`;
         }
 
         updateQuery += ` WHERE UserID = @UserID`;
