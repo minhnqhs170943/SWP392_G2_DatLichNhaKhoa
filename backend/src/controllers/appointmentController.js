@@ -140,7 +140,7 @@ exports.confirmAppointment = async (req, res) => {
                 // Hệ thống tự tìm bác sĩ rảnh
                 const availableResult = await pool.request()
                     .input('appDate', sql.Date, appointment.AppointmentDate)
-                    .input('appTime', sql.VarChar, appointment.AppointmentTime)
+                    .input('appTime', sql.Time, appointment.AppointmentTime)
                     .query(`
                         SELECT TOP 1 d.DoctorID
                         FROM Doctors d
@@ -306,7 +306,7 @@ exports.createAppointment = async (req, res) => {
             .input('patientId', sql.Int, patientId)
             .input('doctorId', sql.Int, doctorId || null)
             .input('appointmentDate', sql.Date, appointmentDate)
-            .input('appointmentTime', sql.VarChar, appointmentTime)
+            .input('appointmentTime', sql.Time, appointmentTime)
             .input('note', sql.NVarChar, note || null)
             .query(`
                 INSERT INTO Appointments (PatientID, DoctorID, AppointmentDate, AppointmentTime, Status, Note, CreatedAt, UpdatedAt)

@@ -131,6 +131,14 @@ const StaffAppointments = () => {
         }
     };
 
+    const formatApptTime = (timeStr) => {
+        if (!timeStr) return '';
+        const time = timeStr.substring(0, 5);
+        if (time === '08:00') return 'Sáng';
+        if (time === '14:00') return 'Chiều';
+        return time;
+    };
+
     // Xác nhận lịch hẹn
     const handleConfirmAppointment = async (appointment) => {
         if (appointment.DoctorID) {
@@ -346,7 +354,7 @@ const StaffAppointments = () => {
                                             </td>
                                             <td>
                                                 <div className="fw-bold">{new Date(app.AppointmentDate).toLocaleDateString('vi-VN')}</div>
-                                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{app.AppointmentTime}</div>
+                                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{formatApptTime(app.AppointmentTime)}</div>
                                             </td>
                                             {/* <td>
                                                 <div className="fw-bold" style={{ color: '#059669' }}>{formatCurrency(app.TotalPrice)}</div>
@@ -435,7 +443,7 @@ const StaffAppointments = () => {
                                 <div className="detail-row">
                                     <div className="detail-label">Thời Gian Hẹn</div>
                                     <div className="detail-value">
-                                        {new Date(selectedAppointment.AppointmentDate).toLocaleDateString('vi-VN')} lúc {selectedAppointment.AppointmentTime}
+                                        {new Date(selectedAppointment.AppointmentDate).toLocaleDateString('vi-VN')} lúc {formatApptTime(selectedAppointment.AppointmentTime)}
                                     </div>
                                 </div>
                                 <div className="detail-row">
@@ -558,7 +566,7 @@ const StaffAppointments = () => {
                                 </div>
                                 <div className="detail-row">
                                     <div className="detail-label">Thời Gian</div>
-                                    <div className="detail-value">{confirmTarget.AppointmentTime} — {new Date(confirmTarget.AppointmentDate).toLocaleDateString('vi-VN')}</div>
+                                    <div className="detail-value">{formatApptTime(confirmTarget.AppointmentTime)} — {new Date(confirmTarget.AppointmentDate).toLocaleDateString('vi-VN')}</div>
                                 </div>
                                 <div className="detail-row">
                                     <div className="detail-label">Dịch Vụ</div>

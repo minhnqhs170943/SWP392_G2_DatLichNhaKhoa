@@ -123,7 +123,7 @@ const BookingPage = () => {
                     price: s.Price
                 })),
                 appointmentDate: selectedDate,
-                appointmentTime: selectedTime,
+                appointmentTime: selectedTime === 'Sáng' ? '08:00' : '14:00',
                 note: note || null
             };
 

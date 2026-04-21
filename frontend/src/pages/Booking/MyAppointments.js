@@ -94,10 +94,10 @@ const MyAppointments = () => {
 
     const formatTime = (timeStr) => {
         if (!timeStr) return '';
-        if (timeStr.includes('T')) return timeStr.substring(11, 16);
-        // Sometimes SQL TIME returns string HH:mm:ss
-        if (timeStr.length > 5) return timeStr.substring(0, 5);
-        return timeStr;
+        const time = timeStr.substring(0, 5);
+        if (time === '08:00') return 'Sáng';
+        if (time === '14:00') return 'Chiều';
+        return time;
     };
 
     const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
