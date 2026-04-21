@@ -255,18 +255,18 @@ const StaffDashboard = () => {
 
                 {/* Charts Row 3 (Services & Doctors) */}
                 <div className="row">
-                    {/* Top Services Line Chart */}
+                    {/* Top Services Bar Chart */}
                     <div className="col-lg-6">
                         <div className="saas-card" style={{ height: '380px' }}>
-                            <div className="chart-title">MẬT ĐỘ SỬ DỤNG DỊCH VỤ</div>
+                            <div className="chart-title">DỊCH VỤ PHỔ BIẾN NHẤT</div>
                             <ResponsiveContainer width="100%" height="85%">
-                                <LineChart data={stats.topServices} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                                <BarChart data={stats.topServices} margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barSize={40}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                                     <XAxis dataKey="name" stroke="#94a3b8" tick={{fontSize: 12}} />
-                                    <YAxis stroke="#94a3b8" tick={{fontSize: 12}} />
+                                    <YAxis stroke="#94a3b8" tick={{fontSize: 12}} allowDecimals={false} />
                                     <Tooltip cursor={{fill: '#f1f5f9'}} />
-                                    <Line type="monotone" dataKey="value" stroke="#ef4444" strokeWidth={4} activeDot={{ r: 8 }} name="Lượt Sử Dụng" />
-                                </LineChart>
+                                    <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Lượt Sử Dụng" />
+                                </BarChart>
                             </ResponsiveContainer>
                         </div>
                     </div>

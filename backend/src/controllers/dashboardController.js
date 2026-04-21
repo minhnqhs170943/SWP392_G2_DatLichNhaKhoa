@@ -110,20 +110,23 @@ exports.getDashboardStats = async (req, res) => {
             value: item.value
         }));
 
-        // 6. Top dịch vụ sử dụng - theo tháng + năm
+        // 6. Top dịch vụ sử dụng - theo tháng + năm + ngày
         let servicesQuery = `
             SELECT TOP 5
                 s.ServiceName as name,
                 COUNT(s.ServiceID) as value
             FROM Appointments a
             JOIN Services s ON a.AppointmentID = s.AppointmentID
-            WHERE YEAR(a.AppointmentDate) = @year
+            WHERE YEAR(a.AppointmentDate) = @year 
+            AND a.Status <> 'Cancelled'
         `;
         if (filterMonth) servicesQuery += ` AND MONTH(a.AppointmentDate) = @month`;
+        if (filterDay) servicesQuery += ` AND DAY(a.AppointmentDate) = @day`;
         servicesQuery += ` GROUP BY s.ServiceName ORDER BY value DESC`;
 
         const servicesReq = pool.request().input('year', filterYear);
         if (filterMonth) servicesReq.input('month', filterMonth);
+        if (filterDay) servicesReq.input('day', filterDay);
         const topServicesResult = await servicesReq.query(servicesQuery);
         const topServices = topServicesResult.recordset;
 
