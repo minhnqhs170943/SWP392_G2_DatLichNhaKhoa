@@ -84,7 +84,7 @@ const MyAppointments = () => {
 
     const getStatusLabel = (status) => {
         switch (status) {
-            case 'Pending': return 'Chờ thanh toán';
+            case 'Pending': return 'Chờ xác nhận';
             case 'Confirmed': return 'Đã xác nhận';
             case 'Completed': return 'Hoàn thành';
             case 'Cancelled': return 'Đã hủy';

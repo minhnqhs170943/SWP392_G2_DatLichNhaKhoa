@@ -68,6 +68,16 @@ const AdminAppointments = () => {
         }
     };
 
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'Pending': return 'Chờ xác nhận';
+            case 'Confirmed': return 'Đã xác nhận';
+            case 'Completed': return 'Hoàn thành';
+            case 'Cancelled': return 'Đã hủy';
+            default: return status;
+        }
+    };
+
     const openDetailsModal = (appointment) => {
         setSelectedAppointment(appointment);
         setIsModalOpen(true);
@@ -129,7 +139,7 @@ const AdminAppointments = () => {
                             style={{paddingLeft: '38px'}}
                         >
                             <option value="All">Tất cả trạng thái</option>
-                            <option value="Pending">Chờ Thanh Toán (Pending)</option>
+                            <option value="Pending">Chờ Xác Nhận</option>
                             <option value="Confirmed">Đã Xác Nhận (Confirmed)</option>
                             <option value="Completed">Hoàn Thành (Completed)</option>
                             <option value="Cancelled">Đã Hủy (Cancelled)</option>
@@ -191,7 +201,7 @@ const AdminAppointments = () => {
                                         </td>
                                         <td>
                                             <span className={`status-badge ${getStatusClass(app.Status)}`}>
-                                                {app.Status}
+                                                {getStatusLabel(app.Status)}
                                             </span>
                                         </td>
                                         <td>
@@ -301,7 +311,7 @@ const AdminAppointments = () => {
                                 <div className="detail-label">Trạng Thái</div>
                                 <div className="detail-value">
                                     <span className={`status-badge ${getStatusClass(selectedAppointment.Status)}`}>
-                                        {selectedAppointment.Status}
+                                        {getStatusLabel(selectedAppointment.Status)}
                                     </span>
                                 </div>
                             </div>

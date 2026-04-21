@@ -1,4 +1,4 @@
-const API_URL = `${process.env.REACT_APP_API_URL}/auth`;
+const API_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/auth`;
 
 export const loginApi = async (email, password) => {
     try {

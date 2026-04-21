@@ -8,15 +8,13 @@ import './BookingPage.css';
 
 const STEPS = [
     { num: 1, label: 'Chọn Dịch Vụ', icon: '🦷' },
-    { num: 2, label: 'Chọn Bác Sĩ', icon: '👨‍⚕️' },
-    { num: 3, label: 'Ngày & Giờ', icon: '📅' },
+    { num: 2, label: 'Ngày & Giờ', icon: '📅' },
+    { num: 3, label: 'Chọn Bác Sĩ', icon: '👨‍⚕️' },
     { num: 4, label: 'Xác Nhận', icon: '✅' },
 ];
 
 const TIME_SLOTS = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '13:30', '14:00', '14:30', '15:00',
-    '15:30', '16:00', '16:30', '17:00'
+    'Sáng', 'Chiều'
 ];
 
 const BookingPage = () => {
@@ -35,6 +33,8 @@ const BookingPage = () => {
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
+    const [serviceSearch, setServiceSearch] = useState('');
+    const [doctorSearch, setDoctorSearch] = useState('');
     const [note, setNote] = useState('');
 
     useEffect(() => {
@@ -48,11 +48,7 @@ const BookingPage = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [doctorsData, servicesRes] = await Promise.all([
-                fetchDoctors(),
-                fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/services`).then(r => r.json())
-            ]);
-            setDoctors(doctorsData || []);
+            const servicesRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/services`).then(r => r.json());
             setServices(servicesRes.data || servicesRes.services || []);
         } catch (error) {
             console.error('Lỗi tải dữ liệu:', error);
@@ -76,15 +72,34 @@ const BookingPage = () => {
     const canGoNext = () => {
         switch (currentStep) {
             case 1: return selectedServices.length > 0;
-            case 2: return true; // Doctor is optional
-            case 3: return selectedDate && selectedTime;
+            case 2: return selectedDate && selectedTime;
+            case 3: return true; // Doctor is optional
             case 4: return true;
             default: return false;
         }
     };
 
-    const handleNext = () => {
+    const fetchAvailableDoctors = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
+            const data = await res.json();
+            if (data.success) {
+                setDoctors(data.data || []);
+                setSelectedDoctor(null); // Reset when time changes
+            }
+        } catch (error) {
+            console.error('Lỗi tải bác sĩ rảnh:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleNext = async () => {
         if (canGoNext() && currentStep < 4) {
+            if (currentStep === 2) {
+                await fetchAvailableDoctors();
+            }
             setCurrentStep(currentStep + 1);
         }
     };
@@ -168,7 +183,7 @@ const BookingPage = () => {
                             </div>
                             <div className="success-row">
                                 <span>Trạng thái</span>
-                                <span className="badge-pending">Chờ thanh toán</span>
+                                <span className="badge-pending">Chờ xác nhận</span>
                             </div>
                         </div>
 
@@ -223,8 +238,19 @@ const BookingPage = () => {
                             <div className="step-panel">
                                 <h2>Chọn Dịch Vụ Khám</h2>
                                 <p className="step-desc">Bạn có thể chọn một hoặc nhiều dịch vụ</p>
+                                <div className="booking-search-box">
+                                    <span className="search-icon">🔍</span>
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm kiếm dịch vụ..."
+                                        value={serviceSearch}
+                                        onChange={(e) => setServiceSearch(e.target.value)}
+                                        className="booking-search-input"
+                                    />
+                                    {serviceSearch && <button className="search-clear" onClick={() => setServiceSearch('')}>✕</button>}
+                                </div>
                                 <div className="services-grid">
-                                    {services.map(svc => (
+                                    {services.filter(svc => svc.ServiceName.toLowerCase().includes(serviceSearch.toLowerCase())).map(svc => (
                                         <div
                                             key={svc.ServiceID}
                                             className={`service-card ${selectedServices.find(s => s.ServiceID === svc.ServiceID) ? 'selected' : ''}`}
@@ -238,6 +264,9 @@ const BookingPage = () => {
                                             <div className="service-price">{formatCurrency(svc.Price)}</div>
                                         </div>
                                     ))}
+                                    {services.filter(svc => svc.ServiceName.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
+                                        <div style={{gridColumn: '1/-1', textAlign: 'center', padding: '30px', color: '#94a3b8'}}>Không tìm thấy dịch vụ phù hợp.</div>
+                                    )}
                                 </div>
                                 {selectedServices.length > 0 && (
                                     <div className="selected-summary">
@@ -248,21 +277,74 @@ const BookingPage = () => {
                             </div>
                         )}
 
-                        {/* STEP 2: Chọn Bác Sĩ */}
+                        {/* STEP 2: Ngày & Giờ */}
                         {currentStep === 2 && (
                             <div className="step-panel">
-                                <h2>Chọn Bác Sĩ</h2>
-                                <p className="step-desc">Chọn bác sĩ bạn muốn khám hoặc bỏ qua để hệ thống tự phân công</p>
-                                <div className="doctors-grid">
-                                    <div
-                                        className={`doctor-card ${selectedDoctor === null ? 'selected' : ''}`}
-                                        onClick={() => setSelectedDoctor(null)}
-                                    >
-                                        <div className="doctor-avatar">🏥</div>
-                                        <h3>Để hệ thống chọn</h3>
-                                        <p className="doctor-specialty">Bác sĩ sẽ được phân công tự động</p>
+                                <h2>Chọn Ngày & Giờ Khám</h2>
+                                <p className="step-desc">Chọn thời gian phù hợp cho buổi khám</p>
+                                
+                                <div className="datetime-section">
+                                    <div className="date-picker-wrapper">
+                                        <label>📅 Ngày khám</label>
+                                        <input
+                                            type="date"
+                                            className="date-input"
+                                            value={selectedDate}
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            min={getMinDate()}
+                                        />
                                     </div>
-                                    {doctors.map(doc => (
+
+                                    <div className="time-picker-wrapper">
+                                        <label>⏰ Khung giờ khám</label>
+                                        <div className="time-slots-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                            {TIME_SLOTS.map(time => (
+                                                <button
+                                                    key={time}
+                                                    className={`time-slot ${selectedTime === time ? 'selected' : ''}`}
+                                                    onClick={() => setSelectedTime(time)}
+                                                    style={{ padding: '15px', fontSize: '1.1rem' }}
+                                                >
+                                                    {time}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 3: Chọn Bác Sĩ */}
+                        {currentStep === 3 && (
+                            <div className="step-panel">
+                                <h2>Chọn Bác Sĩ</h2>
+                                <p className="step-desc">Danh sách bác sĩ còn trống lịch vào {selectedTime} ngày {new Date(selectedDate).toLocaleDateString('vi-VN')}. Bạn có thể chọn hoặc hệ thống tự phân công.</p>
+                                <div className="booking-search-box">
+                                    <span className="search-icon">🔍</span>
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm bác sĩ theo tên hoặc chuyên khoa..."
+                                        value={doctorSearch}
+                                        onChange={(e) => setDoctorSearch(e.target.value)}
+                                        className="booking-search-input"
+                                    />
+                                    {doctorSearch && <button className="search-clear" onClick={() => setDoctorSearch('')}>✕</button>}
+                                </div>
+                                <div className="doctors-grid">
+                                    {!doctorSearch && (
+                                        <div
+                                            className={`doctor-card ${selectedDoctor === null ? 'selected' : ''}`}
+                                            onClick={() => setSelectedDoctor(null)}
+                                        >
+                                            <div className="doctor-avatar">🏥</div>
+                                            <h3>Để hệ thống chọn</h3>
+                                            <p className="doctor-specialty">Bác sĩ sẽ được phân công tự động bởi nhân viên</p>
+                                        </div>
+                                    )}
+                                    {doctors.filter(doc => {
+                                        const q = doctorSearch.toLowerCase();
+                                        return doc.FullName.toLowerCase().includes(q) || (doc.Specialty || '').toLowerCase().includes(q);
+                                    }).map(doc => (
                                         <div
                                             key={doc.DoctorID}
                                             className={`doctor-card ${selectedDoctor?.DoctorID === doc.DoctorID ? 'selected' : ''}`}
@@ -282,42 +364,11 @@ const BookingPage = () => {
                                             )}
                                         </div>
                                     ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 3: Ngày & Giờ */}
-                        {currentStep === 3 && (
-                            <div className="step-panel">
-                                <h2>Chọn Ngày & Giờ Khám</h2>
-                                <p className="step-desc">Chọn thời gian phù hợp cho buổi khám</p>
-                                
-                                <div className="datetime-section">
-                                    <div className="date-picker-wrapper">
-                                        <label>📅 Ngày khám</label>
-                                        <input
-                                            type="date"
-                                            className="date-input"
-                                            value={selectedDate}
-                                            onChange={(e) => setSelectedDate(e.target.value)}
-                                            min={getMinDate()}
-                                        />
-                                    </div>
-
-                                    <div className="time-picker-wrapper">
-                                        <label>⏰ Giờ khám</label>
-                                        <div className="time-slots-grid">
-                                            {TIME_SLOTS.map(time => (
-                                                <button
-                                                    key={time}
-                                                    className={`time-slot ${selectedTime === time ? 'selected' : ''}`}
-                                                    onClick={() => setSelectedTime(time)}
-                                                >
-                                                    {time}
-                                                </button>
-                                            ))}
+                                    {doctors.length === 0 && !doctorSearch && (
+                                        <div className="no-doctor-msg" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '20px', color: '#64748b' }}>
+                                            Hiện tại không có bác sĩ nào trống lịch vào khung giờ này. Vui lòng chọn giờ khác, hoặc "Để hệ thống phân công".
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         )}
