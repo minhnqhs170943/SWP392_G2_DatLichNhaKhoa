@@ -82,7 +82,8 @@ const BookingPage = () => {
     const fetchAvailableDoctors = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
+            const mappedTime = selectedTime === 'Sáng' ? '08:00' : '14:00';
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/available?date=${selectedDate}&time=${mappedTime}`);
             const data = await res.json();
             if (data.success) {
                 setDoctors(data.data || []);
