@@ -49,7 +49,7 @@ const getProductsForAdmin = async (req, res) => {
 
 const createProduct = async (req, res) => {
     try {
-        const { productName, brand, description, price, stockQuantity, imageURL } = req.body;
+        const { productName, brand, description, price, stockQuantity, imageURL, nsx } = req.body;
         if (!productName || price === undefined || stockQuantity === undefined) {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc' });
         }
@@ -60,7 +60,8 @@ const createProduct = async (req, res) => {
             description: description ? String(description).trim() : null,
             price: Number(price),
             stockQuantity: Number(stockQuantity),
-            imageURL: imageURL ? String(imageURL).trim() : null
+            imageURL: imageURL ? String(imageURL).trim() : null,
+            nsx: nsx ? String(nsx).trim() : null
         });
 
         return res.status(201).json({
