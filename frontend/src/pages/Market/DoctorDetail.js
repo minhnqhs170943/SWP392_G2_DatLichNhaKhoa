@@ -83,12 +83,12 @@ export default function DoctorDetail() {
                         {console.log(doctor)}
                         <div
                             className="card border d-flex align-items-center justify-content-center"
-                            style={{ height: 340, borderRadius: 16, borderColor: "#eee", background: "#f0f2f5" }}
+                            style={{ height: 460, borderRadius: 16, borderColor: "#eee", background: "#f0f2f5" }}
                         >
                             <img
-                                src={doctor.avt || "https://via.placeholder.com/360x340?text=Doctor"}
+                                src={doctor.avt || "https://via.placeholder.com/420x460?text=Doctor"}
                                 alt={doctor.name || "Doctor"}
-                                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 16 }}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", borderRadius: 16 }}
                             />
                         </div>
                     </div>

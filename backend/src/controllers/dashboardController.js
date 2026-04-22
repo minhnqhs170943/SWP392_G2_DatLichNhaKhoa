@@ -6,6 +6,7 @@ exports.getDashboardStats = async (req, res) => {
         const pool = await poolPromise;
 
         // Lấy query params lọc, mặc định = năm hiện tại
+        const filterDay = req.query.day ? parseInt(req.query.day) : null;
         const filterMonth = req.query.month ? parseInt(req.query.month) : null; // null = tất cả tháng
         const filterYear = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
 
@@ -14,41 +15,45 @@ exports.getDashboardStats = async (req, res) => {
             SELECT COUNT(*) AS TotalPatients 
             FROM Users u
             JOIN Roles r ON u.RoleID = r.RoleID
-            WHERE r.RoleName = 'Patient' AND u.IsActive = 1
+            WHERE (r.RoleName = 'Patient' OR r.RoleName = 'User') AND u.IsActive = 1
         `);
         const totalPatients = patientsResult.recordset[0].TotalPatients;
 
-        // 2. Tổng doanh thu (theo năm + tháng nếu có)
         let revenueQuery = `
             SELECT ISNULL(SUM(p.Amount), 0) AS TotalRevenue 
             FROM Payments p
             WHERE p.Status = 'Completed' AND YEAR(p.PaymentDate) = @year
         `;
-        if (filterMonth) {
-            revenueQuery += ` AND MONTH(p.PaymentDate) = @month`;
-        }
+        if (filterMonth) revenueQuery += ` AND MONTH(p.PaymentDate) = @month`;
+        if (filterDay) revenueQuery += ` AND DAY(p.PaymentDate) = @day`;
+
         const revenueRequest = pool.request().input('year', filterYear);
         if (filterMonth) revenueRequest.input('month', filterMonth);
+        if (filterDay) revenueRequest.input('day', filterDay);
         const revenueResult = await revenueRequest.query(revenueQuery);
         const totalRevenue = revenueResult.recordset[0].TotalRevenue;
 
-        // 3. Số lịch hẹn (theo tháng+năm hoặc hôm nay nếu không lọc)
-        let appointmentCountQuery;
-        if (filterMonth) {
+        // 3. Số lịch hẹn
+        let appointmentCountQuery = `
+            SELECT COUNT(*) AS CountAppointments 
+            FROM Appointments
+            WHERE YEAR(AppointmentDate) = @year
+        `;
+        if (filterMonth) appointmentCountQuery += ` AND MONTH(AppointmentDate) = @month`;
+        if (filterDay) appointmentCountQuery += ` AND DAY(AppointmentDate) = @day`;
+        
+        // Nếu không có bất kỳ filter nào, mặc định là hôm nay như cũ
+        if (!filterMonth && !filterYear && !filterDay) {
             appointmentCountQuery = `
                 SELECT COUNT(*) AS CountAppointments 
                 FROM Appointments
-                WHERE MONTH(AppointmentDate) = @month AND YEAR(AppointmentDate) = @year
-            `;
-        } else {
-            appointmentCountQuery = `
-                SELECT COUNT(*) AS CountAppointments 
-                FROM Appointments
-                WHERE AppointmentDate = CAST(GETDATE() AS DATE)
+                WHERE CAST(AppointmentDate AS DATE) = CAST(GETDATE() AS DATE)
             `;
         }
+
         const appointmentCountReq = pool.request().input('year', filterYear);
         if (filterMonth) appointmentCountReq.input('month', filterMonth);
+        if (filterDay) appointmentCountReq.input('day', filterDay);
         const appointmentCountResult = await appointmentCountReq.query(appointmentCountQuery);
         const countAppointments = appointmentCountResult.recordset[0].CountAppointments;
 
@@ -85,21 +90,43 @@ exports.getDashboardStats = async (req, res) => {
         const appointmentStatusResult = await statusReq.query(statusQuery);
         const appointmentsStatus = appointmentStatusResult.recordset;
 
-        // 6. Top dịch vụ sử dụng - theo tháng + năm (qua AppointmentServices)
+        // 5.5 Thống kê Lịch hẹn theo ngày (Line Chart) - theo tháng + năm
+        // Nếu không có tháng cụ thể, mặc định lấy tháng hiện tại để biểu đồ không bị trống
+        const statsMonth = filterMonth || (new Date().getMonth() + 1);
+        const appointmentsByDayResult = await pool.request()
+            .input('month', statsMonth)
+            .input('year', filterYear)
+            .query(`
+                SELECT 
+                    DAY(AppointmentDate) as dayNum,
+                    COUNT(*) as value
+                FROM Appointments
+                WHERE MONTH(AppointmentDate) = @month AND YEAR(AppointmentDate) = @year
+                GROUP BY DAY(AppointmentDate)
+                ORDER BY dayNum ASC
+            `);
+        const appointmentsByDay = appointmentsByDayResult.recordset.map(item => ({
+            name: 'Ngày ' + item.dayNum,
+            value: item.value
+        }));
+
+        // 6. Top dịch vụ sử dụng - theo tháng + năm + ngày
         let servicesQuery = `
             SELECT TOP 5
                 s.ServiceName as name,
-                COUNT(aps.ServiceID) as value
+                COUNT(s.ServiceID) as value
             FROM Appointments a
-            JOIN AppointmentServices aps ON a.AppointmentID = aps.AppointmentID
-            JOIN Services s ON aps.ServiceID = s.ServiceID
-            WHERE YEAR(a.AppointmentDate) = @year
+            JOIN Services s ON a.AppointmentID = s.AppointmentID
+            WHERE YEAR(a.AppointmentDate) = @year 
+            AND a.Status <> 'Cancelled'
         `;
         if (filterMonth) servicesQuery += ` AND MONTH(a.AppointmentDate) = @month`;
+        if (filterDay) servicesQuery += ` AND DAY(a.AppointmentDate) = @day`;
         servicesQuery += ` GROUP BY s.ServiceName ORDER BY value DESC`;
 
         const servicesReq = pool.request().input('year', filterYear);
         if (filterMonth) servicesReq.input('month', filterMonth);
+        if (filterDay) servicesReq.input('day', filterDay);
         const topServicesResult = await servicesReq.query(servicesQuery);
         const topServices = topServicesResult.recordset;
 
@@ -130,8 +157,10 @@ exports.getDashboardStats = async (req, res) => {
                 countAppointments,
                 revenueByMonth,
                 appointmentsStatus,
+                appointmentsByDay,
                 topServices,
                 topDoctors,
+                filterDay,
                 filterMonth,
                 filterYear
             }

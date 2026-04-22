@@ -1,0 +1,139 @@
+.admin-dashboard {
+    background: #f4f7fe; /* Very soft light grayish blue typical of premium Admin themes */
+    min-height: 100vh;
+    padding: 35px 45px;
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #2b3674;
+}
+
+/* Header Area */
+.admin-header {
+    margin-bottom: 35px;
+}
+
+.admin-header h1 {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: #2b3674;
+    letter-spacing: -0.5px;
+}
+
+.admin-header p {
+    color: #a3aed1;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Widget Cards */
+.admin-kpi-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 18px 40px rgba(112, 144, 176, 0.12);
+    margin-bottom: 25px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.admin-kpi-card:hover {
+    transform: translateY(-5px);
+}
+
+.kpi-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 18px;
+    flex-shrink: 0;
+}
+
+.kpi-icon-wrapper.revenue { background: #e2e8f0; color: #4318ff; }
+.kpi-icon-wrapper.patients { background: #e0f2fe; color: #0284c7; }
+.kpi-icon-wrapper.appointments { background: #ffedd5; color: #ea580c; }
+
+.kpi-icon-wrapper svg {
+    width: 28px;
+    height: 28px;
+}
+
+.kpi-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-label {
+    color: #a3aed1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-value {
+    color: #2b3674;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+/* Data Cards */
+.admin-data-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 18px 40px rgba(112, 144, 176, 0.12);
+    margin-bottom: 25px;
+}
+
+.admin-data-title {
+    color: #2b3674;
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 25px;
+}
+
+/* Service Table */
+.service-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.service-table th {
+    text-align: left;
+    padding: 15px;
+    color: #a3aed1;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #e2e8f0;
+    text-transform: uppercase;
+}
+
+.service-table td {
+    padding: 16px 15px;
+    color: #2b3674;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.service-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+.currency-text {
+    color: #059669;
+}
+
+/* Tooltip Customization */
+.custom-admin-tooltip {
+    background: #2b3674;
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    border: none;
+    box-shadow: 0 10px 25px rgba(43, 54, 116, 0.2);
+}

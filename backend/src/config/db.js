@@ -30,7 +30,7 @@ const config = {
     user: process.env.DB_USER || 'sa',
     password: process.env.DB_PASSWORD || '',
     server: process.env.DB_SERVER || 'localhost',
-    database: process.env.DB_DATABASE || 'master',
+    database: process.env.DB_NAME || process.env.DB_DATABASE || 'master',
     options: {
         encrypt: (process.env.DB_ENCRYPT || 'true').toLowerCase() === 'true',
         trustServerCertificate: (process.env.DB_TRUST_SERVER_CERT || 'true').toLowerCase() === 'true'

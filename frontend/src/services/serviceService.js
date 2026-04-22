@@ -1,4 +1,4 @@
-const API_URL = `${process.env.REACT_APP_API_URL}/services`;
+const API_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/services`;
 
 export const getAllServicesApi = async () => {
     try {

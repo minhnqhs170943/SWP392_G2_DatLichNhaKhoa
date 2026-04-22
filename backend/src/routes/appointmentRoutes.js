@@ -9,6 +9,9 @@ router.get('/', appointmentController.getAllAppointments);
 // PUT update status of an appointment
 router.put('/:id/status', appointmentController.updateAppointmentStatus);
 
+// PUT xác nhận lịch hẹn (Staff confirm + assign bác sĩ)
+router.put('/:id/confirm', appointmentController.confirmAppointment);
+
 // POST thanh toán appointment → auto xác nhận
 router.post('/:id/pay', appointmentController.payAppointment);
 
