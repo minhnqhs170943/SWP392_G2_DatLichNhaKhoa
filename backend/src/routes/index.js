@@ -29,5 +29,6 @@ router.use('/blogs', blogRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/admin/analytics', require('./adminStatsRoutes'));
 router.use('/admin/users', require('./adminUserRoutes'));
+router.use('/admin/invoices', require('./adminInvoiceRoutes'));
 
 module.exports = router;

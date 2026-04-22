@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Package } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Package, ClipboardList, BookOpen, Stethoscope, FileText } from 'lucide-react';
 import './SidebarAdmin.css';
 
 const SidebarAdmin = () => {
@@ -17,16 +17,37 @@ const SidebarAdmin = () => {
                 <div className="menu-label-admin">QUẢN TRỊ VIÊN</div>
 
                 <div className="nav-item-admin">
-                    <NavLink to="/admin-analytics" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
+                    <NavLink to="/admin/stats" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
                         <LayoutDashboard size={20} />
                         <span>Thống Kê</span>
                     </NavLink>
                 </div>
 
                 <div className="nav-item-admin">
-                    <NavLink to="/admin/user" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
+                    <NavLink to="/admin/users" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
                         <Users size={20} />
                         <span>Người Dùng</span>
+                    </NavLink>
+                </div>
+
+                <div className="nav-item-admin">
+                    <NavLink to="/admin/appointments" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
+                        <ClipboardList size={20} />
+                        <span>Lịch Hẹn</span>
+                    </NavLink>
+                </div>
+
+                <div className="nav-item-admin">
+                    <NavLink to="/admin/invoices" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
+                        <FileText size={20} />
+                        <span>Hóa Đơn</span>
+                    </NavLink>
+                </div>
+
+                <div className="nav-item-admin">
+                    <NavLink to="/admin/services" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
+                        <Stethoscope size={20} />
+                        <span>Dịch Vụ</span>
                     </NavLink>
                 </div>
 
@@ -34,6 +55,13 @@ const SidebarAdmin = () => {
                     <NavLink to="/admin/products" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
                         <Package size={20} />
                         <span>Sản Phẩm</span>
+                    </NavLink>
+                </div>
+
+                <div className="nav-item-admin">
+                    <NavLink to="/admin/blogs" className={({ isActive }) => isActive ? "nav-link-admin active" : "nav-link-admin"}>
+                        <BookOpen size={20} />
+                        <span>Bài Viết</span>
                     </NavLink>
                 </div>
 
