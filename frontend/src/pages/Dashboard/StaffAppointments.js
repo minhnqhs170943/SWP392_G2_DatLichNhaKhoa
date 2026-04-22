@@ -94,15 +94,18 @@ const StaffAppointments = () => {
         }
     };
 
-    const formatApptTime = (timeStr) => {
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const datePart = dateStr.split('T')[0];
+        const [y, m, d] = datePart.split('-');
+        if (y && m && d) return `${d}/${m}/${y}`;
+        return new Date(dateStr).toLocaleDateString('vi-VN');
+    };
+
+    const formatTime = (timeStr) => {
         if (!timeStr) return '';
         if (timeStr.includes('T')) {
-            const date = new Date(timeStr);
-            if (!isNaN(date)) {
-                const hours = String(date.getHours()).padStart(2, '0');
-                const mins = String(date.getMinutes()).padStart(2, '0');
-                return `${hours}:${mins}`;
-            }
+            return timeStr.split('T')[1].substring(0, 5);
         }
         return timeStr.substring(0, 5);
     };
@@ -192,31 +195,6 @@ const StaffAppointments = () => {
         }
     };
 
-    // Hệ thống tự động phân công
-    const handleAutoAssign = async () => {
-        setConfirmLoading(true);
-        try {
-            const response = await fetch(`http://localhost:5001/api/appointments/${confirmTarget.AppointmentID}/confirm`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ autoAssign: true })
-            });
-            const data = await response.json();
-            if (data.success) {
-                closeConfirmModal();
-                showToast(`✅ Xác nhận thành công! Hệ thống đã phân công BS. ${data.data.doctorName}`);
-                fetchAppointments();
-            } else {
-                showToast('Lỗi: ' + data.message, 'error');
-            }
-        } catch (error) {
-            console.error('Lỗi xác nhận:', error);
-            showToast('Không thể kết nối đến server!', 'error');
-        } finally {
-            setConfirmLoading(false);
-        }
-    };
-
     const openDetailsModal = (appointment) => {
         setSelectedAppointment(appointment);
         setIsModalOpen(true);
@@ -293,8 +271,6 @@ const StaffAppointments = () => {
                                     <th>Bệnh Nhân</th>
                                     <th>Dịch Vụ & Bác Sĩ</th>
                                     <th>Thời Gian Hẹn</th>
-                                    {/* <th>Tổng Tiền</th>
-                                <th>Thanh Toán</th> */}
                                     <th>Trạng Thái</th>
                                     <th>Hành Động</th>
                                 </tr>
@@ -319,19 +295,9 @@ const StaffAppointments = () => {
                                                 <div style={{ color: '#64748b', fontSize: '0.85rem' }}>BS. {app.DoctorName || 'Chưa phân công'}</div>
                                             </td>
                                             <td>
-                                                <div className="fw-bold">{new Date(app.AppointmentDate).toLocaleDateString('vi-VN')}</div>
-                                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{formatApptTime(app.AppointmentTime)}</div>
+                                                <div className="fw-bold">{formatDate(app.AppointmentDate)}</div>
+                                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{formatTime(app.AppointmentTime)}</div>
                                             </td>
-                                            {/* <td>
-                                                <div className="fw-bold" style={{ color: '#059669' }}>{formatCurrency(app.TotalPrice)}</div>
-                                            </td> */}
-                                            {/* <td>
-                                                {app.PaymentStatus === 'Completed' ? (
-                                                    <span className="status-badge completed">Đã TT</span>
-                                                ) : (
-                                                    <span className="status-badge pending">Chưa TT</span>
-                                                )}
-                                            </td> */}
                                             <td>
                                                 <span className={`status-badge ${getStatusClass(app.Status)}`}>
                                                     {getStatusLabel(app.Status)}
@@ -404,7 +370,7 @@ const StaffAppointments = () => {
                                 <div className="detail-row">
                                     <div className="detail-label">Thời Gian Hẹn</div>
                                     <div className="detail-value">
-                                        {new Date(selectedAppointment.AppointmentDate).toLocaleDateString('vi-VN')} lúc {formatApptTime(selectedAppointment.AppointmentTime)}
+                                        {formatDate(selectedAppointment.AppointmentDate)} lúc {formatTime(selectedAppointment.AppointmentTime)}
                                     </div>
                                 </div>
                                 <div className="detail-row">
@@ -467,7 +433,7 @@ const StaffAppointments = () => {
                                 </div>
                                 <div className="detail-row">
                                     <div className="detail-label">Thời Gian</div>
-                                    <div className="detail-value">{formatApptTime(confirmTarget.AppointmentTime)} — {new Date(confirmTarget.AppointmentDate).toLocaleDateString('vi-VN')}</div>
+                                    <div className="detail-value">{formatTime(confirmTarget.AppointmentTime)} — {formatDate(confirmTarget.AppointmentDate)}</div>
                                 </div>
                                 <div className="detail-row">
                                     <div className="detail-label">Dịch Vụ</div>
@@ -524,16 +490,7 @@ const StaffAppointments = () => {
                                 >
                                     Xác Nhận & Phân Công
                                 </button>
-                                {availableDoctors.length > 0 && (
-                                    <button
-                                        className="btn-action btn-pay"
-                                        onClick={handleAutoAssign}
-                                        disabled={confirmLoading}
-                                        style={{ background: '#8b5cf6', borderColor: '#8b5cf6' }}
-                                    >
-                                        🤖 Tự Động Phân Công
-                                    </button>
-                                )}
+
                                 <button className="btn-action btn-view" onClick={closeConfirmModal}>Hủy Bỏ</button>
                             </div>
                         </div>
