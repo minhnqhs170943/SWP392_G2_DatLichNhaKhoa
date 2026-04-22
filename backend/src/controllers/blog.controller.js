@@ -1,4 +1,5 @@
 const blogModel = require('../models/blog.model');
+const { checkBadWords } = require('../utils/badWordsFilter');
 
 const getBlogs = async (req, res) => {
     try {
@@ -80,6 +81,20 @@ const createBlog = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
         }
 
+        // --- PHẦN KIỂM SOÁT TỪ NGỮ ---
+        const checkTitle = checkBadWords(title);
+        const checkContent = checkBadWords(content);
+        const checkSummary = checkBadWords(summary);
+
+        if (checkTitle.isBad || checkContent.isBad || checkSummary.isBad) {
+            const violatedWord = checkTitle.word || checkContent.word || checkSummary.word;
+            return res.status(400).json({ 
+                success: false, 
+                message: `Nội dung chứa từ ngữ không phù hợp.` 
+            });
+        }
+        // ----------------------------
+
         const blogId = await blogModel.createBlog({
             title: String(title).trim(),
             slug: String(slug).trim(),
@@ -112,6 +127,20 @@ const updateBlog = async (req, res) => {
         if (!title || !slug || !content) {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
         }
+
+        // --- PHẦN KIỂM SOÁT TỪ NGỮ ---
+        const checkTitle = checkBadWords(title);
+        const checkContent = checkBadWords(content);
+        const checkSummary = checkBadWords(summary);
+
+        if (checkTitle.isBad || checkContent.isBad || checkSummary.isBad) {
+            const violatedWord = checkTitle.word || checkContent.word || checkSummary.word;
+            return res.status(400).json({ 
+                success: false, 
+                message: `Nội dung chứa từ ngữ không phù hợp: "${violatedWord}". Vui lòng chỉnh sửa.` 
+            });
+        }
+        // ----------------------------
 
         const affected = await blogModel.updateBlog(Number(id), {
             title: String(title).trim(),
