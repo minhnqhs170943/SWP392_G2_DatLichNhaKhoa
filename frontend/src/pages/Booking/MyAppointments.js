@@ -94,10 +94,15 @@ const MyAppointments = () => {
 
     const formatTime = (timeStr) => {
         if (!timeStr) return '';
-        const time = timeStr.substring(0, 5);
-        if (time === '08:00') return 'Sáng';
-        if (time === '14:00') return 'Chiều';
-        return time;
+        if (timeStr.includes('T')) {
+            const date = new Date(timeStr);
+            if (!isNaN(date)) {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const mins = String(date.getMinutes()).padStart(2, '0');
+                return `${hours}:${mins}`;
+            }
+        }
+        return timeStr.substring(0, 5);
     };
 
     const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);

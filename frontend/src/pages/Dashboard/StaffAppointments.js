@@ -96,6 +96,14 @@ const StaffAppointments = () => {
 
     const formatApptTime = (timeStr) => {
         if (!timeStr) return '';
+        if (timeStr.includes('T')) {
+            const date = new Date(timeStr);
+            if (!isNaN(date)) {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const mins = String(date.getMinutes()).padStart(2, '0');
+                return `${hours}:${mins}`;
+            }
+        }
         return timeStr.substring(0, 5);
     };
 
@@ -475,23 +483,32 @@ const StaffAppointments = () => {
                                     <p style={{ textAlign: 'center', color: '#64748b' }}>Đang tìm bác sĩ rảnh...</p>
                                 ) : availableDoctors.length > 0 ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '250px', overflowY: 'auto' }}>
-                                        {availableDoctors.map(doc => (
-                                            <div
-                                                key={doc.DoctorID}
-                                                onClick={() => setSelectedDoctorId(doc.DoctorID)}
-                                                style={{
-                                                    padding: '12px',
-                                                    border: selectedDoctorId === doc.DoctorID ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                                                    borderRadius: '8px',
-                                                    cursor: 'pointer',
-                                                    background: selectedDoctorId === doc.DoctorID ? '#eff6ff' : '#fff',
-                                                    transition: 'all 0.15s ease'
-                                                }}
-                                            >
-                                                <div style={{ fontWeight: 'bold', color: '#1e293b' }}>BS. {doc.FullName}</div>
-                                                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{doc.Specialty || 'Nha khoa tổng quát'}</div>
-                                            </div>
-                                        ))}
+                                        {availableDoctors.map(doc => {
+                                            const isBusy = !doc.IsAvailable;
+                                            return (
+                                                <div
+                                                    key={doc.DoctorID}
+                                                    onClick={() => !isBusy && setSelectedDoctorId(doc.DoctorID)}
+                                                    style={{
+                                                        padding: '12px',
+                                                        border: selectedDoctorId === doc.DoctorID ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                                                        borderRadius: '8px',
+                                                        cursor: isBusy ? 'not-allowed' : 'pointer',
+                                                        background: selectedDoctorId === doc.DoctorID ? '#eff6ff' : isBusy ? '#f8fafc' : '#fff',
+                                                        opacity: isBusy ? 0.6 : 1,
+                                                        filter: isBusy ? 'grayscale(0.5)' : 'none',
+                                                        transition: 'all 0.15s ease',
+                                                        position: 'relative'
+                                                    }}
+                                                >
+                                                    <div style={{ fontWeight: 'bold', color: '#1e293b' }}>
+                                                        BS. {doc.FullName}
+                                                        {isBusy && <span style={{ marginLeft: '10px', fontSize: '0.7rem', color: '#ef4444', border: '1px solid #ef4444', padding: '1px 4px', borderRadius: '4px' }}>ĐÃ BẬN</span>}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{doc.Specialty || 'Nha khoa tổng quát'}</div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <div style={{ padding: '20px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', color: '#ef4444' }}>

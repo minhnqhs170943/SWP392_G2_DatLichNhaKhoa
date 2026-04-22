@@ -326,13 +326,11 @@ const BookingPage = () => {
                                                 return (
                                                     <button
                                                         key={time}
-                                                        className={`time-slot ${selectedTime === time ? 'selected' : ''} ${isBooked ? 'booked' : ''}`}
-                                                        onClick={() => !isBooked && setSelectedTime(time)}
-                                                        disabled={isBooked}
-                                                        title={isBooked ? 'Khung giờ này đã hết chỗ' : ''}
+                                                        className={`time-slot ${selectedTime === time ? 'selected' : ''}`}
+                                                        onClick={() => setSelectedTime(time)}
+                                                        title=""
                                                     >
                                                         {time}
-                                                        {isBooked && <span className="booked-label">Hết chỗ</span>}
                                                     </button>
                                                 );
                                             })}
@@ -375,9 +373,10 @@ const BookingPage = () => {
                                     }).map(doc => (
                                         <div
                                             key={doc.DoctorID}
-                                            className={`doctor-card ${selectedDoctor?.DoctorID === doc.DoctorID ? 'selected' : ''}`}
-                                            onClick={() => setSelectedDoctor(doc)}
+                                            className={`doctor-card ${selectedDoctor?.DoctorID === doc.DoctorID ? 'selected' : ''} ${!doc.IsAvailable ? 'busy' : ''}`}
+                                            onClick={() => doc.IsAvailable && setSelectedDoctor(doc)}
                                         >
+                                            {!doc.IsAvailable && <div className="busy-badge">Đã bận</div>}
                                             <div className="doctor-avatar">
                                                 {doc.AvatarURL ? (
                                                     <img src={doc.AvatarURL} alt={doc.FullName} />

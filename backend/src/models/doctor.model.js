@@ -39,19 +39,19 @@ const findAvailableDoctors = async (date, time) => {
                 d.DoctorID,
                 d.Bio,
                 d.ExperienceYears,
-                d.Specialty
+                d.Specialty,
+                CASE WHEN d.DoctorID IN (
+                    SELECT DoctorID 
+                    FROM Appointments 
+                    WHERE AppointmentDate = @AppointmentDate
+                      AND AppointmentTime = CAST(@AppointmentTime AS TIME)
+                      AND Status NOT IN ('Cancelled', 'Completed')
+                      AND DoctorID IS NOT NULL
+                ) THEN 0 ELSE 1 END as IsAvailable
         from Users u
         join Roles r on r.RoleID = u.RoleID
         join Doctors d on d.UserID = u.UserID
         where r.RoleID = 2 AND u.IsActive = 1
-        AND d.DoctorID NOT IN (
-            SELECT DoctorID 
-            FROM Appointments 
-            WHERE AppointmentDate = @AppointmentDate
-              AND AppointmentTime = CAST(@AppointmentTime AS TIME)
-              AND Status NOT IN ('Cancelled', 'Completed')
-              AND DoctorID IS NOT NULL
-        )
     `);
     return result.recordset;
 }

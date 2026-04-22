@@ -268,6 +268,29 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+.doctor-card.busy {
+    opacity: 0.7;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+    filter: grayscale(0.6);
+    position: relative;
+}
+
+.busy-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    z-index: 10;
+}
+
 .doctor-avatar {
     width: 64px;
     height: 64px;
