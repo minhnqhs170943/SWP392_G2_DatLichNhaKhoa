@@ -32,6 +32,23 @@ const getAvailableDoctors = async (req, res) => {
     }
 };
 
+const getBookedSlots = async (req, res) => {
+    try {
+        const { date } = req.query;
+        if (!date) {
+            return res.status(400).json({ success: false, message: 'Vui lòng cung cấp date (YYYY-MM-DD)' });
+        }
+        const bookedSlots = await doctorModel.findBookedSlots(date);
+        return res.status(200).json({
+            success: true,
+            data: bookedSlots
+        });
+    } catch (error) {
+        console.error('Get Booked Slots Error:', error);
+        return res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
+    }
+};
+
 const getDoctorById = async (req, res) => {
     const { id } = req.params;
     try {
@@ -65,4 +82,4 @@ const getServices = async (req, res) => {
     }
 };
 
-module.exports = { getDoctors, getAvailableDoctors, getDoctorById, getServices };
+module.exports = { getDoctors, getAvailableDoctors, getBookedSlots, getDoctorById, getServices };

@@ -11,27 +11,6 @@ import './StaffDashboard.css';
 const COLORS = ['#2563eb', '#60a5fa', '#3b82f6', '#93c5fd', '#bfdbfe'];
 
 const currentYear = new Date().getFullYear();
-const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i);
-const monthOptions = [
-    { value: '', label: 'Tất cả tháng' },
-    { value: '1', label: 'Tháng 1' },
-    { value: '2', label: 'Tháng 2' },
-    { value: '3', label: 'Tháng 3' },
-    { value: '4', label: 'Tháng 4' },
-    { value: '5', label: 'Tháng 5' },
-    { value: '6', label: 'Tháng 6' },
-    { value: '7', label: 'Tháng 7' },
-    { value: '8', label: 'Tháng 8' },
-    { value: '9', label: 'Tháng 9' },
-    { value: '10', label: 'Tháng 10' },
-    { value: '11', label: 'Tháng 11' },
-    { value: '12', label: 'Tháng 12' },
-];
-
-const dayOptions = [
-    { value: '', label: 'Tất cả ngày' },
-    ...Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: `Ngày ${i + 1}` }))
-];
 
 const StaffDashboard = () => {
     const [stats, setStats] = useState({
@@ -47,20 +26,16 @@ const StaffDashboard = () => {
     const [loading, setLoading] = useState(true);
 
     // Filter state
-    const [selectedDay, setSelectedDay] = useState('');
-    const [selectedMonth, setSelectedMonth] = useState('');
-    const [selectedYear, setSelectedYear] = useState(String(currentYear));
+    const today = new Date().toISOString().split('T')[0];
+    const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    
+    const [startDate, setStartDate] = useState(firstDayOfMonth);
+    const [endDate, setEndDate] = useState(today);
 
     const fetchStats = useCallback(async () => {
         try {
             setLoading(true);
-            let url = `http://localhost:5001/api/dashboard/stats?year=${selectedYear}`;
-            if (selectedMonth) {
-                url += `&month=${selectedMonth}`;
-            }
-            if (selectedDay) {
-                url += `&day=${selectedDay}`;
-            }
+            let url = `http://localhost:5001/api/dashboard/stats?startDate=${startDate}&endDate=${endDate}`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.success) {
@@ -71,26 +46,25 @@ const StaffDashboard = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedDay, selectedMonth, selectedYear]);
+    }, [startDate, endDate]);
 
     useEffect(() => {
         fetchStats();
     }, [fetchStats]);
 
     const handleReset = () => {
-        setSelectedDay('');
-        setSelectedMonth('');
-        setSelectedYear(String(currentYear));
+        setStartDate(firstDayOfMonth);
+        setEndDate(today);
+    };
+
+    const formatDateVN = (dateStr) => {
+        if (!dateStr) return '';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y}`;
     };
 
     const getFilterLabel = () => {
-        if (selectedDay && selectedMonth) {
-            return `Ngày ${selectedDay}/${selectedMonth}/${selectedYear}`;
-        }
-        if (selectedMonth) {
-            return `Tháng ${selectedMonth}/${selectedYear}`;
-        }
-        return `Năm ${selectedYear}`;
+        return `Từ ${formatDateVN(startDate)} đến ${formatDateVN(endDate)}`;
     };
 
     if (loading) {
@@ -110,7 +84,7 @@ const StaffDashboard = () => {
                 <div className="dashboard-header d-flex justify-content-between align-items-end">
                     <div>
                         <h2>DENTAL CLINIC PERFORMANCE</h2>
-                        <p>Staff Dashboard | Dữ liệu: {getFilterLabel()}</p>
+                        <p>Staff Dashboard | {getFilterLabel()}</p>
                     </div>
                 </div>
 
@@ -118,38 +92,27 @@ const StaffDashboard = () => {
                 <div className="filter-bar">
                     <div className="filter-bar-label">
                         <CalendarDays size={18} />
-                        <span>Bộ Lọc Thống Kê</span>
+                        <span>Khoảng Thời Gian</span>
                     </div>
                     <div className="filter-bar-controls">
-                        <select 
-                            className="filter-select"
-                            value={selectedMonth} 
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                        >
-                            {monthOptions.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                        <select 
-                            className="filter-select"
-                            value={selectedDay} 
-                            onChange={(e) => setSelectedDay(e.target.value)}
-                            disabled={!selectedMonth}
-                            title={!selectedMonth ? "Chọn tháng trước để lọc theo ngày" : ""}
-                        >
-                            {dayOptions.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                        <select 
-                            className="filter-select"
-                            value={selectedYear} 
-                            onChange={(e) => setSelectedYear(e.target.value)}
-                        >
-                            {yearOptions.map(y => (
-                                <option key={y} value={String(y)}>Năm {y}</option>
-                            ))}
-                        </select>
+                        <div className="d-flex align-items-center gap-2">
+                            <span style={{fontSize:'0.85rem', fontWeight:'600', color:'#64748b'}}>Từ:</span>
+                            <input 
+                                type="date" 
+                                className="filter-select" 
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            <span style={{fontSize:'0.85rem', fontWeight:'600', color:'#64748b'}}>Đến:</span>
+                            <input 
+                                type="date" 
+                                className="filter-select" 
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
                         <button className="filter-reset-btn" onClick={handleReset} title="Reset về mặc định">
                             <RotateCcw size={16} />
                             Reset
@@ -177,9 +140,7 @@ const StaffDashboard = () => {
 
                     <div className="col-md-4">
                         <div className="saas-card stat-wrapper">
-                            <span className="stat-title">
-                                {selectedDay ? `LỊCH KHÁM NGÀY ${selectedDay}` : selectedMonth ? `LỊCH KHÁM THÁNG ${selectedMonth}` : 'LỊCH KHÁM HÔM NAY'}
-                            </span>
+                            <span className="stat-title">LỊCH KHÁM TRONG KHOẢNG</span>
                             <span className="stat-value">{stats.countAppointments} <span style={{fontSize:'1rem', color:'#64748b', fontWeight:'500'}}>Ca</span></span>
                         </div>
                     </div>
@@ -191,7 +152,7 @@ const StaffDashboard = () => {
                     <div className="col-lg-8">
                         <div className="saas-card" style={{ height: '420px' }}>
                             <div className="chart-title">
-                                THỐNG KÊ DOANH THU THEO THÁNG — NĂM {selectedYear}
+                                THỐNG KÊ DOANH THU THEO THÁNG — NĂM {endDate ? new Date(endDate).getFullYear() : currentYear}
                             </div>
                             <ResponsiveContainer width="100%" height="85%">
                                 <BarChart data={stats.revenueByMonth} margin={{ top: 10, right: 10, left: 20, bottom: 5 }} barSize={35}>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { fetchDoctors } from '../../services/doctorApi';
 import { createAppointment } from '../../services/appointmentApi';
 import './BookingPage.css';
 
@@ -14,7 +13,7 @@ const STEPS = [
 ];
 
 const TIME_SLOTS = [
-    'Sáng', 'Chiều'
+    '08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'
 ];
 
 const BookingPage = () => {
@@ -36,6 +35,7 @@ const BookingPage = () => {
     const [serviceSearch, setServiceSearch] = useState('');
     const [doctorSearch, setDoctorSearch] = useState('');
     const [note, setNote] = useState('');
+    const [bookedSlots, setBookedSlots] = useState([]); // Times that are full
 
     useEffect(() => {
         if (!user) {
@@ -54,6 +54,29 @@ const BookingPage = () => {
             console.error('Lỗi tải dữ liệu:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Khi chọn ngày → lấy danh sách khung giờ đã hết chỗ
+    useEffect(() => {
+        if (selectedDate) {
+            fetchBookedSlots(selectedDate);
+        }
+    }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const fetchBookedSlots = async (date) => {
+        try {
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/booked-slots?date=${date}`);
+            const data = await res.json();
+            if (data.success) {
+                setBookedSlots(data.data || []);
+                // Nếu giờ đang chọn bị trùng (hiếm gặp vì disabled nhưng có thể do đổi ngày)
+                if (data.data.includes(selectedTime)) {
+                    setSelectedTime('');
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi lấy khung giờ đã đặt:', error);
         }
     };
 
@@ -82,8 +105,7 @@ const BookingPage = () => {
     const fetchAvailableDoctors = async () => {
         try {
             setLoading(true);
-            const mappedTime = selectedTime === 'Sáng' ? '08:00' : '14:00';
-            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/available?date=${selectedDate}&time=${mappedTime}`);
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
             const data = await res.json();
             if (data.success) {
                 setDoctors(data.data || []);
@@ -124,7 +146,7 @@ const BookingPage = () => {
                     price: s.Price
                 })),
                 appointmentDate: selectedDate,
-                appointmentTime: selectedTime === 'Sáng' ? '08:00' : '14:00',
+                appointmentTime: selectedTime,
                 note: note || null
             };
 
@@ -297,18 +319,23 @@ const BookingPage = () => {
                                     </div>
 
                                     <div className="time-picker-wrapper">
-                                        <label>⏰ Khung giờ khám</label>
-                                        <div className="time-slots-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                                            {TIME_SLOTS.map(time => (
-                                                <button
-                                                    key={time}
-                                                    className={`time-slot ${selectedTime === time ? 'selected' : ''}`}
-                                                    onClick={() => setSelectedTime(time)}
-                                                    style={{ padding: '15px', fontSize: '1.1rem' }}
-                                                >
-                                                    {time}
-                                                </button>
-                                            ))}
+                                        <label>⏰ Giờ khám</label>
+                                        <div className="time-slots-grid">
+                                            {TIME_SLOTS.map(time => {
+                                                const isBooked = bookedSlots.includes(time);
+                                                return (
+                                                    <button
+                                                        key={time}
+                                                        className={`time-slot ${selectedTime === time ? 'selected' : ''} ${isBooked ? 'booked' : ''}`}
+                                                        onClick={() => !isBooked && setSelectedTime(time)}
+                                                        disabled={isBooked}
+                                                        title={isBooked ? 'Khung giờ này đã hết chỗ' : ''}
+                                                    >
+                                                        {time}
+                                                        {isBooked && <span className="booked-label">Hết chỗ</span>}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
