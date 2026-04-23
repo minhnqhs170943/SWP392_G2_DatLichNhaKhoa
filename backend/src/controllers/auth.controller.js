@@ -23,16 +23,15 @@ const login = async (req, res, next) => {
             return res.status(404).json({ success: false, field: 'email', message: "Email này không tồn tại trong hệ thống" });
         }
 
-        // const isMatch = await bcrypt.compare(password, user.Password);
-        // if (!isMatch) {
-        //     return res.status(401).json({ success: false, field: 'password', message: "Mật khẩu không chính xác" });
-        // } 
-
-        // Bỏ kiểm tra mật khẩu để dễ dàng test, sẽ thêm lại sau khi hoàn thiện chức năng quên mật khẩu
-        const isMatch = password === user.Password;
+        const isMatch = await bcrypt.compare(password, user.Password);
         if (!isMatch) {
             return res.status(401).json({ success: false, field: 'password', message: "Mật khẩu không chính xác" });
         }
+
+        // const isMatch = password === user.Password;
+        // if (!isMatch) {
+        //     return res.status(401).json({ success: false, field: 'password', message: "Mật khẩu không chính xác" });
+        // }
 
         const { Password, ...userInfos } = user;
         let doctorId = null;
