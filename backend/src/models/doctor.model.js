@@ -39,21 +39,54 @@ const findAvailableDoctors = async (date, time) => {
                 d.DoctorID,
                 d.Bio,
                 d.ExperienceYears,
-                d.Specialty
+                d.Specialty,
+                CASE WHEN d.DoctorID IN (
+                    SELECT DoctorID 
+                    FROM Appointments 
+                    WHERE AppointmentDate = @AppointmentDate
+                      AND AppointmentTime = CAST(@AppointmentTime AS TIME)
+                      AND Status NOT IN ('Cancelled', 'Completed')
+                      AND DoctorID IS NOT NULL
+                ) THEN 0 ELSE 1 END as IsAvailable
         from Users u
         join Roles r on r.RoleID = u.RoleID
         join Doctors d on d.UserID = u.UserID
         where r.RoleID = 2 AND u.IsActive = 1
-        AND d.DoctorID NOT IN (
-            SELECT DoctorID 
-            FROM Appointments 
-            WHERE AppointmentDate = @AppointmentDate
-              AND AppointmentTime = CAST(@AppointmentTime AS TIME)
-              AND Status NOT IN ('Cancelled', 'Completed')
-              AND DoctorID IS NOT NULL
-        )
     `);
     return result.recordset;
+}
+
+const findBookedSlots = async (date) => {
+    const request = new sql.Request();
+    request.input('AppointmentDate', sql.Date, date);
+
+    // 1. Lấy tổng số bác sĩ đang hoạt động
+    const doctorsCountResult = await request.query(`
+        SELECT COUNT(*) as TotalDoctors 
+        FROM Doctors d
+        JOIN Users u ON d.UserID = u.UserID
+        WHERE u.RoleID = 2 AND u.IsActive = 1
+    `);
+    const totalDoctors = doctorsCountResult.recordset[0].TotalDoctors;
+
+    // 2. Lấy số lượng lịch hẹn theo từng khung giờ trong ngày đó
+    // (Chỉ tính các lịch chưa hủy/chưa hoàn thành)
+    const appointmentsResult = await request.query(`
+        SELECT 
+            CONVERT(VARCHAR(5), AppointmentTime, 108) as timeStr,
+            COUNT(*) as AppointmentCount
+        FROM Appointments
+        WHERE AppointmentDate = @AppointmentDate
+          AND Status NOT IN ('Cancelled', 'Completed')
+        GROUP BY AppointmentTime
+    `);
+
+    // 3. Khung giờ nào có số lịch hẹn >= số bác sĩ thì coi như "Full"
+    const bookedSlots = appointmentsResult.recordset
+        .filter(row => row.AppointmentCount >= totalDoctors)
+        .map(row => row.timeStr);
+
+    return bookedSlots;
 }
 
 const findDoctorById = async (userId) => {
@@ -93,4 +126,4 @@ const getAllServices = async () => {
     return result.recordset;
 };
 
-module.exports = { findAllDoctors, findAvailableDoctors, findDoctorById, getAllServices };
+module.exports = { findAllDoctors, findAvailableDoctors, findBookedSlots, findDoctorById, getAllServices };

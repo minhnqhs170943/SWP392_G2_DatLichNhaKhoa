@@ -7,6 +7,9 @@ const AdminServices = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
+    const MAX_NAME_LENGTH = 100;
+    const MAX_DESC_LENGTH = 500;
+
     const [formData, setFormData] = useState({
         serviceName: '',
         description: '',
@@ -78,6 +81,15 @@ const AdminServices = () => {
                 ? `http://localhost:5001/api/services/${editingService.ServiceID}`
                 : 'http://localhost:5001/api/services';
             const method = editingService ? 'PUT' : 'POST';
+
+            if (formData.serviceName.length > MAX_NAME_LENGTH) {
+                alert(`Tên dịch vụ không được quá ${MAX_NAME_LENGTH} ký tự.`);
+                return;
+            }
+            if (formData.description.length > MAX_DESC_LENGTH) {
+                alert(`Mô tả không được quá ${MAX_DESC_LENGTH} ký tự.`);
+                return;
+            }
 
             const response = await fetch(url, {
                 method,
@@ -234,17 +246,27 @@ const AdminServices = () => {
                         <div className="custom-modal-body">
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-3">
-                                    <label className="form-label">Tên Dịch Vụ</label>
+                                    <label className="form-label d-flex justify-content-between">
+                                        Tên Dịch Vụ
+                                        <span className={`small ${formData.serviceName.length > MAX_NAME_LENGTH ? 'text-danger' : 'text-muted'}`}>
+                                            {formData.serviceName.length} / {MAX_NAME_LENGTH}
+                                        </span>
+                                    </label>
                                     <input 
-                                        type="text" className="form-control" required
+                                        type="text" className={`form-control ${formData.serviceName.length > MAX_NAME_LENGTH ? 'is-invalid' : ''}`} required
                                         value={formData.serviceName} 
                                         onChange={e => setFormData({...formData, serviceName: e.target.value})} 
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <label className="form-label">Mô Tả</label>
+                                    <label className="form-label d-flex justify-content-between">
+                                        Mô Tả
+                                        <span className={`small ${formData.description.length > MAX_DESC_LENGTH ? 'text-danger' : 'text-muted'}`}>
+                                            {formData.description.length} / {MAX_DESC_LENGTH}
+                                        </span>
+                                    </label>
                                     <textarea 
-                                        className="form-control" rows="3"
+                                        className={`form-control ${formData.description.length > MAX_DESC_LENGTH ? 'is-invalid' : ''}`} rows="3"
                                         value={formData.description} 
                                         onChange={e => setFormData({...formData, description: e.target.value})} 
                                     ></textarea>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/SidebarStaff/Sidebar';
-import { Search, Filter, Eye, X, CreditCard } from 'lucide-react';
+import { Search, Filter, Eye, X } from 'lucide-react';
 import './StaffAppointments.css';
 
 const StaffAppointments = () => {
@@ -13,11 +13,13 @@ const StaffAppointments = () => {
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Payment modal state
-    const [isPayModalOpen, setIsPayModalOpen] = useState(false);
-    const [payTarget, setPayTarget] = useState(null);
-    const [paymentMethod, setPaymentMethod] = useState('');
-    const [payLoading, setPayLoading] = useState(false);
+    // Toast notification state
+    const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type, visible: true });
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3500);
+    };
 
     // Confirm modal state
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -46,8 +48,6 @@ const StaffAppointments = () => {
     }, []);
 
     const updateStatus = async (appointmentId, newStatus) => {
-        if (!window.confirm(`Xác nhận chuyển trạng thái thành: ${newStatus}?`)) return;
-
         try {
             const response = await fetch(`http://localhost:5001/api/appointments/${appointmentId}/status`, {
                 method: 'PUT',
@@ -61,55 +61,18 @@ const StaffAppointments = () => {
                 if (selectedAppointment && selectedAppointment.AppointmentID === appointmentId) {
                     setSelectedAppointment({ ...selectedAppointment, Status: newStatus });
                 }
+                const label = newStatus === 'Completed' ? 'Hoàn thành' : newStatus === 'Cancelled' ? 'Hủy' : newStatus;
+                showToast(`✅ Đã chuyển trạng thái thành: ${label}`);
             } else {
-                alert('Có lỗi xảy ra khi cập nhật.');
+                showToast('Có lỗi xảy ra khi cập nhật.', 'error');
             }
         } catch (error) {
             console.error('Lỗi cập nhật:', error);
-            alert('Lỗi kết nối server!');
+            showToast('Lỗi kết nối server!', 'error');
         }
     };
 
-    // Thanh toán → auto xác nhận
-    const openPayModal = (appointment) => {
-        setPayTarget(appointment);
-        setPaymentMethod('');
-        setIsPayModalOpen(true);
-    };
 
-    const closePayModal = () => {
-        setIsPayModalOpen(false);
-        setPayTarget(null);
-        setPaymentMethod('');
-    };
-
-    const handlePay = async () => {
-        if (!paymentMethod) {
-            alert('Vui lòng chọn phương thức thanh toán!');
-            return;
-        }
-        setPayLoading(true);
-        try {
-            const response = await fetch(`http://localhost:5001/api/appointments/${payTarget.AppointmentID}/pay`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentMethod })
-            });
-            const data = await response.json();
-            if (data.success) {
-                alert(`✅ ${data.message}\nMã giao dịch: ${data.data.transactionID}`);
-                closePayModal();
-                fetchAppointments();
-            } else {
-                alert('Lỗi: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Lỗi thanh toán:', error);
-            alert('Không thể kết nối đến server!');
-        } finally {
-            setPayLoading(false);
-        }
-    };
 
     const getStatusClass = (status) => {
         switch (status.toLowerCase()) {
@@ -131,19 +94,26 @@ const StaffAppointments = () => {
         }
     };
 
-    const formatApptTime = (timeStr) => {
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const datePart = dateStr.split('T')[0];
+        const [y, m, d] = datePart.split('-');
+        if (y && m && d) return `${d}/${m}/${y}`;
+        return new Date(dateStr).toLocaleDateString('vi-VN');
+    };
+
+    const formatTime = (timeStr) => {
         if (!timeStr) return '';
-        const time = timeStr.substring(0, 5);
-        if (time === '08:00') return 'Sáng';
-        if (time === '14:00') return 'Chiều';
-        return time;
+        if (timeStr.includes('T')) {
+            return timeStr.split('T')[1].substring(0, 5);
+        }
+        return timeStr.substring(0, 5);
     };
 
     // Xác nhận lịch hẹn
     const handleConfirmAppointment = async (appointment) => {
         if (appointment.DoctorID) {
             // Customer đã chọn bác sĩ → xác nhận trực tiếp
-            if (!window.confirm(`Xác nhận lịch hẹn của ${appointment.PatientName}?\nBác sĩ: ${appointment.DoctorName}`)) return;
             setConfirmLoading(true);
             try {
                 const response = await fetch(`http://localhost:5001/api/appointments/${appointment.AppointmentID}/confirm`, {
@@ -153,14 +123,14 @@ const StaffAppointments = () => {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    alert('✅ Xác nhận lịch hẹn thành công!');
+                    showToast(`✅ Xác nhận lịch hẹn của ${appointment.PatientName} thành công!`);
                     fetchAppointments();
                 } else {
-                    alert('Lỗi: ' + data.message);
+                    showToast('Lỗi: ' + data.message, 'error');
                 }
             } catch (error) {
                 console.error('Lỗi xác nhận:', error);
-                alert('Không thể kết nối đến server!');
+                showToast('Không thể kết nối đến server!', 'error');
             } finally {
                 setConfirmLoading(false);
             }
@@ -199,7 +169,7 @@ const StaffAppointments = () => {
     // Staff chọn bác sĩ cụ thể rồi xác nhận
     const handleConfirmWithDoctor = async () => {
         if (!selectedDoctorId) {
-            alert('Vui lòng chọn bác sĩ!');
+            showToast('Vui lòng chọn bác sĩ!', 'error');
             return;
         }
         setConfirmLoading(true);
@@ -211,41 +181,15 @@ const StaffAppointments = () => {
             });
             const data = await response.json();
             if (data.success) {
-                alert(`✅ Xác nhận thành công! Đã phân công BS. ${data.data.doctorName}`);
                 closeConfirmModal();
+                showToast(`✅ Xác nhận thành công! Đã phân công BS. ${data.data.doctorName}`);
                 fetchAppointments();
             } else {
-                alert('Lỗi: ' + data.message);
+                showToast('Lỗi: ' + data.message, 'error');
             }
         } catch (error) {
             console.error('Lỗi xác nhận:', error);
-            alert('Không thể kết nối đến server!');
-        } finally {
-            setConfirmLoading(false);
-        }
-    };
-
-    // Hệ thống tự động phân công
-    const handleAutoAssign = async () => {
-        if (!window.confirm('Hệ thống sẽ tự động chọn bác sĩ rảnh. Tiếp tục?')) return;
-        setConfirmLoading(true);
-        try {
-            const response = await fetch(`http://localhost:5001/api/appointments/${confirmTarget.AppointmentID}/confirm`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ autoAssign: true })
-            });
-            const data = await response.json();
-            if (data.success) {
-                alert(`✅ Xác nhận thành công! Hệ thống đã phân công BS. ${data.data.doctorName}`);
-                closeConfirmModal();
-                fetchAppointments();
-            } else {
-                alert('Lỗi: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Lỗi xác nhận:', error);
-            alert('Không thể kết nối đến server!');
+            showToast('Không thể kết nối đến server!', 'error');
         } finally {
             setConfirmLoading(false);
         }
@@ -327,8 +271,6 @@ const StaffAppointments = () => {
                                     <th>Bệnh Nhân</th>
                                     <th>Dịch Vụ & Bác Sĩ</th>
                                     <th>Thời Gian Hẹn</th>
-                                    {/* <th>Tổng Tiền</th>
-                                <th>Thanh Toán</th> */}
                                     <th>Trạng Thái</th>
                                     <th>Hành Động</th>
                                 </tr>
@@ -353,19 +295,9 @@ const StaffAppointments = () => {
                                                 <div style={{ color: '#64748b', fontSize: '0.85rem' }}>BS. {app.DoctorName || 'Chưa phân công'}</div>
                                             </td>
                                             <td>
-                                                <div className="fw-bold">{new Date(app.AppointmentDate).toLocaleDateString('vi-VN')}</div>
-                                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{formatApptTime(app.AppointmentTime)}</div>
+                                                <div className="fw-bold">{formatDate(app.AppointmentDate)}</div>
+                                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{formatTime(app.AppointmentTime)}</div>
                                             </td>
-                                            {/* <td>
-                                                <div className="fw-bold" style={{ color: '#059669' }}>{formatCurrency(app.TotalPrice)}</div>
-                                            </td> */}
-                                            {/* <td>
-                                                {app.PaymentStatus === 'Completed' ? (
-                                                    <span className="status-badge completed">Đã TT</span>
-                                                ) : (
-                                                    <span className="status-badge pending">Chưa TT</span>
-                                                )}
-                                            </td> */}
                                             <td>
                                                 <span className={`status-badge ${getStatusClass(app.Status)}`}>
                                                     {getStatusLabel(app.Status)}
@@ -379,12 +311,7 @@ const StaffAppointments = () => {
                                                     {app.Status === 'Pending' && (
                                                         <button className="btn-action btn-complete" style={{ background: '#3b82f6', color: '#fff' }} onClick={() => handleConfirmAppointment(app)}>Xác nhận</button>
                                                     )}
-                                                    {app.Status === 'Confirmed' && app.PaymentStatus !== 'Completed' && (
-                                                        <button className="btn-action btn-pay" onClick={() => openPayModal(app)} title="Thanh toán">
-                                                            <CreditCard size={16} /> Thanh Toán
-                                                        </button>
-                                                    )}
-                                                    {app.Status === 'Confirmed' && app.PaymentStatus === 'Completed' && (
+                                                    {app.Status === 'Confirmed' && (
                                                         <button className="btn-action btn-complete" onClick={() => updateStatus(app.AppointmentID, 'Completed')}>Hoàn thành</button>
                                                     )}
                                                     {(app.Status === 'Pending' || app.Status === 'Confirmed') && (
@@ -443,7 +370,7 @@ const StaffAppointments = () => {
                                 <div className="detail-row">
                                     <div className="detail-label">Thời Gian Hẹn</div>
                                     <div className="detail-value">
-                                        {new Date(selectedAppointment.AppointmentDate).toLocaleDateString('vi-VN')} lúc {formatApptTime(selectedAppointment.AppointmentTime)}
+                                        {formatDate(selectedAppointment.AppointmentDate)} lúc {formatTime(selectedAppointment.AppointmentTime)}
                                     </div>
                                 </div>
                                 <div className="detail-row">
@@ -475,12 +402,7 @@ const StaffAppointments = () => {
                                 {selectedAppointment.Status === 'Pending' && (
                                     <button className="btn-action btn-complete" style={{ background: '#3b82f6', color: '#fff' }} onClick={() => { closeModal(); setTimeout(() => handleConfirmAppointment(selectedAppointment), 100); }}>Xác Nhận</button>
                                 )}
-                                {selectedAppointment.Status === 'Confirmed' && selectedAppointment.PaymentStatus !== 'Completed' && (
-                                    <button className="btn-action btn-pay" onClick={() => { closeModal(); setTimeout(() => openPayModal(selectedAppointment), 100); }}>
-                                        <CreditCard size={16} /> Thanh Toán
-                                    </button>
-                                )}
-                                {selectedAppointment.Status === 'Confirmed' && selectedAppointment.PaymentStatus === 'Completed' && (
+                                {selectedAppointment.Status === 'Confirmed' && (
                                     <button className="btn-action btn-complete" onClick={() => updateStatus(selectedAppointment.AppointmentID, 'Completed')}>Hoàn Thành</button>
                                 )}
                                 {(selectedAppointment.Status === 'Pending' || selectedAppointment.Status === 'Confirmed') && (
@@ -492,62 +414,7 @@ const StaffAppointments = () => {
                     </div>
                 )}
 
-                {/* ===== Thanh Toán Modal ===== */}
-                {isPayModalOpen && payTarget && (
-                    <div className="appt-overlay" onClick={closePayModal}>
-                        <div className="appt-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
-                            <div className="appt-dialog-head" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius: '16px 16px 0 0' }}>
-                                <h3 style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                                    <CreditCard size={22} /> Thanh Toán Lịch Hẹn
-                                </h3>
-                                <button className="appt-close-btn" onClick={closePayModal} style={{ color: '#fff' }}>
-                                    <X size={24} />
-                                </button>
-                            </div>
-                            <div className="appt-dialog-body">
-                                <div className="detail-row">
-                                    <div className="detail-label">Bệnh Nhân</div>
-                                    <div className="detail-value">{payTarget.PatientName}</div>
-                                </div>
-                                <div className="detail-row">
-                                    <div className="detail-label">Dịch Vụ</div>
-                                    <div className="detail-value">{payTarget.ServiceNames || 'Chưa có dịch vụ'}</div>
-                                </div>
-                                <div className="detail-row">
-                                    <div className="detail-label">Số Tiền</div>
-                                    <div className="detail-value" style={{ fontSize: '1.3rem', color: '#059669', fontWeight: '700' }}>
-                                        {formatCurrency(payTarget.TotalPrice)}
-                                    </div>
-                                </div>
-                                <div className="detail-row" style={{ flexDirection: 'column', border: 'none', paddingBottom: '0' }}>
-                                    <div className="detail-label" style={{ width: '100%', marginBottom: '10px' }}>Phương Thức Thanh Toán</div>
-                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                        {['Tiền mặt', 'Chuyển khoản', 'VNPay', 'Momo'].map(method => (
-                                            <button
-                                                key={method}
-                                                className={`pay-method-btn ${paymentMethod === method ? 'active' : ''}`}
-                                                onClick={() => setPaymentMethod(method)}
-                                            >
-                                                {method}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="appt-dialog-foot" style={{ justifyContent: 'center' }}>
-                                <button
-                                    className="btn-action btn-pay"
-                                    style={{ padding: '10px 32px', fontSize: '1rem' }}
-                                    onClick={handlePay}
-                                    disabled={payLoading || !paymentMethod}
-                                >
-                                    {payLoading ? 'Đang xử lý...' : '✅ Xác Nhận Thanh Toán'}
-                                </button>
-                                <button className="btn-action btn-view" onClick={closePayModal}>Hủy Bỏ</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+
 
                 {/* ===== Xác Nhận & Phân Công Modal ===== */}
                 {isConfirmModalOpen && confirmTarget && (
@@ -566,7 +433,7 @@ const StaffAppointments = () => {
                                 </div>
                                 <div className="detail-row">
                                     <div className="detail-label">Thời Gian</div>
-                                    <div className="detail-value">{formatApptTime(confirmTarget.AppointmentTime)} — {new Date(confirmTarget.AppointmentDate).toLocaleDateString('vi-VN')}</div>
+                                    <div className="detail-value">{formatTime(confirmTarget.AppointmentTime)} — {formatDate(confirmTarget.AppointmentDate)}</div>
                                 </div>
                                 <div className="detail-row">
                                     <div className="detail-label">Dịch Vụ</div>
@@ -582,23 +449,32 @@ const StaffAppointments = () => {
                                     <p style={{ textAlign: 'center', color: '#64748b' }}>Đang tìm bác sĩ rảnh...</p>
                                 ) : availableDoctors.length > 0 ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '250px', overflowY: 'auto' }}>
-                                        {availableDoctors.map(doc => (
-                                            <div
-                                                key={doc.DoctorID}
-                                                onClick={() => setSelectedDoctorId(doc.DoctorID)}
-                                                style={{
-                                                    padding: '12px',
-                                                    border: selectedDoctorId === doc.DoctorID ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                                                    borderRadius: '8px',
-                                                    cursor: 'pointer',
-                                                    background: selectedDoctorId === doc.DoctorID ? '#eff6ff' : '#fff',
-                                                    transition: 'all 0.15s ease'
-                                                }}
-                                            >
-                                                <div style={{ fontWeight: 'bold', color: '#1e293b' }}>BS. {doc.FullName}</div>
-                                                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{doc.Specialty || 'Nha khoa tổng quát'}</div>
-                                            </div>
-                                        ))}
+                                        {availableDoctors.map(doc => {
+                                            const isBusy = !doc.IsAvailable;
+                                            return (
+                                                <div
+                                                    key={doc.DoctorID}
+                                                    onClick={() => !isBusy && setSelectedDoctorId(doc.DoctorID)}
+                                                    style={{
+                                                        padding: '12px',
+                                                        border: selectedDoctorId === doc.DoctorID ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                                                        borderRadius: '8px',
+                                                        cursor: isBusy ? 'not-allowed' : 'pointer',
+                                                        background: selectedDoctorId === doc.DoctorID ? '#eff6ff' : isBusy ? '#f8fafc' : '#fff',
+                                                        opacity: isBusy ? 0.6 : 1,
+                                                        filter: isBusy ? 'grayscale(0.5)' : 'none',
+                                                        transition: 'all 0.15s ease',
+                                                        position: 'relative'
+                                                    }}
+                                                >
+                                                    <div style={{ fontWeight: 'bold', color: '#1e293b' }}>
+                                                        BS. {doc.FullName}
+                                                        {isBusy && <span style={{ marginLeft: '10px', fontSize: '0.7rem', color: '#ef4444', border: '1px solid #ef4444', padding: '1px 4px', borderRadius: '4px' }}>ĐÃ BẬN</span>}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{doc.Specialty || 'Nha khoa tổng quát'}</div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <div style={{ padding: '20px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', color: '#ef4444' }}>
@@ -614,22 +490,21 @@ const StaffAppointments = () => {
                                 >
                                     Xác Nhận & Phân Công
                                 </button>
-                                {availableDoctors.length > 0 && (
-                                    <button
-                                        className="btn-action btn-pay"
-                                        onClick={handleAutoAssign}
-                                        disabled={confirmLoading}
-                                        style={{ background: '#8b5cf6', borderColor: '#8b5cf6' }}
-                                    >
-                                        🤖 Tự Động Phân Công
-                                    </button>
-                                )}
+
                                 <button className="btn-action btn-view" onClick={closeConfirmModal}>Hủy Bỏ</button>
                             </div>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* ===== Toast Notification ===== */}
+            {toast.visible && (
+                <div className={`staff-toast ${toast.type}`} onClick={() => setToast(prev => ({ ...prev, visible: false }))}>
+                    <span>{toast.message}</span>
+                    <button className="toast-close" onClick={() => setToast(prev => ({ ...prev, visible: false }))}>✕</button>
+                </div>
+            )}
         </div>
     );
 };

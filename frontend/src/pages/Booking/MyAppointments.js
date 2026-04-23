@@ -92,12 +92,20 @@ const MyAppointments = () => {
         }
     };
 
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const datePart = dateStr.split('T')[0];
+        const [y, m, d] = datePart.split('-');
+        if (y && m && d) return `${d}/${m}/${y}`;
+        return new Date(dateStr).toLocaleDateString('vi-VN');
+    };
+
     const formatTime = (timeStr) => {
         if (!timeStr) return '';
-        const time = timeStr.substring(0, 5);
-        if (time === '08:00') return 'Sáng';
-        if (time === '14:00') return 'Chiều';
-        return time;
+        if (timeStr.includes('T')) {
+            return timeStr.split('T')[1].substring(0, 5);
+        }
+        return timeStr.substring(0, 5);
     };
 
     const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
@@ -166,7 +174,7 @@ const MyAppointments = () => {
                                         <div className="appt-info-row">
                                             <div className="appt-info-item">
                                                 <span className="info-label">📅 Ngày khám</span>
-                                                <span className="info-value">{new Date(app.AppointmentDate).toLocaleDateString('vi-VN')}</span>
+                                                <span className="info-value">{formatDate(app.AppointmentDate)}</span>
                                             </div>
                                             <div className="appt-info-item">
                                                 <span className="info-label">⏰ Giờ</span>
@@ -225,7 +233,7 @@ const MyAppointments = () => {
                                         </div>
                                         <div className="modal-row">
                                             <span>Ngày khám</span>
-                                            <strong>{new Date(selectedDetail.appointment.AppointmentDate).toLocaleDateString('vi-VN')}</strong>
+                                            <strong>{formatDate(selectedDetail.appointment.AppointmentDate)}</strong>
                                         </div>
                                         <div className="modal-row">
                                             <span>Giờ</span>

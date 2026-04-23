@@ -5,12 +5,11 @@ exports.getDashboardStats = async (req, res) => {
     try {
         const pool = await poolPromise;
 
-        // Lấy query params lọc, mặc định = năm hiện tại
-        const filterDay = req.query.day ? parseInt(req.query.day) : null;
-        const filterMonth = req.query.month ? parseInt(req.query.month) : null; // null = tất cả tháng
-        const filterYear = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
+        // Lấy query params lọc (startDate, endDate)
+        const startDate = req.query.startDate; // YYYY-MM-DD
+        const endDate = req.query.endDate;     // YYYY-MM-DD
 
-        // 1. Tổng số bệnh nhân
+        // 1. Tổng số bệnh nhân (Không lọc theo ngày vì là tổng số hệ thống)
         const patientsResult = await pool.request().query(`
             SELECT COUNT(*) AS TotalPatients 
             FROM Users u
@@ -19,49 +18,49 @@ exports.getDashboardStats = async (req, res) => {
         `);
         const totalPatients = patientsResult.recordset[0].TotalPatients;
 
+        // 2. Tổng doanh thu (Lọc theo range)
         let revenueQuery = `
             SELECT ISNULL(SUM(p.Amount), 0) AS TotalRevenue 
             FROM Payments p
-            WHERE p.Status = 'Completed' AND YEAR(p.PaymentDate) = @year
+            WHERE p.Status = 'Completed'
         `;
-        if (filterMonth) revenueQuery += ` AND MONTH(p.PaymentDate) = @month`;
-        if (filterDay) revenueQuery += ` AND DAY(p.PaymentDate) = @day`;
+        if (startDate && endDate) {
+            revenueQuery += ` AND CAST(p.PaymentDate AS DATE) BETWEEN @startDate AND @endDate`;
+        }
 
-        const revenueRequest = pool.request().input('year', filterYear);
-        if (filterMonth) revenueRequest.input('month', filterMonth);
-        if (filterDay) revenueRequest.input('day', filterDay);
+        const revenueRequest = pool.request();
+        if (startDate && endDate) {
+            revenueRequest.input('startDate', startDate).input('endDate', endDate);
+        }
         const revenueResult = await revenueRequest.query(revenueQuery);
         const totalRevenue = revenueResult.recordset[0].TotalRevenue;
 
-        // 3. Số lịch hẹn
+        // 3. Số lịch hẹn (Lọc theo range)
         let appointmentCountQuery = `
             SELECT COUNT(*) AS CountAppointments 
             FROM Appointments
-            WHERE YEAR(AppointmentDate) = @year
+            WHERE Status <> 'Cancelled'
         `;
-        if (filterMonth) appointmentCountQuery += ` AND MONTH(AppointmentDate) = @month`;
-        if (filterDay) appointmentCountQuery += ` AND DAY(AppointmentDate) = @day`;
-        
-        // Nếu không có bất kỳ filter nào, mặc định là hôm nay như cũ
-        if (!filterMonth && !filterYear && !filterDay) {
-            appointmentCountQuery = `
-                SELECT COUNT(*) AS CountAppointments 
-                FROM Appointments
-                WHERE CAST(AppointmentDate AS DATE) = CAST(GETDATE() AS DATE)
-            `;
+        if (startDate && endDate) {
+            appointmentCountQuery += ` AND AppointmentDate BETWEEN @startDate AND @endDate`;
+        } else {
+            // Mặc định nếu không có range là hôm nay
+            appointmentCountQuery += ` AND CAST(AppointmentDate AS DATE) = CAST(GETDATE() AS DATE)`;
         }
 
-        const appointmentCountReq = pool.request().input('year', filterYear);
-        if (filterMonth) appointmentCountReq.input('month', filterMonth);
-        if (filterDay) appointmentCountReq.input('day', filterDay);
+        const appointmentCountReq = pool.request();
+        if (startDate && endDate) {
+            appointmentCountReq.input('startDate', startDate).input('endDate', endDate);
+        }
         const appointmentCountResult = await appointmentCountReq.query(appointmentCountQuery);
         const countAppointments = appointmentCountResult.recordset[0].CountAppointments;
 
         // === CÁC QUERY CHO BIỂU ĐỒ ===
 
-        // 4. Thống kê Doanh thu theo tháng (Bar Chart) - theo năm đã chọn
+        // 4. Thống kê Doanh thu theo tháng (Bar Chart) - Lấy theo năm của endDate hoặc năm hiện tại
+        const reportYear = endDate ? new Date(endDate).getFullYear() : new Date().getFullYear();
         const revenueByMonthResult = await pool.request()
-            .input('year', filterYear)
+            .input('year', reportYear)
             .query(`
                 SELECT 
                     MONTH(p.PaymentDate) as monthNum,
@@ -76,61 +75,72 @@ exports.getDashboardStats = async (req, res) => {
             revenue: item.revenue
         }));
 
-        // 5. Trạng thái lịch hẹn (Pie Chart) - theo tháng + năm
+        // 5. Trạng thái lịch hẹn (Pie Chart) - Lọc theo range
         let statusQuery = `
             SELECT Status as name, COUNT(*) as value
             FROM Appointments
-            WHERE YEAR(AppointmentDate) = @year
+            WHERE 1=1
         `;
-        if (filterMonth) statusQuery += ` AND MONTH(AppointmentDate) = @month`;
+        if (startDate && endDate) {
+            statusQuery += ` AND AppointmentDate BETWEEN @startDate AND @endDate`;
+        }
         statusQuery += ` GROUP BY Status`;
 
-        const statusReq = pool.request().input('year', filterYear);
-        if (filterMonth) statusReq.input('month', filterMonth);
+        const statusReq = pool.request();
+        if (startDate && endDate) {
+            statusReq.input('startDate', startDate).input('endDate', endDate);
+        }
         const appointmentStatusResult = await statusReq.query(statusQuery);
         const appointmentsStatus = appointmentStatusResult.recordset;
 
-        // 5.5 Thống kê Lịch hẹn theo ngày (Line Chart) - theo tháng + năm
-        // Nếu không có tháng cụ thể, mặc định lấy tháng hiện tại để biểu đồ không bị trống
-        const statsMonth = filterMonth || (new Date().getMonth() + 1);
-        const appointmentsByDayResult = await pool.request()
-            .input('month', statsMonth)
-            .input('year', filterYear)
-            .query(`
-                SELECT 
-                    DAY(AppointmentDate) as dayNum,
-                    COUNT(*) as value
-                FROM Appointments
-                WHERE MONTH(AppointmentDate) = @month AND YEAR(AppointmentDate) = @year
-                GROUP BY DAY(AppointmentDate)
-                ORDER BY dayNum ASC
-            `);
+        // 5.5 Thống kê Lịch hẹn theo ngày (Line Chart) - Lọc theo range
+        let dailyQuery = `
+            SELECT 
+                CONVERT(VARCHAR, AppointmentDate, 103) as dayLabel,
+                COUNT(*) as value
+            FROM Appointments
+            WHERE 1=1
+        `;
+        if (startDate && endDate) {
+            dailyQuery += ` AND AppointmentDate BETWEEN @startDate AND @endDate`;
+        } else {
+            // Mặc định 7 ngày gần nhất
+            dailyQuery += ` AND AppointmentDate >= DATEADD(day, -7, GETDATE())`;
+        }
+        dailyQuery += ` GROUP BY AppointmentDate ORDER BY AppointmentDate ASC`;
+
+        const dailyReq = pool.request();
+        if (startDate && endDate) {
+            dailyReq.input('startDate', startDate).input('endDate', endDate);
+        }
+        const appointmentsByDayResult = await dailyReq.query(dailyQuery);
         const appointmentsByDay = appointmentsByDayResult.recordset.map(item => ({
-            name: 'Ngày ' + item.dayNum,
+            name: item.dayLabel,
             value: item.value
         }));
 
-        // 6. Top dịch vụ sử dụng - theo tháng + năm + ngày
+        // 6. Top dịch vụ sử dụng - Lọc theo range
         let servicesQuery = `
             SELECT TOP 5
                 s.ServiceName as name,
                 COUNT(s.ServiceID) as value
             FROM Appointments a
             JOIN Services s ON a.AppointmentID = s.AppointmentID
-            WHERE YEAR(a.AppointmentDate) = @year 
-            AND a.Status <> 'Cancelled'
+            WHERE a.Status <> 'Cancelled'
         `;
-        if (filterMonth) servicesQuery += ` AND MONTH(a.AppointmentDate) = @month`;
-        if (filterDay) servicesQuery += ` AND DAY(a.AppointmentDate) = @day`;
+        if (startDate && endDate) {
+            servicesQuery += ` AND a.AppointmentDate BETWEEN @startDate AND @endDate`;
+        }
         servicesQuery += ` GROUP BY s.ServiceName ORDER BY value DESC`;
 
-        const servicesReq = pool.request().input('year', filterYear);
-        if (filterMonth) servicesReq.input('month', filterMonth);
-        if (filterDay) servicesReq.input('day', filterDay);
+        const servicesReq = pool.request();
+        if (startDate && endDate) {
+            servicesReq.input('startDate', startDate).input('endDate', endDate);
+        }
         const topServicesResult = await servicesReq.query(servicesQuery);
         const topServices = topServicesResult.recordset;
 
-        // 7. Tần suất bác sĩ khám - theo tháng + năm (Doctors JOIN Users để lấy FullName)
+        // 7. Tần suất bác sĩ khám - Lọc theo range
         let doctorsQuery = `
             SELECT 
                 u.FullName as name,
@@ -138,13 +148,17 @@ exports.getDashboardStats = async (req, res) => {
             FROM Appointments a
             JOIN Doctors d ON a.DoctorID = d.DoctorID
             JOIN Users u ON d.UserID = u.UserID
-            WHERE YEAR(a.AppointmentDate) = @year
+            WHERE a.Status <> 'Cancelled'
         `;
-        if (filterMonth) doctorsQuery += ` AND MONTH(a.AppointmentDate) = @month`;
+        if (startDate && endDate) {
+            doctorsQuery += ` AND a.AppointmentDate BETWEEN @startDate AND @endDate`;
+        }
         doctorsQuery += ` GROUP BY u.FullName ORDER BY value DESC`;
 
-        const doctorsReq = pool.request().input('year', filterYear);
-        if (filterMonth) doctorsReq.input('month', filterMonth);
+        const doctorsReq = pool.request();
+        if (startDate && endDate) {
+            doctorsReq.input('startDate', startDate).input('endDate', endDate);
+        }
         const topDoctorsResult = await doctorsReq.query(doctorsQuery);
         const topDoctors = topDoctorsResult.recordset;
 
@@ -160,9 +174,8 @@ exports.getDashboardStats = async (req, res) => {
                 appointmentsByDay,
                 topServices,
                 topDoctors,
-                filterDay,
-                filterMonth,
-                filterYear
+                startDate,
+                endDate
             }
         });
 

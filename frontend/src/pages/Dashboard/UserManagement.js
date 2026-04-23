@@ -18,6 +18,9 @@ const UserManagement = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+    const [lockReason, setLockReason] = useState('');
+    const [userToLock, setUserToLock] = useState(null);
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -137,19 +140,39 @@ const UserManagement = () => {
         }
     };
 
-    const handleDelete = async (userId) => {
-        if (window.confirm("Bạn có chắc chắn muốn khoá người dùng này?")) {
-            try {
-                const res = await fetch(`${API_URL}/${userId}`, { method: 'DELETE' });
-                const data = await res.json();
-                if (data.success) {
-                    fetchUsers();
-                } else {
-                    alert(data.message || 'Không thể khoá người dùng');
-                }
-            } catch (error) {
-                alert('Lỗi hệ thống khi xoá');
+    const handleDelete = (user) => {
+        if (user.IsActive === false) {
+            alert("Tài khoản này đã bị khoá.");
+            return;
+        }
+        setUserToLock(user);
+        setLockReason('');
+        setIsLockModalOpen(true);
+    };
+
+    const confirmLock = async () => {
+        if (!lockReason.trim()) {
+            alert("Vui lòng nhập lý do khoá.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/${userToLock.UserID}`, { 
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: lockReason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchUsers();
+                setIsLockModalOpen(false);
+                setUserToLock(null);
+                alert(data.message || "Khoá thành công");
+            } else {
+                alert(data.message || 'Không thể khoá người dùng');
             }
+        } catch (error) {
+            alert('Lỗi hệ thống khi khoá');
         }
     };
 
@@ -207,7 +230,7 @@ const UserManagement = () => {
                                         <button className="edit-btn" onClick={() => openEditModal(user)} title="Sửa">
                                             <Edit2 size={16} />
                                         </button>
-                                        <button className="delete-btn" onClick={() => handleDelete(user.UserID)} title="Xoá">
+                                        <button className="delete-btn" onClick={() => handleDelete(user)} title="Khoá">
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -341,6 +364,37 @@ const UserManagement = () => {
                             <button className="btn-save" onClick={handleSave} disabled={saving}>
                                 {saving ? 'Đang lưu...' : (modalMode === 'add' ? 'Thêm Mới' : 'Cập Nhật')}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Lock Reason Modal */}
+            {isLockModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsLockModalOpen(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <div className="modal-header">
+                            <h2>Lý Do Khoá Tài Khoản</h2>
+                            <button className="close-modal-btn" onClick={() => setIsLockModalOpen(false)}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <p>Bạn đang thực hiện khoá tài khoản của <strong>{userToLock?.FullName}</strong>.</p>
+                            <div className="form-group" style={{ marginTop: '15px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                                    Lý do khoá <span className="text-danger">*</span>
+                                </label>
+                                <textarea 
+                                    className="form-control" 
+                                    rows="3" 
+                                    placeholder="Nhập lý do khoá..."
+                                    value={lockReason}
+                                    onChange={e => setLockReason(e.target.value)}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                ></textarea>
+                            </div>
+                        </div>
+                        <div className="modal-footer" style={{ borderTop: '1px solid #eee', marginTop: '20px', paddingTop: '15px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <button className="btn-cancel" onClick={() => setIsLockModalOpen(false)} style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid #ddd', background: '#fff' }}>Hủy</button>
+                            <button className="btn-save" style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px' }} onClick={confirmLock}>Khoá Tài Khoản</button>
                         </div>
                     </div>
                 </div>
