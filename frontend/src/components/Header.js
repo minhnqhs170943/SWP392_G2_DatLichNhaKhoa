@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import './../styles/Header.css';
 
 const Header = () => {
+    const navigate = useNavigate();
+
     return (
         <header className="header-section">
             <div className="container">
@@ -14,8 +17,12 @@ const Header = () => {
                             Chăm sóc nụ cười của bạn ngay hôm nay.
                         </p>
                         <div className="d-flex flex-wrap gap-3">
-                            <button className="btn-header-primary">Đặt lịch khám</button>
-                            <button className="btn-header-outline">Về chúng tôi</button>
+                            <button className="btn-header-primary" onClick={() => navigate('/booking')}>
+                                Đặt lịch khám
+                            </button>
+                            <button className="btn-header-outline" onClick={() => navigate('/about')}>
+                                Về chúng tôi
+                            </button>
                         </div>
                         <div className="contact-box flex-wrap">
                             <div className="contact-item">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchDoctors } from '../services/doctorApi';
 import { getAllServicesApi } from '../services/serviceService';
 import Footer from './../components/Footer';
@@ -9,6 +10,7 @@ import './../styles/Homepage.css';
 const HomePage = () => {
     const [services, setServices] = useState([]);
     const [doctors, setDoctors] = useState([]);
+    const navigate = useNavigate();
 
     const scrollRef = useRef(null);
 
@@ -133,7 +135,9 @@ const HomePage = () => {
                                                 <h4 className="custom-service-price">
                                                     {formatPrice(service.Price)}
                                                 </h4>
-                                                <button className="btn-custom-book">Đặt lịch ngay</button>
+                                                <button className="btn-custom-book" onClick={() => navigate('/booking')}>
+                                                    Đặt lịch ngay
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

@@ -19,7 +19,9 @@ const verifyToken = (req, res, next) => {
 
 const checkRole = (allowedRoles) => {
     return (req, res, next) => {
-        if (!req.user || !allowedRoles.includes(req.user.roleId)) {
+        const userRole = Number(req.user.roleId); 
+        
+        if (!req.user || !allowedRoles.includes(userRole)) {
             return res.status(403).json({ success: false, message: "Bạn không có quyền truy cập tài nguyên này" });
         }
         next();

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Footer from '../../components/Footer';
 import Navbar from '../../components/Navbar';
-import { changePasswordApi, getProfileApi, updateProfileApi } from '../../services/authService';
+import { changePasswordApi, getProfileApi, updateProfileApi, uploadAvatarApi } from '../../services/authService';
 import '../../styles/Profile.css';
 
 const Profile = () => {
@@ -9,21 +9,24 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
 
     const [profile, setProfile] = useState({ username: '', fullName: '', email: '', phone: '', address: '' });
-    
+
     const [savedProfile, setSavedProfile] = useState({ username: '', fullName: '', email: '', phone: '', address: '' });
 
     const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
 
     const [profileErrors, setProfileErrors] = useState({});
-    const [profileMsg, setProfileMsg] = useState({ type: '', text: '' }); 
+    const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
     const [passErrors, setPassErrors] = useState({});
     const [passMsg, setPassMsg] = useState({ type: '', text: '' });
+
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
             const storedUser = JSON.parse(localStorage.getItem('user'));
-
             if (storedUser && storedUser.UserID) {
                 const data = await getProfileApi(storedUser.UserID);
 
@@ -33,10 +36,11 @@ const Profile = () => {
                         fullName: data.user.FullName || '',
                         email: data.user.Email || '',
                         phone: data.user.Phone || '',
-                        address: data.user.Address || ''
+                        address: data.user.Address || '',
+                        avatarUrl: data.user.AvatarURL || ''
                     };
                     setProfile(fetchedData);
-                    setSavedProfile(fetchedData); 
+                    setSavedProfile(fetchedData);
                 }
             }
         };
@@ -111,6 +115,8 @@ const Profile = () => {
                 const updatedUser = { ...storedUser, FullName: trimmedName, Address: trimmedAddress };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
 
+                window.dispatchEvent(new Event('authChange'));
+
                 setProfileMsg({ type: 'success', text: 'Thông tin cá nhân đã được cập nhật thành công!' });
                 setIsEditing(false);
                 setSavedProfile(prev => ({ ...prev, fullName: trimmedName, address: trimmedAddress }));
@@ -127,7 +133,7 @@ const Profile = () => {
         let tempErrors = {};
         let isValid = true;
         const passRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
-        
+
         const oldP = passwords.currentPassword.trim();
         const newP = passwords.newPassword.trim();
         const confP = passwords.confirmPassword.trim();
@@ -170,11 +176,13 @@ const Profile = () => {
         if (!isValid) return;
 
         try {
-            const data = await changePasswordApi(storedUser.UserID, { oldPassword: oldP, newPassword: newP });
+            const payload = { oldPassword: oldP, newPassword: newP };
+            const data = await changePasswordApi(storedUser.UserID, payload);
 
             if (data.success) {
                 setPassMsg({ type: 'success', text: 'Đổi mật khẩu thành công!' });
                 setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setShowPasswords({ current: false, new: false, confirm: false });
             } else {
                 if (data.field) {
                     const errorField = data.field === 'oldPassword' ? 'currentPassword' : data.field;
@@ -185,6 +193,46 @@ const Profile = () => {
             }
         } catch (error) {
             setPassMsg({ type: 'error', text: 'Lỗi kết nối máy chủ!' });
+        }
+    };
+
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate sương sương: Chỉ nhận ảnh và < 5MB
+        if (!file.type.startsWith('image/')) {
+            setProfileMsg({ type: 'error', text: 'Vui lòng chọn file hình ảnh hợp lệ!' });
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setProfileMsg({ type: 'error', text: 'Kích thước ảnh không được vượt quá 5MB!' });
+            return;
+        }
+
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        setIsUploading(true);
+        setProfileMsg({ type: '', text: '' });
+
+        try {
+            const data = await uploadAvatarApi(storedUser.UserID, file);
+            if (data.success) {
+                setAvatarUrl(data.avatarUrl);
+
+                const updatedUser = { ...storedUser, AvatarURL: data.avatarUrl };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                window.dispatchEvent(new Event('authChange'));
+
+                setProfileMsg({ type: 'success', text: 'Cập nhật ảnh đại diện thành công!' });
+            } else {
+                setProfileMsg({ type: 'error', text: data.message || 'Lỗi khi tải ảnh lên!' });
+            }
+        } catch (error) {
+            setProfileMsg({ type: 'error', text: 'Lỗi kết nối máy chủ!' });
+        } finally {
+            setIsUploading(false);
+            e.target.value = null;
         }
     };
 
@@ -203,15 +251,51 @@ const Profile = () => {
                             {/* Sidebar */}
                             <div className="col-md-3">
                                 <div className="profile-sidebar">
-                                    <div className="profile-avatar">
-                                        {savedProfile.fullName ? savedProfile.fullName.charAt(0).toUpperCase() : 'U'}
+                                    <div
+                                        className="profile-avatar-wrapper"
+                                        onClick={() => !isUploading && fileInputRef.current.click()}
+                                        style={{
+                                            position: 'relative',
+                                            width: '120px',
+                                            height: '120px',
+                                            margin: '0 auto 15px',
+                                            cursor: isUploading ? 'not-allowed' : 'pointer'
+                                        }}
+                                    >
+                                        {avatarUrl ? (
+                                            <img
+                                                src={avatarUrl}
+                                                alt="Avatar"
+                                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '3px solid #e5e7eb' }}
+                                            />
+                                        ) : (
+                                            <div className="profile-avatar" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>
+                                                {savedProfile.fullName ? savedProfile.fullName.charAt(0).toUpperCase() : 'U'}
+                                            </div>
+                                        )}
+
+                                        {/* Lớp phủ Camera / Loading */}
+                                        <div style={{
+                                            position: 'absolute', bottom: 0, right: 0, background: '#3b82f6', color: 'white',
+                                            borderRadius: '50%', width: '35px', height: '35px', display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center', border: '2px solid white'
+                                        }}>
+                                            {isUploading ? '⌛' : '📷'}
+                                        </div>
                                     </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={fileInputRef}
+                                        onChange={handleAvatarChange}
+                                        style={{ display: 'none' }}
+                                    />
                                     <div className="profile-user-name">{savedProfile.fullName}</div>
                                     <div className="profile-user-email">{savedProfile.email}</div>
 
                                     <div
                                         className={`profile-nav-item ${activeTab === 'profile' ? 'active' : 'inactive'}`}
-                                        onClick={() => { setActiveTab('profile'); setProfileErrors({}); setProfileMsg({type:'', text:''}); }}
+                                        onClick={() => { setActiveTab('profile'); setProfileErrors({}); setProfileMsg({ type: '', text: '' }); }}
                                     >
                                         <span className="profile-nav-icon"><UserIcon /></span>
                                         Thông tin cá nhân
@@ -219,7 +303,7 @@ const Profile = () => {
 
                                     <div
                                         className={`profile-nav-item ${activeTab === 'password' ? 'active' : 'inactive'}`}
-                                        onClick={() => { setActiveTab('password'); setPassErrors({}); setPassMsg({type:'', text:''}); }}
+                                        onClick={() => { setActiveTab('password'); setPassErrors({}); setPassMsg({ type: '', text: '' }); }}
                                     >
                                         <span className="profile-nav-icon"><LockIcon /></span>
                                         Đổi mật khẩu
@@ -306,8 +390,8 @@ const Profile = () => {
                                                 <div style={{ marginTop: '20px' }}>
                                                     {isEditing ? (
                                                         <>
-                                                            <button type="button" className="profile-btn-outline" onClick={() => { 
-                                                                setIsEditing(false); 
+                                                            <button type="button" className="profile-btn-outline" onClick={() => {
+                                                                setIsEditing(false);
                                                                 setProfileErrors({});
                                                                 setProfile(savedProfile);
                                                             }}>Hủy</button>
