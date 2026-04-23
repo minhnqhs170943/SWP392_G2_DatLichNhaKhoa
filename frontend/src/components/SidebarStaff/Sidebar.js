@@ -42,14 +42,6 @@ const Sidebar = () => {
                     </NavLink>
                 </div>
 
-                {/* THÊM MỤC QUẢN LÝ HÓA ĐƠN Ở ĐÂY */}
-                <div className="nav-item">
-                    <NavLink to="/staff/invoices" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        <ReceiptText />
-                        <span>Quản Lý Hóa Đơn</span>
-                    </NavLink>
-                </div>
-
                 {user?.RoleID === 1 && (
                 <div className="nav-item">
                     <NavLink to="/admin/users" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>

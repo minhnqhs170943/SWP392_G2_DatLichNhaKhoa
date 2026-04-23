@@ -52,6 +52,26 @@ const getAllInvoices = async (req, res) => {
             whereClauses.push(`i.Status = @status`);
         }
 
+        if (req.query.date) {
+            request.input('date', sql.Date, req.query.date);
+            whereClauses.push(`CAST(i.IssuedDate AS DATE) = @date`);
+        }
+
+        if (req.query.day) {
+            request.input('day', sql.Int, req.query.day);
+            whereClauses.push(`DAY(i.IssuedDate) = @day`);
+        }
+
+        if (req.query.month) {
+            request.input('month', sql.Int, req.query.month);
+            whereClauses.push(`MONTH(i.IssuedDate) = @month`);
+        }
+
+        if (req.query.year) {
+            request.input('year', sql.Int, req.query.year);
+            whereClauses.push(`YEAR(i.IssuedDate) = @year`);
+        }
+
         if (whereClauses.length > 0) {
             query += ` WHERE ` + whereClauses.join(' AND ');
         }
