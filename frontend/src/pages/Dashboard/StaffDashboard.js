@@ -35,7 +35,7 @@ const StaffDashboard = () => {
     const fetchStats = useCallback(async () => {
         try {
             setLoading(true);
-            let url = `http://localhost:5001/api/dashboard/stats?startDate=${startDate}&endDate=${endDate}`;
+            let url = `http://localhost:5000/api/dashboard/stats?startDate=${startDate}&endDate=${endDate}`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.success) {

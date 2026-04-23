@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit2, Trash2, X, Eye, Search, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import './ProductManagement.css';
 
-const API_URL = 'http://localhost:5001/api/admin/products';
+const API_URL = 'http://localhost:5000/api/admin/products';
 
 const defaultForm = {
     ProductName: '',

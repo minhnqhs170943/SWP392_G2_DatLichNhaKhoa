@@ -48,7 +48,7 @@ const BookingPage = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const servicesRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/services`).then(r => r.json());
+            const servicesRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/services`).then(r => r.json());
             setServices(servicesRes.data || servicesRes.services || []);
         } catch (error) {
             console.error('Lỗi tải dữ liệu:', error);
@@ -66,7 +66,7 @@ const BookingPage = () => {
 
     const fetchBookedSlots = async (date) => {
         try {
-            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/booked-slots?date=${date}`);
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/doctors/booked-slots?date=${date}`);
             const data = await res.json();
             if (data.success) {
                 setBookedSlots(data.data || []);
@@ -105,7 +105,7 @@ const BookingPage = () => {
     const fetchAvailableDoctors = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
             const data = await res.json();
             if (data.success) {
                 setDoctors(data.data || []);
