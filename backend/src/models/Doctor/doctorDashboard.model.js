@@ -14,7 +14,7 @@ const dateCondition = "CAST(a.AppointmentDate AS DATE) BETWEEN @StartDate AND @E
 const getMetrics = async (userId, startDate, endDate) => {
     const request = await createRequest(userId, startDate, endDate);
     const query = `
-        SELECT 
+        SELECT
             COUNT(a.AppointmentID) AS total,
             SUM(CASE WHEN a.Status = 'Completed' THEN 1 ELSE 0 END) AS completed,
             COUNT(DISTINCT a.PatientID) AS newPatients,
@@ -37,7 +37,7 @@ const getComboChartData = async (userId, filterMode, startDate, endDate) => {
         groupBy = "MONTH(a.AppointmentDate)";
         orderBy = "MONTH(a.AppointmentDate) ASC";
     } else {
-        timeSelect = "CONVERT(VARCHAR(5), a.AppointmentDate, 103)"; 
+        timeSelect = "CONVERT(VARCHAR(5), a.AppointmentDate, 103)";
         groupBy = "a.AppointmentDate";
         orderBy = "a.AppointmentDate ASC";
     }
@@ -98,7 +98,8 @@ const getAppointmentLists = async (userId, startDate, endDate) => {
     const pending = await request1.query(`
         SELECT a.AppointmentID AS id, u.FullName AS patient,
             CONVERT(VARCHAR(5), a.AppointmentTime, 108) + ' ' + CONVERT(VARCHAR(10), a.AppointmentDate, 103) AS time,
-            (SELECT TOP 1 s.ServiceName FROM AppointmentServices aps JOIN Services s ON aps.ServiceID = s.ServiceID WHERE aps.AppointmentID = a.AppointmentID) AS service
+            (SELECT TOP 1 s.ServiceName FROM AppointmentServices aps JOIN Services s ON aps.ServiceID = s.ServiceID WHERE aps.AppointmentID = a.AppointmentID) AS service,
+            a.Note AS patientNote -- [GIẢI THÍCH SỬA]: Lấy thêm ghi chú của bệnh nhân để Bác sĩ xem trước khi Duyệt/Hủy
         FROM Appointments a JOIN Users u ON a.PatientID = u.UserID
         WHERE a.DoctorID = (SELECT DoctorID FROM Doctors WHERE UserID = @UserID) 
         AND a.Status = 'Assigned' AND ${dateCondition}
@@ -109,7 +110,8 @@ const getAppointmentLists = async (userId, startDate, endDate) => {
     const approved = await request2.query(`
         SELECT a.AppointmentID AS id, u.FullName AS patient,
             CONVERT(VARCHAR(5), a.AppointmentTime, 108) + ' ' + CONVERT(VARCHAR(10), a.AppointmentDate, 103) AS time,
-            (SELECT TOP 1 s.ServiceName FROM AppointmentServices aps JOIN Services s ON aps.ServiceID = s.ServiceID WHERE aps.AppointmentID = a.AppointmentID) AS service
+            (SELECT TOP 1 s.ServiceName FROM AppointmentServices aps JOIN Services s ON aps.ServiceID = s.ServiceID WHERE aps.AppointmentID = a.AppointmentID) AS service,
+            a.Note AS patientNote -- [GIẢI THÍCH SỬA]: Lấy thêm ghi chú ở cả danh sách Đã duyệt
         FROM Appointments a JOIN Users u ON a.PatientID = u.UserID
         WHERE a.DoctorID = (SELECT DoctorID FROM Doctors WHERE UserID = @UserID) 
         AND a.Status = 'Approved' AND ${dateCondition}
@@ -121,20 +123,27 @@ const getAppointmentLists = async (userId, startDate, endDate) => {
     return { pending: pending.recordset, approved: approved.recordset };
 };
 
-const updateStatus = async (appointmentId, status, note, userId) => {
+const updateStatus = async (appointmentId, status, userId, cancelReason = null) => {
     const request = await createRequest(userId);
-    let query = `UPDATE Appointments SET Status = @Status, UpdatedAt = GETDATE()`;
-    if (note) {
-        query += `, Note = @Note`;
-        request.input('Note', sql.NVarChar, note);
+    
+    let query = `
+        UPDATE Appointments
+        SET Status = @Status, UpdatedAt = GETDATE()
+    `;
+
+    if (status === 'Cancelled' && cancelReason) {
+        query += `, CancelReason = @CancelReason`;
+        request.input('CancelReason', sql.NVarChar, cancelReason);
     }
-    query += ` WHERE AppointmentID = @AppointmentID AND DoctorID = (SELECT DoctorID FROM Doctors WHERE UserID = @UserID)`;
+
+    query += ` WHERE AppointmentID = @AppointmentID
+               AND DoctorID = (SELECT DoctorID FROM Doctors WHERE UserID = @UserID)`;
     
     request.input('AppointmentID', sql.Int, appointmentId);
     request.input('Status', sql.NVarChar, status);
     
     const result = await request.query(query);
-    return result.rowsAffected[0] > 0;
+    return result.rowsAffected[0] > 0; 
 };
 
 module.exports = { getMetrics, getComboChartData, getStatusDistribution, getTopServices, getAppointmentLists, updateStatus };

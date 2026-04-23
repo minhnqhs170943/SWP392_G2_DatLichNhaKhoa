@@ -12,12 +12,12 @@ const getAllServicesList = async () => {
     }
 };
 
-const getPendingAppointments = async (userId, search, startDate, endDate, service, page, limit) => {
+const getApprovedAppointments = async (userId, search, startDate, endDate, service, page, limit) => {
     const pool = await poolPromise;
     const request = pool.request();
     request.input('UserID', sql.Int, userId);
 
-    let conditions = `a.DoctorID = (SELECT DoctorID FROM Doctors WHERE UserID = @UserID) AND a.Status = 'Assigned'`;
+    let conditions = `a.DoctorID = (SELECT DoctorID FROM Doctors WHERE UserID = @UserID) AND a.Status = 'Approved'`;
 
     if (search) {
         conditions += ` AND (u.FullName LIKE @Search OR u.Phone LIKE @Search OR CAST(a.AppointmentID AS VARCHAR) LIKE @Search)`;
@@ -58,21 +58,18 @@ const getPendingAppointments = async (userId, search, startDate, endDate, servic
             CONVERT(VARCHAR(10), a.AppointmentDate, 103) AS date,
             CONVERT(VARCHAR(5), a.AppointmentTime, 108) AS time,
             a.Note AS patientNote,
-            (
-            SELECT STRING_AGG(s.ServiceName, ', ') 
+            (SELECT STRING_AGG(s.ServiceName, ', ') 
             FROM AppointmentServices aps 
             JOIN Services s ON aps.ServiceID = s.ServiceID 
-            WHERE aps.AppointmentID = a.AppointmentID
-            ) AS services
-        FROM Appointments a
+            WHERE aps.AppointmentID = a.AppointmentID) AS services
+        FROM Appointments a 
         JOIN Users u ON a.PatientID = u.UserID
         WHERE ${conditions}
         ORDER BY a.AppointmentDate ASC, a.AppointmentTime ASC
         OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
     `;
-
     const result = await request.query(query);
-
+    
     return {
         data: result.recordset,
         total: totalRecords,
@@ -81,25 +78,7 @@ const getPendingAppointments = async (userId, search, startDate, endDate, servic
     };
 };
 
-const updateAppointmentStatus = async (appointmentId, status, cancelReason, userId) => {
-    const pool = await poolPromise;
-    const request = pool.request();
-
-    let query = `UPDATE Appointments SET Status = @Status, UpdatedAt = GETDATE()`;
-
-    if (status === 'Cancelled' && cancelReason) {
-        query += `, CancelReason = @CancelReason`;
-        request.input('CancelReason', sql.NVarChar, cancelReason);
-    }
-
-    query += ` WHERE AppointmentID = @AppointmentID AND DoctorID = (SELECT DoctorID FROM Doctors WHERE UserID = @UserID)`;
-
-    request.input('AppointmentID', sql.Int, appointmentId);
-    request.input('Status', sql.NVarChar, status);
-    request.input('UserID', sql.Int, userId);
-
-    const result = await request.query(query);
-    return result.rowsAffected[0] > 0;
+module.exports = {
+    getAllServicesList,
+    getApprovedAppointments
 };
-
-module.exports = { getPendingAppointments, getAllServicesList, updateAppointmentStatus };

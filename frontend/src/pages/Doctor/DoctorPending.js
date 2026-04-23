@@ -13,14 +13,12 @@ const DoctorPending = () => {
     const [endDate, setEndDate] = useState('');
     const [filterService, setFilterService] = useState('');
 
-    // Phân trang
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const [itemsPerPage, setItemsPerPage] = useState(5);
 
-    // Modal Hủy/Từ chối lịch
-    const [cancelModal, setCancelModal] = useState({ isOpen: false, appointmentId: null, note: '' });
+    const [cancelModal, setCancelModal] = useState({ isOpen: false, appointmentId: null, cancelReason: '' });
 
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const userId = user.UserID || user.id || user.doctorId;
@@ -74,31 +72,33 @@ const DoctorPending = () => {
         setCurrentPage(1);
     };
 
-    // --- CÁC HÀM XỬ LÝ DUYỆT VÀ TỪ CHỐI LỊCH ---
     const handleApprove = async (appointmentId) => {
         try {
             setLoading(true);
-            await updateAppointmentStatus(appointmentId, { status: 'Approved', note: null, doctorId: userId });
-            await loadPendingAppointments(); // Tải lại danh sách sau khi duyệt
+            await updateAppointmentStatus(appointmentId, { status: 'Approved' });
+            await loadPendingAppointments(); 
         } catch (error) {
             alert("Lỗi khi duyệt lịch: " + error.message);
             setLoading(false);
         }
     };
 
-    const openCancelModal = (appointmentId) => setCancelModal({ isOpen: true, appointmentId, note: '' });
-    const closeCancelModal = () => setCancelModal({ isOpen: false, appointmentId: null, note: '' });
+    const openCancelModal = (appointmentId) => setCancelModal({ isOpen: true, appointmentId, cancelReason: '' });
+    const closeCancelModal = () => setCancelModal({ isOpen: false, appointmentId: null, cancelReason: '' });
 
     const submitCancel = async () => {
-        if (!cancelModal.note.trim()) {
+        if (!cancelModal.cancelReason.trim()) {
             alert("Vui lòng nhập lý do từ chối để thông báo cho lễ tân/bệnh nhân.");
             return;
         }
         try {
             setLoading(true);
-            await updateAppointmentStatus(cancelModal.appointmentId, { status: 'Cancelled', note: cancelModal.note, doctorId: userId });
+            await updateAppointmentStatus(cancelModal.appointmentId, { 
+                status: 'Cancelled', 
+                cancelReason: cancelModal.cancelReason 
+            });
             closeCancelModal();
-            await loadPendingAppointments(); // Tải lại danh sách sau khi hủy
+            await loadPendingAppointments(); 
         } catch (error) {
             alert("Lỗi khi hủy lịch: " + error.message);
             setLoading(false);
@@ -128,12 +128,6 @@ const DoctorPending = () => {
                             <input type="text" className="form-control border-0 shadow-none bg-transparent fw-medium" placeholder="Tìm kiếm tên bệnh nhân..." value={searchTerm} onChange={(e) => handleFilterChange(setSearchTerm, e.target.value)} />
                         </div>
                     </div>
-                    {/* <div className="col-md-4">
-                        <div className="input-group shadow-sm rounded-pill overflow-hidden bg-white">
-                            <span className="input-group-text bg-transparent border-0 text-success"><i className="bi bi-calendar-event"></i></span>
-                            <input type="date" className="form-control border-0 shadow-none bg-transparent text-muted fw-medium" value={filterDate} onChange={(e) => handleFilterChange(setFilterDate, e.target.value)} />
-                        </div>
-                    </div> */}
                     <div className="col-md-4">
                         <div className="input-group shadow-sm rounded-pill overflow-hidden bg-white">
                             <span className="input-group-text bg-transparent border-0 text-success"><i className="bi bi-calendar-range"></i></span>
@@ -187,6 +181,7 @@ const DoctorPending = () => {
                             <table className="table table-hover align-middle mb-0">
                                 <thead className="table-light">
                                     <tr>
+                                        <th className="text-muted fw-bold rounded-start px-4">Mã đặt lịch</th>
                                         <th className="text-muted fw-bold rounded-start px-4">THỜI GIAN</th>
                                         <th className="text-muted fw-bold">BỆNH NHÂN</th>
                                         <th className="text-muted fw-bold">DỊCH VỤ</th>
@@ -197,6 +192,11 @@ const DoctorPending = () => {
                                 <tbody>
                                     {appointments?.map((apt) => (
                                         <tr key={apt.id} className="bg-white">
+                                            <td className="px-4 py-3">
+                                                <span className="badge bg-white text-secondary px-4 py-2 rounded-pill fw-bold border shadow-sm fs-6">
+                                                    <span className="text-primary me-1"></span>{apt.id}
+                                                </span>
+                                            </td>
                                             <td className="px-4 py-3">
                                                 <div className="d-flex align-items-center gap-3">
                                                     <div className="bg-primary bg-opacity-10 text-primary rounded-3 p-2 text-center shadow-sm" style={{ minWidth: '70px' }}>
@@ -210,11 +210,20 @@ const DoctorPending = () => {
                                                 <span className="text-muted small"><i className="bi bi-telephone-fill me-1 opacity-50"></i>{apt.patientPhone}</span>
                                             </td>
                                             <td>
-                                                <span className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill fw-bold border border-info border-opacity-25">
-                                                    {apt.services}
-                                                </span>
+                                                <div className="d-flex flex-column gap-2 align-items-start">
+                                                    {apt.services.split(',').map((srv, idx) => (
+                                                        <span
+                                                            key={idx}
+                                                            className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill fw-bold border border-info border-opacity-25 shadow-sm"
+                                                        >
+                                                            {srv.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </td>
-                                            <td className="text-muted small" style={{ maxWidth: '200px' }}>{apt.note}</td>
+                                            <td className="text-muted small" style={{ maxWidth: '200px' }}>
+                                                {apt.patientNote}
+                                            </td>
                                             <td className="text-end px-4">
                                                 <div className="d-flex justify-content-end gap-2">
                                                     <button onClick={() => handleApprove(apt.id)} className="btn btn-success rounded-pill px-3 shadow-sm fw-bold">
@@ -271,7 +280,6 @@ const DoctorPending = () => {
                     )}
                 </div>
 
-                {/* --- MODAL (POPUP) TỪ CHỐI / HỦY LỊCH --- */}
                 {cancelModal.isOpen && <div className="modal-backdrop fade show" style={{ zIndex: 1040, backgroundColor: 'rgba(0,0,0,0.5)' }}></div>}
                 {cancelModal.isOpen && (
                     <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1050 }}>
@@ -289,8 +297,8 @@ const DoctorPending = () => {
                                         className="form-control rounded-3 bg-light border-0 shadow-none p-3"
                                         rows="3"
                                         placeholder="Ví dụ: Bác sĩ kẹt lịch phẫu thuật đột xuất, vui lòng đổi ngày..."
-                                        value={cancelModal.note}
-                                        onChange={(e) => setCancelModal({ ...cancelModal, note: e.target.value })}
+                                        value={cancelModal.cancelReason}
+                                        onChange={(e) => setCancelModal({ ...cancelModal, cancelReason: e.target.value })}
                                         autoFocus
                                     ></textarea>
                                 </div>

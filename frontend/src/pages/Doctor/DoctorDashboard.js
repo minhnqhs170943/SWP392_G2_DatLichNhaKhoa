@@ -57,7 +57,7 @@ const DoctorDashboard = () => {
     const [filterMode, setFilterMode] = useState('date');
     const [startValue, setStartValue] = useState(formatDateStandard(new Date()));
     const [endValue, setEndValue] = useState(formatDateStandard(new Date()));
-    
+
     const [loading, setLoading] = useState(false);
     const [animate, setAnimate] = useState(false);
 
@@ -141,15 +141,15 @@ const DoctorDashboard = () => {
     }, [loadDashboardData]);
 
     const handleAction = async (appointmentId, nextStatus) => {
-        let note = null;
+        let cancelReason = null;
         if (nextStatus === 'Cancelled') {
-            note = prompt("Vui lòng nhập lý do hủy lịch khám này:");
-            if (note === null) return;
+            cancelReason = prompt("Vui lòng nhập lý do hủy lịch khám này:");
+            if (!cancelReason || cancelReason.trim() === '') return;
         }
 
         try {
             setLoading(true);
-            await updateAppointmentStatus(appointmentId, { status: nextStatus, note: note, doctorId: userId });
+            await updateAppointmentStatus(appointmentId, { status: nextStatus, cancelReason });
             await loadDashboardData();
         } catch (error) {
             alert("Cập nhật thất bại: " + error.message);
@@ -184,7 +184,7 @@ const DoctorDashboard = () => {
                             <option value="month">Nhóm theo Tháng</option>
                             <option value="year">Nhóm theo Năm</option>
                         </select>
-                        
+
                         <div className="vr text-secondary opacity-25"></div>
 
                         {/* INPUT KHU VỰC - RENDER DỰA THEO FILTER MODE */}
@@ -340,6 +340,12 @@ const DoctorDashboard = () => {
                                                     <div>
                                                         <h6 className="fw-bold mb-1 text-dark">{apt.patient}</h6>
                                                         <span className="text-muted small"><i className="bi bi-bookmark-check text-primary me-1"></i> {apt.service}</span>
+
+                                                        {apt.patientNote && (
+                                                            <div className="small mt-1" style={{ color: '#0369a1', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                                                                🗣️ "{apt.patientNote}"
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="d-flex gap-2">
@@ -379,6 +385,12 @@ const DoctorDashboard = () => {
                                                     <div>
                                                         <div className="d-flex align-items-center gap-2 mb-1"><h6 className="fw-bold mb-0 text-dark">{apt.patient}</h6></div>
                                                         <span className="text-muted small"><i className="bi bi-clipboard2-check text-success me-1"></i> {apt.service}</span>
+
+                                                        {apt.patientNote && (
+                                                            <div className="small mt-1" style={{ color: '#0369a1', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                                                                🗣️ "{apt.patientNote}"
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <Link to={`/doctor/consultation/${apt.id}`} className={`btn btn-sm rounded-pill px-4 fw-bold shadow-sm ${apt.isNext ? 'btn-success' : 'btn-outline-success bg-white'}`}>

@@ -1,11 +1,11 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import RoleRoute from './components/RoleRoute';
 import AdminLayout from './layouts/AdminLayout';
-import AdminBlog from './pages/Admin/AdminBlog';
-import ProductManagement from './pages/Admin/ProductManagement';
-import AdminServices from './pages/Admin/AdminServices';
-import AdminAppointments from './pages/Admin/AdminAppointments';
 import AdminAnalytics from './pages/Admin/AdminAnalytics';
+import AdminAppointments from './pages/Admin/AdminAppointments';
+import AdminBlog from './pages/Admin/AdminBlog';
+import AdminServices from './pages/Admin/AdminServices';
+import ProductManagement from './pages/Admin/ProductManagement';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
 import Profile from './pages/Auth/Profile';
@@ -16,8 +16,12 @@ import CheckoutPage from './pages/CheckoutPage';
 import StaffAppointments from './pages/Dashboard/StaffAppointments';
 import StaffDashboard from './pages/Dashboard/StaffDashboard';
 import UserManagement from './pages/Dashboard/UserManagement';
+import ConsultationDetail from './pages/Doctor/ConsultationDetail';
+import ConsultationHistory from './pages/Doctor/ConsultationHistory';
+import ConsultationList from './pages/Doctor/ConsultationList';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import DoctorPending from './pages/Doctor/DoctorPending';
+import DoctorProfile from './pages/Doctor/DoctorProfile';
 import HomePage from './pages/Homepage';
 import Cart from './pages/Market/Cart';
 import Doctor from './pages/Market/Doctor';
@@ -41,7 +45,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/home" />} />
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -70,11 +74,14 @@ function App() {
         <Route path="/profile" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><Profile /></RoleRoute>} />
         <Route path="/notifications" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><NotificationsPage /></RoleRoute>} />
 
-        <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminProduct /></RoleRoute>} />
 
         {/* Doctor */}
         <Route path="/doctor/dashboard" element={<RoleRoute allowedRoles={[2]}><DoctorDashboard /></RoleRoute>} />
         <Route path="/doctor/pending" element={<RoleRoute allowedRoles={[2]}><DoctorPending /></RoleRoute>} />
+        <Route path="/doctor/consultation" element={<RoleRoute allowedRoles={[2]}><ConsultationList /></RoleRoute>} />
+        <Route path="/doctor/consultation/:id" element={<RoleRoute allowedRoles={[2]}><ConsultationDetail /></RoleRoute>} />
+        <Route path="/doctor/history" element={<RoleRoute allowedRoles={[2]}><ConsultationHistory /></RoleRoute>} />
+        <Route path="/doctor/profile" element={<RoleRoute allowedRoles={[2]}><DoctorProfile /></RoleRoute>} />
 
         {/* Admin */}
         <Route path="/admin" element={<Navigate to="/admin/stats" />} />
@@ -86,8 +93,8 @@ function App() {
         <Route path="/admin/appointments" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminAppointments /></AdminLayout></RoleRoute>} />
 
         {/* Staff Dashboard */}
-        <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 2]}><StaffDashboard /></RoleRoute>} />
-        <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[1, 2]}><StaffAppointments /></RoleRoute>} />
+        <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[3]}><StaffDashboard /></RoleRoute>} />
+        <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[3]}><StaffAppointments /></RoleRoute>} />
       </Routes>
     </Router>
   );

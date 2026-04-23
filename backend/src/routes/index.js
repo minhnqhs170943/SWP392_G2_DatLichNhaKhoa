@@ -15,6 +15,10 @@ const blogRoutes = require('./blog.routes');
 const notificationRoutes = require('./notification.routes');
 const doctorDashboard = require('../routes/Doctor/doctorDashboard.routes');
 const doctorPending = require('../routes/Doctor/doctorPending.routes');
+const consultationList = require('../routes/Doctor/consultationList.routes');
+const consultationDetail = require('../routes/Doctor/consultationDetail.routes');
+const consultationHistory = require('../routes/Doctor/consultationHistory.routes');
+const doctorProfileRoutes = require('../routes/Doctor/doctorProfile.routes');
 
 router.use("/upload", uploadRoutes);
 router.use('/auth', authRoutes);
@@ -34,5 +38,9 @@ router.use('/admin/analytics', require('./adminStatsRoutes'));
 // Doctor
 router.use('/doctor-dashboard', doctorDashboard);
 router.use('/doctor-pending', doctorPending);
+router.use('/consultation-list', consultationList);
+router.use('/consultation-detail', consultationDetail);
+router.use('/consultation-history', consultationHistory);
+router.use('/doctor-profile', doctorProfileRoutes);
 
 module.exports = router;

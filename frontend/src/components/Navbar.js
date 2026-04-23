@@ -1,12 +1,14 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
 import { fetchCart } from '../services/cartApi';
-import { getUserNotifications, getUnreadCount, markAsRead as markNotificationAsRead } from '../services/notificationApi';
+import { getUnreadCount, getUserNotifications, markAsRead as markNotificationAsRead } from '../services/notificationApi';
 import './../styles/Navbar.css';
 
 const Navbar = () => {
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user'));
+    const [user, setUser] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+    });
     const [showDropdown, setShowDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [cartCount, setCartCount] = useState(0);
@@ -30,7 +32,7 @@ const Navbar = () => {
         }
     };
 
-    const loadNotifications = async () => {
+    const loadNotifications = useCallback(async () => {
         if (!user) return;
         try {
             const [notifData, count] = await Promise.all([
@@ -42,7 +44,7 @@ const Navbar = () => {
         } catch (error) {
             console.error('Error loading notifications:', error);
         }
-    };
+    }, [user]);
 
     const formatTime = (dateString) => {
         const date = new Date(dateString);
@@ -94,10 +96,30 @@ const Navbar = () => {
             window.setTimeout(() => setCartGlow(false), 500);
         };
 
+        const handleAuthChange = () => {
+            try {
+                const updatedUser = JSON.parse(localStorage.getItem('user'));
+                if (mounted) {
+                    setUser(updatedUser);
+                    if (updatedUser) {
+                        loadNotifications();
+                        loadCartCount();
+                    } else {
+                        setNotifications([]);
+                        setUnreadCount(0);
+                        setCartCount(0);
+                    }
+                }
+            } catch {
+                if (mounted) setUser(null);
+            }
+        };
+
         loadCartCount();
-        loadNotifications();
-        
+        if (user) loadNotifications();
+
         window.addEventListener('cart:updated', handleCartUpdated);
+        window.addEventListener('authChange', handleAuthChange);
 
         // Poll notifications every 30 seconds
         const notifInterval = setInterval(() => {
@@ -107,12 +129,19 @@ const Navbar = () => {
         return () => {
             mounted = false;
             window.removeEventListener('cart:updated', handleCartUpdated);
+            window.removeEventListener('authChange', handleAuthChange);
             clearInterval(notifInterval);
         };
-    }, [user]);
+    }, [user, loadNotifications]);
+
+
 
     const handleLogout = () => {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
+
+        window.dispatchEvent(new Event('authChange'));
+
         alert("Đã đăng xuất");
         navigate('/home');
     };
@@ -256,7 +285,7 @@ const Navbar = () => {
                                                             marginTop: '6px',
                                                             flexShrink: 0
                                                         }} />
-                                                        
+
                                                         <div style={{ flex: 1 }}>
                                                             <div style={{
                                                                 fontSize: '13px',
@@ -327,17 +356,33 @@ const Navbar = () => {
                                         padding: '8px 12px',
                                         background: 'white',
                                         border: '1px solid #e5e7eb',
-                                        borderRadius: '6px',
+                                        borderRadius: '50px',
                                         cursor: 'pointer',
                                         fontSize: '14px',
                                         fontWeight: '500',
                                         color: '#1f2937'
                                     }}
                                 >
+                                    {user.AvatarURL ? (
+                                        <img
+                                            src={user.AvatarURL}
+                                            alt="avatar"
+                                            style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <div style={{
+                                            width: '28px', height: '28px', borderRadius: '50%',
+                                            background: '#3b82f6', color: 'white', display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold'
+                                        }}>
+                                            {user.FullName ? user.FullName.charAt(0).toUpperCase() : 'U'}
+                                        </div>
+                                    )}
+
                                     <span>Chào, {user.FullName}</span>
-                                    <span style={{ fontSize: '12px' }}>▼</span>
+                                    <span style={{ fontSize: '10px', marginLeft: '2px' }}>▼</span>
                                 </button>
-                                
+
                                 {showDropdown && (
                                     <div style={{
                                         position: 'absolute',

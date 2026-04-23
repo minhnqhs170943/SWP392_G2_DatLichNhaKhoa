@@ -1,9 +1,13 @@
 const dashboardModel = require('../../models/Doctor/doctorDashboard.model');
 
-const getFullDashboard = async (req, res) => {
+const getFullDashboard = async (req, res, next) => {
     try {
-        const { doctorId: userId } = req.params;
+        const { userId } = req.params;
         const { filterMode = 'date', startDate, endDate } = req.query;
+
+        if (parseInt(userId) !== req.user.userId) {
+            return res.status(403).json({ success: false, message: 'Bạn không có quyền xem dữ liệu của người khác' });
+        }
 
         if (!userId) return res.status(400).json({ success: false, message: 'Thiếu ID bác sĩ' });
         if (!startDate || !endDate) return res.status(400).json({ success: false, message: 'Thiếu khoảng thời gian' });
@@ -16,22 +20,28 @@ const getFullDashboard = async (req, res) => {
 
         res.status(200).json({ success: true, metrics, combo, status, topServices, appointments });
     } catch (error) {
-        console.error('Lỗi dashboard:', error);
-        res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+        next(error);
     }
 };
 
-const handleStatusUpdate = async (req, res) => {
+const handleStatusUpdate = async (req, res, next) => {
     try {
         const { appointmentId } = req.params;
-        const { status, note, doctorId: userId } = req.body; 
+        const { status, cancelReason } = req.body;
+        const userId = req.user.userId;
 
-        const success = await dashboardModel.updateStatus(appointmentId, status, note, userId);
-        if (!success) return res.status(404).json({ success: false, message: 'Thao tác thất bại' });
+        if (!status) return res.status(400).json({ success: false, message: 'Thiếu trạng thái cần cập nhật' });
 
-        res.status(200).json({ success: true, message: 'Cập nhật thành công' });
+        if (status === 'Cancelled' && (!cancelReason || cancelReason.trim() === '')) {
+            return res.status(400).json({ success: false, message: 'Vui lòng nhập lý do hủy lịch hẹn' });
+        }
+
+        const success = await dashboardModel.updateStatus(appointmentId, status, userId, cancelReason);
+        if (!success) return res.status(404).json({ success: false, message: 'Thao tác thất bại hoặc lịch hẹn không thuộc về bạn' });
+
+        res.status(200).json({ success: true, message: 'Cập nhật trạng thái lịch hẹn thành công' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
+        next(error);
     }
 };
 

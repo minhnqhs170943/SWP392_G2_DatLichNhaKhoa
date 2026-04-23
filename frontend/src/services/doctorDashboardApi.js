@@ -1,20 +1,40 @@
+import axios from 'axios';
 const API_BASE = `${process.env.REACT_APP_API_URL}/doctor-dashboard`;
 
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
+};
+
+const handleAxiosError = (error) => {
+    if (error.response && error.response.data) {
+        throw new Error(error.response.data.message || "Lỗi từ máy chủ");
+    }
+    throw new Error("Không thể kết nối đến máy chủ");
+};
+
 export async function fetchDoctorDashboard(userId, filterMode, startDate, endDate) {
-    const query = new URLSearchParams({ filterMode, startDate, endDate }).toString();
-    const res = await fetch(`${API_BASE}/${userId}?${query}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Lỗi tải dữ liệu dashboard");
-    return data;
+    try {
+        const query = new URLSearchParams({ filterMode, startDate, endDate }).toString();
+        const response = await axios.get(`${API_BASE}/${userId}?${query}`, {
+            headers: getAuthHeaders()
+        });
+        return response.data;
+    } catch (error) {
+        return handleAxiosError(error);
+    }
 }
 
 export async function updateAppointmentStatus(appointmentId, statusData) {
-  const res = await fetch(`${API_BASE}/status/${appointmentId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(statusData),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Lỗi cập nhật trạng thái lịch hẹn");
-  return data;
+    try {
+        const response = await axios.put(`${API_BASE}/status/${appointmentId}`, statusData, {
+            headers: getAuthHeaders()
+        });
+        return response.data;
+    } catch (error) {
+        return handleAxiosError(error);
+    }
 }

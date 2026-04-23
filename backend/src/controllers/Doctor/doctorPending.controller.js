@@ -1,45 +1,49 @@
 const pendingModel = require('../../models/Doctor/doctorPending.model');
 
-const getServicesList = async (req, res) => {
+const getServicesList = async (req, res, next) => {
     try {
         const services = await pendingModel.getAllServicesList();
         res.status(200).json({ success: true, data: services });
     } catch (error) {
-        console.error('Lỗi lấy dịch vụ:', error);
-        res.status(500).json({ success: false, message: 'Lỗi lấy danh sách dịch vụ' });
+        next(error);
     }
 };
 
-const getPendingList = async (req, res) => {
+const getPendingList = async (req, res, next) => {
     try {
-        const { doctorId: userId } = req.params;
-        const { search = '', startDate = '', endDate = '', service = '', page = 1, limit = 5 } = req.query; 
-        
-        if (!userId) return res.status(400).json({ success: false, message: 'Thiếu ID bác sĩ' });
+        const { userId } = req.params;
+        const { search = '', startDate = '', endDate = '', service = '', page = 1, limit = 10 } = req.query;
+
+        if (parseInt(userId) !== req.user.userId) {
+            return res.status(403).json({ success: false, message: 'Bạn không có quyền xem dữ liệu này' });
+        }
 
         const result = await pendingModel.getPendingAppointments(userId, search, startDate, endDate, service, page, limit);
-        res.status(200).json({ success: true, ...result }); 
+        res.status(200).json({ success: true, ...result });
     } catch (error) {
-        console.error('Lỗi lấy danh sách lịch chờ duyệt:', error);
-        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+        next(error);
     }
 };
 
-const updateStatus = async (req, res) => {
+const updateStatus = async (req, res, next) => {
     try {
         const { appointmentId } = req.params;
-        const { status, note, doctorId } = req.body;
+        const { status, cancelReason } = req.body;
+        const userId = req.user.userId;
 
-        const isSuccess = await pendingModel.updateAppointmentStatus(appointmentId, status, note, doctorId);
+        if (status === 'Cancelled' && (!cancelReason || cancelReason.trim() === '')) {
+            return res.status(400).json({ success: false, message: 'Vui lòng nhập lý do từ chối lịch hẹn' });
+        }
+
+        const isSuccess = await pendingModel.updateAppointmentStatus(appointmentId, status, cancelReason, userId);
         
         if (isSuccess) {
             res.status(200).json({ success: true, message: 'Cập nhật trạng thái thành công' });
         } else {
-            res.status(404).json({ success: false, message: 'Không tìm thấy lịch khám' });
+            res.status(404).json({ success: false, message: 'Không tìm thấy lịch khám hoặc bạn không có quyền' });
         }
     } catch (error) {
-        console.error('Lỗi cập nhật trạng thái:', error);
-        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+        next(error);
     }
 };
 
