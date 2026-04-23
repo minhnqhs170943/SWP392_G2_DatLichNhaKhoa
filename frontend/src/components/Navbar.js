@@ -386,6 +386,23 @@ const Navbar = () => {
                                             🗓️ Lịch hẹn của tôi
                                         </Link>
                                         <Link
+                                            to="/review"
+                                            onClick={() => setShowDropdown(false)}
+                                            style={{
+                                                display: 'block',
+                                                padding: '12px 16px',
+                                                color: '#374151',
+                                                textDecoration: 'none',
+                                                fontSize: '14px',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                        >
+                                            ⭐ Đánh giá
+                                        </Link>
+                                        <Link
                                             to="/profile"
                                             onClick={() => setShowDropdown(false)}
                                             style={{
