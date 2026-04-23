@@ -8,6 +8,7 @@ import AdminAppointments from './pages/Admin/AdminAppointments';
 import AdminAnalytics from './pages/Admin/AdminAnalytics';
 import AdminOverview from './pages/Admin/AdminOverview';
 import AdminInvoices from './pages/Admin/AdminInvoices';
+import AdminReviews from './pages/Admin/AdminReviews';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
 import Profile from './pages/Auth/Profile';
@@ -86,6 +87,7 @@ function App() {
         <Route path="/admin/services" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminServices /></AdminLayout></RoleRoute>} />
         <Route path="/admin/appointments" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminAppointments /></AdminLayout></RoleRoute>} />
         <Route path="/admin/invoices" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminInvoices /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/reviews" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminReviews /></AdminLayout></RoleRoute>} />
 
         {/* Staff Dashboard */}
         <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 3]}><StaffDashboard /></RoleRoute>} />

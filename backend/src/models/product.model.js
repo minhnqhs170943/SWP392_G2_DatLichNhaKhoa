@@ -31,7 +31,7 @@ const findProductById = async (productId) => {
             Price,
             ImageURL,
             IsActive,
-            CreatedAt,
+            CreatedAt 
         FROM [dbo].[Products]
         WHERE ProductID = @productId AND IsActive = 1
     `);

@@ -1,0 +1,57 @@
+.admin-reviews {
+    padding: 8px;
+}
+
+.admin-reviews .section-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.admin-reviews .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.admin-reviews .section-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.admin-reviews .section-subtitle {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.admin-reviews .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.admin-reviews .table td,
+.admin-reviews .table th {
+    vertical-align: middle;
+}
+
+.admin-reviews .word-form {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 900px) {
+    .admin-reviews .word-form {
+        grid-template-columns: 1fr;
+    }
+}
+

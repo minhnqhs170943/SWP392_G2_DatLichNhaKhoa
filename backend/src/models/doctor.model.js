@@ -81,7 +81,7 @@ const findBookedSlots = async (date) => {
         GROUP BY AppointmentTime
     `);
 
-    // 3. Khung giờ nào có số lịch hẹn >= số bác sĩ thì coi như "Full"
+    // 2. Khung giờ nào có số lịch hẹn >= số bác sĩ thì coi như "Full"
     const bookedSlots = appointmentsResult.recordset
         .filter(row => row.AppointmentCount >= totalDoctors)
         .map(row => row.timeStr);
