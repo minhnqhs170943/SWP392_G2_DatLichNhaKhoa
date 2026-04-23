@@ -26,8 +26,8 @@ const findAvailableDoctors = async (date, time) => {
     const request = new sql.Request();
     request.input('AppointmentDate', sql.Date, date);
     request.input('AppointmentTime', sql.NVarChar, time);
-    // Find all active doctors except those who have an appointment at the exact given date and time
-    // that is NOT cancelled or completed (meaning it's Pending, Confirmed, Assigned).
+    // Bác sĩ chỉ bận khi đã có lịch hẹn được Staff xác nhận (Confirmed).
+    // Lịch Pending (khách mới đặt, chưa xác nhận) KHÔNG tính là bận.
     const result = await request.query(`
         select  u.UserID, 
                 u.Email, 
@@ -45,7 +45,7 @@ const findAvailableDoctors = async (date, time) => {
                     FROM Appointments 
                     WHERE AppointmentDate = @AppointmentDate
                       AND AppointmentTime = CAST(@AppointmentTime AS TIME)
-                      AND Status NOT IN ('Cancelled', 'Completed')
+                      AND Status = 'Confirmed'
                       AND DoctorID IS NOT NULL
                 ) THEN 0 ELSE 1 END as IsAvailable
         from Users u
@@ -70,14 +70,14 @@ const findBookedSlots = async (date) => {
     const totalDoctors = doctorsCountResult.recordset[0].TotalDoctors;
 
     // 2. Lấy số lượng lịch hẹn theo từng khung giờ trong ngày đó
-    // (Chỉ tính các lịch chưa hủy/chưa hoàn thành)
+    // (Chỉ tính các lịch đã được Staff xác nhận - Confirmed)
     const appointmentsResult = await request.query(`
         SELECT 
             CONVERT(VARCHAR(5), AppointmentTime, 108) as timeStr,
             COUNT(*) as AppointmentCount
         FROM Appointments
         WHERE AppointmentDate = @AppointmentDate
-          AND Status NOT IN ('Cancelled', 'Completed')
+          AND Status = 'Confirmed'
         GROUP BY AppointmentTime
     `);
 

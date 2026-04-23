@@ -96,7 +96,15 @@ const BookingPage = () => {
         switch (currentStep) {
             case 1: return selectedServices.length > 0;
             case 2: return selectedDate && selectedTime;
-            case 3: return doctors.length === 0 || selectedDoctor !== null;
+            case 3: {
+                // Nếu có bác sĩ rảnh → bắt buộc chọn 1 bác sĩ
+                const hasAvailableDoctor = doctors.some(d => d.IsAvailable);
+                if (hasAvailableDoctor) {
+                    return selectedDoctor !== null;
+                }
+                // Nếu tất cả bận → cho phép đi tiếp (hệ thống chọn)
+                return true;
+            }
             case 4: return true;
             default: return false;
         }
@@ -108,11 +116,14 @@ const BookingPage = () => {
             const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
             const data = await res.json();
             if (data.success) {
-                const availableDoctors = data.data || [];
-                setDoctors(availableDoctors);
-                if (availableDoctors.length > 0) {
-                    setSelectedDoctor(availableDoctors[0]);
+                const allDoctors = data.data || [];
+                setDoctors(allDoctors);
+                // Chỉ tự chọn bác sĩ rảnh đầu tiên (IsAvailable === true)
+                const availableOnes = allDoctors.filter(d => d.IsAvailable);
+                if (availableOnes.length > 0) {
+                    setSelectedDoctor(availableOnes[0]);
                 } else {
+                    // Tất cả bận → hệ thống sẽ chọn
                     setSelectedDoctor(null);
                 }
             }
@@ -362,6 +373,18 @@ const BookingPage = () => {
                                     {doctorSearch && <button className="search-clear" onClick={() => setDoctorSearch('')}>✕</button>}
                                 </div>
                                 <div className="doctors-grid">
+                                    {/* Hiện ô "Hệ thống chọn" khi TẤT CẢ bác sĩ đều bận */}
+                                    {!doctorSearch && doctors.length > 0 && !doctors.some(d => d.IsAvailable) && (
+                                        <div
+                                            className={`doctor-card ${selectedDoctor === null ? 'selected' : ''}`}
+                                            onClick={() => setSelectedDoctor(null)}
+                                        >
+                                            <div className="doctor-avatar">🏥</div>
+                                            <h3>Để hệ thống chọn</h3>
+                                            <p className="doctor-specialty">Tất cả bác sĩ hiện tại đã bận. Nhân viên sẽ phân công bác sĩ khi có lịch trống.</p>
+                                        </div>
+                                    )}
+                                    {/* Hiện ô "Hệ thống chọn" khi không có bác sĩ nào trong hệ thống */}
                                     {!doctorSearch && doctors.length === 0 && (
                                         <div
                                             className={`doctor-card ${selectedDoctor === null ? 'selected' : ''}`}
