@@ -30,5 +30,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/admin/analytics', require('./adminStatsRoutes'));
 router.use('/admin/users', require('./adminUserRoutes'));
 router.use('/admin/invoices', require('./adminInvoiceRoutes'));
+router.use('/admin/reviews', require('./adminReviewRoutes'));
 
 module.exports = router;

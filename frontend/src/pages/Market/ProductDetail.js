@@ -75,7 +75,7 @@ const STYLES = `
 .pd2-back:hover { border-color: #3b82f6; color: #3b82f6; transform: translateX(-3px); }
 
 /* ── Main row ── */
-.pd2-main { display: grid; grid-template-columns: 1fr 1.15fr; gap: 24px; margin-bottom: 24px; }
+.pd2-main { display: grid; grid-template-columns: 1fr 1.15fr; gap: 24px; margin-bottom: 24px; align-items: start; }
 @media (max-width: 768px) {
   .pd2-main { grid-template-columns: 1fr; }
   .pd2-page { padding: 80px 16px 48px; }
@@ -123,7 +123,7 @@ const STYLES = `
   animation: pd2-fadeInUp .4s .15s ease both;
 }
 .pd2-desc {
-  font-size: 14px; color: #64748b; line-height: 1.7; margin: 0 0 20px; flex: 1;
+  font-size: 14px; color: #64748b; line-height: 1.7; margin: 0 0 20px;
   animation: pd2-fadeInUp .4s .2s ease both;
 }
 .pd2-price {
