@@ -18,6 +18,7 @@ import MyAppointments from './pages/Booking/MyAppointments';
 import CheckoutPage from './pages/CheckoutPage';
 import StaffAppointments from './pages/Dashboard/StaffAppointments';
 import StaffDashboard from './pages/Dashboard/StaffDashboard';
+import StaffInvoices from './pages/Dashboard/StaffInvoices';
 import UserManagement from './pages/Dashboard/UserManagement';
 import ConsultationDetail from './pages/Doctor/ConsultationDetail';
 import ConsultationHistory from './pages/Doctor/ConsultationHistory';
@@ -103,6 +104,7 @@ function App() {
         {/* Staff Dashboard */}
         <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 3]}><StaffDashboard /></RoleRoute>} />
         <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[1, 3]}><StaffAppointments /></RoleRoute>} />
+        <Route path="/staff/invoices" element={<RoleRoute allowedRoles={[1, 3]}><StaffInvoices /></RoleRoute>} />
       </Routes>
     </Router>
   );
