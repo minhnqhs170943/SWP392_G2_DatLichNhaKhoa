@@ -190,14 +190,14 @@ const ConsultationHistory = () => {
                                             </td>
                                             <td>
                                                 <div className="d-flex flex-column gap-2 align-items-start">
-                                                    {apt.services.split(',').map((srv, idx) => (
+                                                    {/* {apt.services.split(',').map((srv, idx) => (
                                                         <span
                                                             key={idx}
                                                             className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill fw-bold border border-info border-opacity-25 shadow-sm"
                                                         >
                                                             {srv.trim()}
                                                         </span>
-                                                    ))}
+                                                    ))} */}
                                                 </div>
                                             </td>
                                             <td>
