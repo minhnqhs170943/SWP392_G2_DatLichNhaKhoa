@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Eye, X, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import '../Dashboard/StaffAppointments.css'; // Reusing staff appointments CSS
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const AdminAppointments = () => {
     const [appointments, setAppointments] = useState([]);
@@ -17,7 +18,7 @@ const AdminAppointments = () => {
     const fetchAppointments = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/appointments');
+            const response = await fetch(`${API_BASE}/appointments`);
             const data = await response.json();
             if (data.success) {
                 setAppointments(data.data);
@@ -37,7 +38,7 @@ const AdminAppointments = () => {
         if (!window.confirm(`Xác nhận chuyển trạng thái thành: ${newStatus}?`)) return;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/status`, {
+            const response = await fetch(`${API_BASE}/appointments/${appointmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })

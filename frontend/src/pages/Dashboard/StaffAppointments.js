@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/SidebarStaff/Sidebar';
 import { Search, Filter, Eye, X } from 'lucide-react';
 import './StaffAppointments.css';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const StaffAppointments = () => {
     const [appointments, setAppointments] = useState([]);
@@ -31,7 +32,7 @@ const StaffAppointments = () => {
     const fetchAppointments = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/appointments');
+            const response = await fetch(`${API_BASE}/appointments`);
             const data = await response.json();
             if (data.success) {
                 setAppointments(data.data);
@@ -49,7 +50,7 @@ const StaffAppointments = () => {
 
     const updateStatus = async (appointmentId, newStatus) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/status`, {
+            const response = await fetch(`${API_BASE}/appointments/${appointmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -116,7 +117,7 @@ const StaffAppointments = () => {
             // Customer đã chọn bác sĩ → xác nhận trực tiếp
             setConfirmLoading(true);
             try {
-                const response = await fetch(`http://localhost:5000/api/appointments/${appointment.AppointmentID}/confirm`, {
+                const response = await fetch(`${API_BASE}/appointments/${appointment.AppointmentID}/confirm`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
@@ -147,7 +148,7 @@ const StaffAppointments = () => {
             const dateStr = d.toISOString().split('T')[0];
             const timeStr = appointment.AppointmentTime;
 
-            const response = await fetch(`http://localhost:5000/api/doctors/available?date=${dateStr}&time=${timeStr}`);
+            const response = await fetch(`${API_BASE}/doctors/available?date=${dateStr}&time=${timeStr}`);
             const data = await response.json();
             if (data.success) {
                 setAvailableDoctors(data.data || []);
@@ -174,7 +175,7 @@ const StaffAppointments = () => {
         }
         setConfirmLoading(true);
         try {
-            const response = await fetch(`http://localhost:5000/api/appointments/${confirmTarget.AppointmentID}/confirm`, {
+            const response = await fetch(`${API_BASE}/appointments/${confirmTarget.AppointmentID}/confirm`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ doctorId: selectedDoctorId })

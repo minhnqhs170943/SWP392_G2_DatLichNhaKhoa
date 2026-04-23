@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Plus, X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import './AdminServices.css';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const AdminServices = () => {
     const [services, setServices] = useState([]);
@@ -37,7 +38,7 @@ const AdminServices = () => {
     const fetchServices = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/services');
+            const response = await fetch(`${API_BASE}/services`);
             const data = await response.json();
             if (data.success) {
                 setServices(data.services);
@@ -78,8 +79,8 @@ const AdminServices = () => {
         e.preventDefault();
         try {
             const url = editingService 
-                ? `http://localhost:5000/api/services/${editingService.ServiceID}`
-                : 'http://localhost:5000/api/services';
+                ? `${API_BASE}/services/${editingService.ServiceID}`
+                : `${API_BASE}/services`;
             const method = editingService ? 'PUT' : 'POST';
 
             if (formData.serviceName.length > MAX_NAME_LENGTH) {
@@ -113,7 +114,7 @@ const AdminServices = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Bạn có chắc chắn muốn xóa dịch vụ này không?')) return;
         try {
-            const response = await fetch(`http://localhost:5000/api/services/${id}`, { method: 'DELETE' });
+            const response = await fetch(`${API_BASE}/services/${id}`, { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
                 fetchServices();

@@ -5,9 +5,22 @@ exports.getDashboardStats = async (req, res) => {
     try {
         const pool = await poolPromise;
 
-        // Lấy query params lọc (startDate, endDate)
-        const startDate = req.query.startDate; // YYYY-MM-DD
-        const endDate = req.query.endDate;     // YYYY-MM-DD
+        // Lấy query params lọc (startDate, endDate, year, month)
+        let { startDate, endDate, year, month } = req.query;
+
+        // Nếu có year/month mà không có startDate/endDate -> tự tính toán range
+        if (year && !startDate && !endDate) {
+            if (month) {
+                const yearNum = parseInt(year);
+                const monthNum = parseInt(month);
+                startDate = `${yearNum}-${String(monthNum).padStart(2, '0')}-01`;
+                const lastDay = new Date(yearNum, monthNum, 0).getDate();
+                endDate = `${yearNum}-${String(monthNum).padStart(2, '0')}-${lastDay}`;
+            } else {
+                startDate = `${year}-01-01`;
+                endDate = `${year}-12-31`;
+            }
+        }
 
         // 1. Tổng số bệnh nhân (Không lọc theo ngày vì là tổng số hệ thống)
         const patientsResult = await pool.request().query(`
