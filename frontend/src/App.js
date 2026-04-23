@@ -30,7 +30,7 @@ import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard';
-
+import StaffInvoices from './pages/Dashboard/StaffInvoices';
 
 // RoleID từ DB: 1-Admin, 2-Doctor, 3-Staff, 4-User
 import BlogListPage from './pages/BlogListPage';
@@ -88,6 +88,7 @@ function App() {
         {/* Staff Dashboard */}
         <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 3]}><StaffDashboard /></RoleRoute>} />
         <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[1, 3]}><StaffAppointments /></RoleRoute>} />
+        <Route path="/staff/invoices" element={<RoleRoute allowedRoles={[1, 3]}><StaffInvoices /></RoleRoute>} />
       </Routes>
     </Router>
   );

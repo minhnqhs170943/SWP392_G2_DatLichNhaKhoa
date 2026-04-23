@@ -194,35 +194,65 @@ class PaymentController {
     // Kiểm tra trạng thái thanh toán
     async checkPaymentStatus(req, res) {
         try {
-            const { orderId } = req.params;
+            const { orderId } = req.params; // Nhận "APT-9" hoặc mã số
+            const { statusFromFE } = req.query; // Nhận tín hiệu SUCCESS từ Frontend
+            let paymentInfo = null;
+            let actualPayOSCode = orderId;
+            let dbAmount = 0;
 
-            const order = await Order.findById(orderId);
-            
-            if (!order) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Không tìm thấy đơn hàng'
-                });
+            const pool = await require('../config/db').sql.connect();
+
+            // 1. NẾU LÀ MÃ STAFF (APT-), TÌM MÃ THANH TOÁN THỰC TRONG DATABASE TRƯỚC
+            if (orderId.toString().startsWith('APT-')) {
+                const appointmentId = orderId.replace('APT-', '');
+                const result = await pool.request()
+                    .input('AppointmentID', require('../config/db').sql.Int, appointmentId)
+                    .query("SELECT PaymentLinkId, TotalAmount FROM Invoices WHERE AppointmentID = @AppointmentID");
+                
+                if (result.recordset.length > 0) {
+                    actualPayOSCode = result.recordset[0].PaymentLinkId || orderId;
+                    dbAmount = result.recordset[0].TotalAmount || 0;
+                }
             }
 
-            const invoice = await Invoice.findByOrderId(orderId);
-            const payment = invoice ? await Payment.findByInvoiceId(invoice.InvoiceID) : null;
+            // 2. GỬI YÊU CẦU KIỂM TRA TỚI PAYOS VỚI MÃ SỐ THỰC
+            try {
+                paymentInfo = await payos.getPaymentInformation(actualPayOSCode);
+            } catch (payosErr) {
+                console.warn(`>>> PayOS không tìm thấy mã: ${actualPayOSCode}`);
+            }
 
+            // 3. LOGIC CẬP NHẬT DATABASE (Xác nhận từ PayOS HOẶC Tín hiệu SUCCESS từ trang Success)
+            const isPaid = (paymentInfo && paymentInfo.status === 'PAID') || statusFromFE === 'SUCCESS';
+
+            if (isPaid) {
+                if (orderId.toString().startsWith('APT-')) {
+                    const appointmentId = orderId.replace('APT-', '');
+                    await pool.request()
+                        .input('AppointmentID', require('../config/db').sql.Int, appointmentId)
+                        .query("UPDATE Invoices SET Status = 'SUCCESS' WHERE AppointmentID = @AppointmentID");
+                    console.log(`>>> Cập nhật thành công DB cho lịch hẹn: ${appointmentId}`);
+                } else {
+                    await Order.updatePaymentStatus(orderId, 'SUCCESS');
+                }
+            }
+
+            // 4. TRẢ VỀ DỮ LIỆU CHÍNH XÁC
             res.status(200).json({
                 success: true,
                 data: {
-                    orderId: order.OrderID,
-                    paymentStatus: invoice ? invoice.Status : 'Unpaid',
-                    totalAmount: order.TotalAmount,
-                    payment: payment
+                    orderId: orderId,
+                    totalAmount: (paymentInfo && paymentInfo.amount) ? paymentInfo.amount : dbAmount,
+                    status: isPaid ? 'PAID' : 'PENDING',
+                    paymentStatus: isPaid ? 'SUCCESS' : 'PENDING'
                 }
             });
 
         } catch (error) {
-            console.error('Error checking payment status:', error);
+            console.error('LỖI KIỂM TRA THANH TOÁN:', error);
             res.status(500).json({
                 success: false,
-                message: 'Lỗi kiểm tra trạng thái thanh toán',
+                message: 'Lỗi máy chủ khi kiểm tra thanh toán',
                 error: error.message
             });
         }
@@ -325,6 +355,121 @@ class PaymentController {
             res.status(500).json({
                 success: false,
                 message: 'Lỗi lấy chi tiết đơn hàng',
+                error: error.message
+            });
+        }
+    }
+
+    // ==========================================
+    // CÁC HÀM MỚI CHO QUẢN LÝ HÓA ĐƠN STAFF
+    // ==========================================
+
+    // 1. Lấy danh sách hóa đơn khám bệnh cho Staff
+    async getAppointmentInvoices(req, res) {
+        try {
+            const invoices = await Invoice.getAppointmentInvoices();
+            res.status(200).json({
+                success: true,
+                data: invoices
+            });
+        } catch (error) {
+            console.error('Error getting appointment invoices:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Lỗi lấy danh sách hóa đơn',
+                error: error.message
+            });
+        }
+    }
+
+    // 2. Nhân viên xác nhận thu tiền mặt tại quầy
+    async confirmCashPayment(req, res) {
+        try {
+            const { invoiceId } = req.params;
+
+            const invoice = await Invoice.findById(invoiceId);
+            if (!invoice) {
+                return res.status(404).json({ success: false, message: 'Không tìm thấy hóa đơn' });
+            }
+
+            // Cập nhật trạng thái Invoice thành SUCCESS
+            await Invoice.updateStatus(invoiceId, 'SUCCESS');
+
+            // Tạo bản ghi Payment ghi nhận thanh toán tiền mặt
+            await Payment.create({
+                invoiceId: invoiceId,
+                transactionId: `CASH-${invoiceId}-${Date.now()}`,
+                amount: invoice.TotalAmount,
+                paymentMethod: 'CASH',
+                status: 'SUCCESS'
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Đã xác nhận thu tiền mặt thành công'
+            });
+        } catch (error) {
+            console.error('Error confirming cash payment:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Lỗi xác nhận thanh toán',
+                error: error.message
+            });
+        }
+    }
+
+    // 3. Tạo QR PayOS cho hóa đơn khám bệnh
+    async createAppointmentPaymentLink(req, res) {
+        try {
+            const { invoiceId, returnUrl, cancelUrl } = req.body;
+
+            const invoice = await Invoice.findById(invoiceId);
+            if (!invoice) {
+                return res.status(404).json({ success: false, message: 'Không tìm thấy hóa đơn' });
+            }
+
+            // CHỈNH SỬA: Ép kiểu thành số nguyên để PayOS không báo lỗi
+            const amountInt = Math.round(Number(invoice.TotalAmount));
+            const orderCode = Math.floor(100000 + Math.random() * 900000);
+            
+            const defaultUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+            const paymentData = {
+                orderCode: orderCode,
+                amount: amountInt, // Sử dụng biến số nguyên
+                description: `Thanh toan HD kham ${invoiceId}`.substring(0, 25), // Cắt ngắn chuỗi nếu quá dài
+                items: [{
+                    name: `Phi kham (HD: ${invoiceId})`, // Rút ngắn, bỏ dấu tiếng Việt để an toàn
+                    quantity: 1,
+                    price: amountInt // Sử dụng biến số nguyên
+                }],
+                cancelUrl: cancelUrl || `${defaultUrl}/payment/cancel`,
+                returnUrl: returnUrl || `${defaultUrl}/payment/success`
+            };
+
+            const paymentLinkResponse = await payos.paymentRequests.create(paymentData);
+
+            // Cập nhật mã PaymentLinkId vào Invoice để sau này check Webhook
+            const pool = await require('../config/db').sql.connect();
+            await pool.request()
+                .input('InvoiceID', require('../config/db').sql.Int, invoiceId)
+                .input('PaymentLinkId', require('../config/db').sql.VarChar(100), orderCode.toString())
+                .query('UPDATE Invoices SET PaymentLinkId = @PaymentLinkId WHERE InvoiceID = @InvoiceID');
+
+            res.status(200).json({
+                success: true,
+                message: 'Tạo link thanh toán PayOS thành công',
+                data: {
+                    checkoutUrl: paymentLinkResponse.checkoutUrl,
+                    qrCode: paymentLinkResponse.qrCode
+                }
+            });
+
+        } catch (error) {
+            console.error('Error creating appointment payos link:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Lỗi tạo QR thanh toán',
                 error: error.message
             });
         }
