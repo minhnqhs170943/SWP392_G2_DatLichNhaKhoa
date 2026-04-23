@@ -6,6 +6,9 @@ import AdminAppointments from './pages/Admin/AdminAppointments';
 import AdminBlog from './pages/Admin/AdminBlog';
 import AdminServices from './pages/Admin/AdminServices';
 import ProductManagement from './pages/Admin/ProductManagement';
+import AdminOverview from './pages/Admin/AdminOverview';
+import AdminInvoices from './pages/Admin/AdminInvoices';
+import AdminReviews from './pages/Admin/AdminReviews';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
 import Profile from './pages/Auth/Profile';
@@ -34,6 +37,8 @@ import OrdersPage from './pages/OrdersPage';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
+import DoctorDashboard from './pages/Doctor/DoctorDashboard';
+import StaffInvoices from './pages/Dashboard/StaffInvoices';
 
 // RoleID từ DB: 1-Admin, 2-Doctor, 3-Staff, 4-User
 import BlogDetailPage from './pages/BlogDetailPage';
@@ -83,18 +88,23 @@ function App() {
         <Route path="/doctor/history" element={<RoleRoute allowedRoles={[2]}><ConsultationHistory /></RoleRoute>} />
         <Route path="/doctor/profile" element={<RoleRoute allowedRoles={[2]}><DoctorProfile /></RoleRoute>} />
 
+
         {/* Admin */}
-        <Route path="/admin" element={<Navigate to="/admin/stats" />} />
+        <Route path="/admin" element={<Navigate to="/admin/overview" />} />
+        <Route path="/admin/overview" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminOverview /></AdminLayout></RoleRoute>} />
         <Route path="/admin/stats" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminAnalytics /></AdminLayout></RoleRoute>} />
         <Route path="/admin/products" element={<RoleRoute allowedRoles={[1]}><AdminLayout><ProductManagement /></AdminLayout></RoleRoute>} />
         <Route path="/admin/blogs" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminBlog /></AdminLayout></RoleRoute>} />
         <Route path="/admin/users" element={<RoleRoute allowedRoles={[1]}><AdminLayout><UserManagement /></AdminLayout></RoleRoute>} />
         <Route path="/admin/services" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminServices /></AdminLayout></RoleRoute>} />
         <Route path="/admin/appointments" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminAppointments /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/invoices" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminInvoices /></AdminLayout></RoleRoute>} />
+        <Route path="/admin/reviews" element={<RoleRoute allowedRoles={[1]}><AdminLayout><AdminReviews /></AdminLayout></RoleRoute>} />
 
         {/* Staff Dashboard */}
-        <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[3]}><StaffDashboard /></RoleRoute>} />
-        <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[3]}><StaffAppointments /></RoleRoute>} />
+        <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 3]}><StaffDashboard /></RoleRoute>} />
+        <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[1, 3]}><StaffAppointments /></RoleRoute>} />
+        <Route path="/staff/invoices" element={<RoleRoute allowedRoles={[1, 3]}><StaffInvoices /></RoleRoute>} />
       </Routes>
     </Router>
   );

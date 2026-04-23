@@ -13,7 +13,7 @@ class PaymentService {
             });
 
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || 'Lỗi tạo thanh toán');
             }
@@ -30,7 +30,7 @@ class PaymentService {
         try {
             const response = await fetch(`${API_URL}/payment/status/${orderId}`);
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || 'Lỗi kiểm tra trạng thái');
             }
@@ -53,7 +53,7 @@ class PaymentService {
             });
 
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || 'Lỗi hủy thanh toán');
             }
@@ -70,7 +70,7 @@ class PaymentService {
         try {
             const response = await fetch(`${API_URL}/payment/orders/user/${userId}`);
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || 'Lỗi lấy danh sách đơn hàng');
             }
@@ -87,7 +87,7 @@ class PaymentService {
         try {
             const response = await fetch(`${API_URL}/payment/orders/${orderId}`);
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || 'Lỗi lấy chi tiết đơn hàng');
             }
@@ -100,4 +100,5 @@ class PaymentService {
     }
 }
 
-export default new PaymentService();
+const paymentService = new PaymentService();
+export default paymentService;

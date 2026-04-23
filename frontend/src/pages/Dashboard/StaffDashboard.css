@@ -1,47 +1,45 @@
-body {
-    background-color: #f8fafc;
-}
+/* ===== StaffDashboard - Clean Layout ===== */
 
 .staff-dashboard {
     min-height: 100vh;
     background: #f8fafc;
-    padding: 40px;
+    padding: 28px 32px;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Header */
 .dashboard-header {
-    margin-bottom: 35px;
+    margin-bottom: 28px;
 }
 
 .dashboard-header h2 {
     color: #1e293b;
-    font-weight: 800;
-    font-size: 1.8rem;
-    letter-spacing: -0.5px;
-    margin-bottom: 5px;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.3px;
+    margin: 0 0 4px 0;
 }
 
 .dashboard-header p {
     color: #64748b;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
     margin: 0;
 }
 
-/* Base styling for all cards */
+/* Base Card */
 .saas-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
-    padding: 24px;
-    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    padding: 20px;
+    margin-bottom: 20px;
     transition: box-shadow 0.2s ease;
 }
 
 .saas-card:hover {
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Summary Stats */
@@ -51,23 +49,23 @@ body {
 }
 
 .stat-title {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .stat-value {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #0f172a;
-    margin: 0 0 10px 0;
+    margin: 0 0 8px 0;
 }
 
 .stat-trend {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
@@ -78,10 +76,10 @@ body {
 
 /* Chart Titles */
 .chart-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #334155;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -89,11 +87,11 @@ body {
 
 /* Table Area */
 .table-header {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #334155;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
     border-bottom: 1px solid #f1f5f9;
 }
 
@@ -108,41 +106,43 @@ body {
     font-weight: 600;
     letter-spacing: 0.5px;
     border-bottom: 1px solid #e2e8f0;
-    padding: 12px 16px;
+    padding: 10px 14px;
     border-top: none;
 }
 
 .table td {
-    padding: 16px;
+    padding: 12px 14px;
     vertical-align: middle;
     color: #334155;
     font-weight: 500;
     border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem;
 }
 
 .table tbody tr:hover {
     background-color: #f8fafc;
 }
 
+/* Badges */
 .badge-saas {
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.3px;
 }
 
-.badge-completed { background-color: #ecfdf5; color: #059669; }
-.badge-pending { background-color: #fef3c7; color: #d97706; }
-.badge-confirmed { background-color: #eff6ff; color: #2563eb; }
-.badge-cancelled { background-color: #fef2f2; color: #dc2626; }
+.badge-completed { background-color: #dcfce7; color: #15803d; }
+.badge-pending { background-color: #fef3c7; color: #b45309; }
+.badge-confirmed { background-color: #dbeafe; color: #1d4ed8; }
+.badge-cancelled { background-color: #fee2e2; color: #b91c1c; }
 
 /* Tooltips */
 .recharts-tooltip-wrapper .recharts-default-tooltip {
     background-color: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 8px !important;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Filter Bar */
@@ -150,12 +150,12 @@ body {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 24px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .filter-bar-label {
@@ -164,46 +164,46 @@ body {
     gap: 8px;
     font-weight: 700;
     color: #334155;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .filter-bar-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .filter-select {
-    padding: 8px 14px;
-    border: 1px solid #cbd5e1;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #1e293b;
     background: #f8fafc;
     outline: none;
     cursor: pointer;
     transition: border-color 0.2s;
-    min-width: 140px;
+    min-width: 130px;
 }
 
 .filter-select:focus {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
 }
 
 .filter-reset-btn {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
-    border: 1px solid #cbd5e1;
+    padding: 8px 14px;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     background: #fff;
     color: #64748b;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
 }
 
 .filter-reset-btn:hover {

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Eye, X, CreditCard } from 'lucide-react';
+import { Search, Filter, Eye, X, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import '../Dashboard/StaffAppointments.css'; // Reusing staff appointments CSS
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const AdminAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
-    
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
     // Modal state
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,7 +18,7 @@ const AdminAppointments = () => {
     const fetchAppointments = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5001/api/appointments');
+            const response = await fetch(`${API_BASE}/appointments`);
             const data = await response.json();
             if (data.success) {
                 setAppointments(data.data);
@@ -35,7 +38,7 @@ const AdminAppointments = () => {
         if (!window.confirm(`Xác nhận chuyển trạng thái thành: ${newStatus}?`)) return;
 
         try {
-            const response = await fetch(`http://localhost:5001/api/appointments/${appointmentId}/status`, {
+            const response = await fetch(`${API_BASE}/appointments/${appointmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -45,7 +48,7 @@ const AdminAppointments = () => {
             if (data.success) {
                 fetchAppointments();
                 if (selectedAppointment && selectedAppointment.AppointmentID === appointmentId) {
-                    setSelectedAppointment({...selectedAppointment, Status: newStatus});
+                    setSelectedAppointment({ ...selectedAppointment, Status: newStatus });
                 }
             } else {
                 alert('Có lỗi xảy ra khi cập nhật.');
@@ -66,6 +69,16 @@ const AdminAppointments = () => {
         }
     };
 
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'Pending': return 'Chờ xác nhận';
+            case 'Confirmed': return 'Đã xác nhận';
+            case 'Completed': return 'Hoàn thành';
+            case 'Cancelled': return 'Đã hủy';
+            default: return status;
+        }
+    };
+
     const openDetailsModal = (appointment) => {
         setSelectedAppointment(appointment);
         setIsModalOpen(true);
@@ -78,11 +91,19 @@ const AdminAppointments = () => {
 
     const filteredAppointments = appointments.filter(app => {
         const matchStatus = filterStatus === 'All' || app.Status === filterStatus;
-        const matchSearch = app.PatientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            (app.DoctorName && app.DoctorName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                            (app.ServiceNames && app.ServiceNames.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchSearch = app.PatientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (app.DoctorName && app.DoctorName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (app.ServiceNames && app.ServiceNames.toLowerCase().includes(searchTerm.toLowerCase()));
         return matchStatus && matchSearch;
     });
+
+    const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE) || 1;
+    const paginatedAppointments = filteredAppointments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    // Reset pagination when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterStatus]);
 
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0);
@@ -98,28 +119,28 @@ const AdminAppointments = () => {
             <div className="filters-wrapper">
                 <div className="filter-group">
                     <label>Tìm Kiếm</label>
-                    <div style={{position: 'relative'}}>
-                        <Search size={18} color="#94a3b8" style={{position: 'absolute', left: '12px', top: '12px'}} />
-                        <input 
-                            type="text" 
-                            placeholder="Tên bệnh nhân, bác sĩ, dịch vụ..." 
+                    <div style={{ position: 'relative' }}>
+                        <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                        <input
+                            type="text"
+                            placeholder="Tên bệnh nhân, bác sĩ, dịch vụ..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{paddingLeft: '38px'}}
+                            style={{ paddingLeft: '38px' }}
                         />
                     </div>
                 </div>
                 <div className="filter-group">
                     <label>Trạng Thái</label>
-                    <div style={{position: 'relative'}}>
-                        <Filter size={18} color="#94a3b8" style={{position: 'absolute', left: '12px', top: '12px'}} />
-                        <select 
-                            value={filterStatus} 
+                    <div style={{ position: 'relative' }}>
+                        <Filter size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                        <select
+                            value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            style={{paddingLeft: '38px'}}
+                            style={{ paddingLeft: '38px' }}
                         >
                             <option value="All">Tất cả trạng thái</option>
-                            <option value="Pending">Chờ Thanh Toán (Pending)</option>
+                            <option value="Pending">Chờ Xác Nhận</option>
                             <option value="Confirmed">Đã Xác Nhận (Confirmed)</option>
                             <option value="Completed">Hoàn Thành (Completed)</option>
                             <option value="Cancelled">Đã Hủy (Cancelled)</option>
@@ -140,15 +161,15 @@ const AdminAppointments = () => {
                                 <th>Bệnh Nhân</th>
                                 <th>Dịch Vụ & Bác Sĩ</th>
                                 <th>Thời Gian Hẹn</th>
-                                <th>Tổng Tiền</th>
-                                <th>Thanh Toán</th>
+                                {/* <th>Tổng Tiền</th>
+                                <th>Thanh Toán</th> */}
                                 <th>Trạng Thái</th>
                                 <th>Hành Động</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredAppointments.length > 0 ? (
-                                filteredAppointments.map(app => (
+                            {paginatedAppointments.length > 0 ? (
+                                paginatedAppointments.map(app => (
                                     <tr key={app.AppointmentID}>
                                         <td>
                                             <div className="patient-info">
@@ -162,14 +183,14 @@ const AdminAppointments = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="fw-bold" style={{color: '#1e293b'}}>{app.ServiceNames || 'Chưa có dịch vụ'}</div>
-                                            <div style={{color: '#64748b', fontSize: '0.85rem'}}>BS. {app.DoctorName || 'Chưa phân công'}</div>
+                                            <div className="fw-bold" style={{ color: '#1e293b' }}>{app.ServiceNames || 'Chưa có dịch vụ'}</div>
+                                            <div style={{ color: '#64748b', fontSize: '0.85rem' }}>BS. {app.DoctorName || 'Chưa phân công'}</div>
                                         </td>
                                         <td>
                                             <div className="fw-bold">{new Date(app.AppointmentDate).toLocaleDateString('vi-VN')}</div>
-                                            <div style={{color: '#64748b', fontSize: '0.85rem'}}>{app.AppointmentTime}</div>
+                                            <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{app.AppointmentTime}</div>
                                         </td>
-                                        <td>
+                                        {/* <td>
                                             <div className="fw-bold" style={{color: '#059669'}}>{formatCurrency(app.TotalPrice)}</div>
                                         </td>
                                         <td>
@@ -178,10 +199,10 @@ const AdminAppointments = () => {
                                             ) : (
                                                 <span className="status-badge pending">Chưa TT</span>
                                             )}
-                                        </td>
+                                        </td> */}
                                         <td>
                                             <span className={`status-badge ${getStatusClass(app.Status)}`}>
-                                                {app.Status}
+                                                {getStatusLabel(app.Status)}
                                             </span>
                                         </td>
                                         <td>
@@ -211,6 +232,42 @@ const AdminAppointments = () => {
                 )}
             </div>
 
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px', gap: '5px' }}>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        style={{ padding: '6px 10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            style={{
+                                padding: '6px 12px',
+                                background: currentPage === page ? '#3b82f6' : '#fff',
+                                color: currentPage === page ? '#fff' : '#0f172a',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        style={{ padding: '6px 10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
+
             {/* ===== Chi Tiết Modal ===== */}
             {isModalOpen && selectedAppointment && (
                 <div className="appt-overlay" onClick={closeModal}>
@@ -224,13 +281,13 @@ const AdminAppointments = () => {
                         <div className="appt-dialog-body">
                             <div className="detail-row">
                                 <div className="detail-label">Mã Lịch Hẹn</div>
-                                <div className="detail-value" style={{color: '#3b82f6'}}>#{selectedAppointment.AppointmentID}</div>
+                                <div className="detail-value" style={{ color: '#3b82f6' }}>#{selectedAppointment.AppointmentID}</div>
                             </div>
                             <div className="detail-row">
                                 <div className="detail-label">Bệnh Nhân</div>
                                 <div className="detail-value">
                                     {selectedAppointment.PatientName}
-                                    <div style={{fontSize: '0.85rem', color: '#64748b', fontWeight: '400'}}>SĐT: {selectedAppointment.PatientPhone || 'Chưa cung cấp'}</div>
+                                    <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '400' }}>SĐT: {selectedAppointment.PatientPhone || 'Chưa cung cấp'}</div>
                                 </div>
                             </div>
                             <div className="detail-row">
@@ -239,7 +296,7 @@ const AdminAppointments = () => {
                             </div>
                             <div className="detail-row">
                                 <div className="detail-label">Tổng Tiền</div>
-                                <div className="detail-value" style={{color: '#059669'}}>{formatCurrency(selectedAppointment.TotalPrice)}</div>
+                                <div className="detail-value" style={{ color: '#059669' }}>{formatCurrency(selectedAppointment.TotalPrice)}</div>
                             </div>
                             <div className="detail-row">
                                 <div className="detail-label">Bác Sĩ</div>
@@ -255,7 +312,7 @@ const AdminAppointments = () => {
                                 <div className="detail-label">Trạng Thái</div>
                                 <div className="detail-value">
                                     <span className={`status-badge ${getStatusClass(selectedAppointment.Status)}`}>
-                                        {selectedAppointment.Status}
+                                        {getStatusLabel(selectedAppointment.Status)}
                                     </span>
                                 </div>
                             </div>

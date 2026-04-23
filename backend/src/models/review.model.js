@@ -41,7 +41,7 @@ const getEligibleAppointmentsByUserId = async (userId) => {
             ISNULL(r.EditCount, 0) AS EditCount,
             CASE
                 WHEN r.ReviewID IS NULL THEN 1
-                WHEN ISNULL(r.EditCount, 0) < 1 THEN 1
+                WHEN r.EditCount < 1 THEN 1
                 ELSE 0
             END AS CanReviewOrEdit
         FROM Appointments a
@@ -116,9 +116,24 @@ const updateReviewByAppointment = async ({ appointmentId, userId, rating, commen
     return result.recordset[0]?.Affected > 0;
 };
 
+
+const deteleReviewByAppointment = async ({ appointmentId, userId }) => {
+    const request = new sql.Request();
+    request.input('AppointmentID', sql.Int, appointmentId);
+    request.input('UserID', sql.Int, userId);
+
+    const result = await request.query(`
+        DELETE r
+        FROM Reviews r
+        JOIN Appointments a ON a.AppointmentID = r.AppointmentID
+        WHERE r.AppointmentID = @AppointmentID
+          AND r.UserID = @UserID
+    `);}
+
 module.exports = {
     getLatestReviews,
     getEligibleAppointmentsByUserId,
     createReview,
-    updateReviewByAppointment
+    updateReviewByAppointment,
+    deteleReviewByAppointment
 };

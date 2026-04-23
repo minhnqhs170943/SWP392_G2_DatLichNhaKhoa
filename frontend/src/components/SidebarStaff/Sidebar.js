@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, Users, Settings, LogOut, Activity } from 'lucide-react';
+// THÊM ReceiptText VÀO ĐÂY
+import { LayoutDashboard, CalendarDays, Users, Settings, LogOut, Activity, ReceiptText } from 'lucide-react';
 import './Sidebar.css';
 
 const Sidebar = () => {
@@ -41,6 +42,14 @@ const Sidebar = () => {
                     </NavLink>
                 </div>
 
+                {/* THÊM MỤC QUẢN LÝ HÓA ĐƠN Ở ĐÂY */}
+                <div className="nav-item">
+                    <NavLink to="/staff/invoices" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                        <ReceiptText />
+                        <span>Quản Lý Hóa Đơn</span>
+                    </NavLink>
+                </div>
+
                 {user?.RoleID === 1 && (
                 <div className="nav-item">
                     <NavLink to="/admin/users" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
@@ -49,7 +58,6 @@ const Sidebar = () => {
                     </NavLink>
                 </div>
                 )}
-
             </div>
 
             <div className="sidebar-footer">

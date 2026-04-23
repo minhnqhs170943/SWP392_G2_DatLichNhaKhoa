@@ -8,35 +8,48 @@ class AdminStatsController {
      */
     static async getComprehensiveAnalytics(req, res) {
         try {
+            const { startDate, endDate } = req.query;
             const pool = await poolPromise;
+            
+            let dateFilter = '';
+            const request = pool.request();
+            if (startDate && endDate) {
+                dateFilter = 'AND a.AppointmentDate >= @startDate AND a.AppointmentDate <= @endDate';
+                request.input('startDate', startDate);
+                request.input('endDate', endDate);
+            }
 
             // 1. KPI: Total Patients (attended / completed appointments)
-            const userMetrics = await pool.request().query(`
+            const userMetrics = await request.query(`
                 SELECT COUNT(DISTINCT a.PatientID) as TotalPatients
                 FROM Appointments a
-                WHERE a.Status = 'Completed'
+                WHERE a.Status = 'Completed' ${dateFilter}
             `);
 
             // 2. KPI: Gross Revenue
-            const revenueMetrics = await pool.request().query(`
+            let revenueDateFilter = '';
+            if (startDate && endDate) {
+                revenueDateFilter = 'AND p.PaymentDate >= @startDate AND p.PaymentDate <= @endDate';
+            }
+            const revenueMetrics = await request.query(`
                 SELECT ISNULL(SUM(Amount), 0) as GrossRevenue
-                FROM Payments
-                WHERE Status = 'Completed'
+                FROM Payments p
+                WHERE Status = 'Completed' ${revenueDateFilter}
             `);
 
             // 3. KPI: Appointment Stats
-            const appointmentMetrics = await pool.request().query(`
+            const appointmentFilter = startDate && endDate ? 'WHERE AppointmentDate >= @startDate AND AppointmentDate <= @endDate' : '';
+            const appointmentMetrics = await request.query(`
                 SELECT
                     COUNT(*) as TotalAppointments,
                     SUM(CASE WHEN Status = 'Completed' THEN 1 ELSE 0 END) as CompletedAppointments,
                     SUM(CASE WHEN Status = 'Cancelled' THEN 1 ELSE 0 END) as CancelledAppointments
                 FROM Appointments
+                ${appointmentFilter}
             `);
 
             // 4. CHART: Revenue by Doctor
-            // Schema mới: Doctors.FullName -> Users.FullName qua Doctors.UserID
-            // Payments -> Invoices -> Appointments -> Doctors
-            const revenueByDoctor = await pool.request().query(`
+            const revenueByDoctor = await request.query(`
                 SELECT
                     u.FullName as DoctorName,
                     ISNULL(SUM(p.Amount), 0) as Revenue
@@ -44,47 +57,45 @@ class AdminStatsController {
                 JOIN Users u ON d.UserID = u.UserID
                 LEFT JOIN Appointments a ON d.DoctorID = a.DoctorID
                 LEFT JOIN Invoices inv ON a.AppointmentID = inv.AppointmentID
-                LEFT JOIN Payments p ON inv.InvoiceID = p.InvoiceID AND p.Status = 'Completed'
+                LEFT JOIN Payments p ON inv.InvoiceID = p.InvoiceID AND p.Status = 'Completed' ${revenueDateFilter}
                 GROUP BY u.FullName
                 ORDER BY Revenue DESC
             `);
 
             // 5. CHART: Payment Methods Distribution
-            const paymentMethods = await pool.request().query(`
+            const paymentMethods = await request.query(`
                 SELECT
                     PaymentMethod as Method,
                     COUNT(PaymentID) as Transactions,
                     ISNULL(SUM(Amount), 0) as TotalVolume
-                FROM Payments
-                WHERE Status = 'Completed'
+                FROM Payments p
+                WHERE Status = 'Completed' ${revenueDateFilter}
                 GROUP BY PaymentMethod
             `);
 
-            // 6. CHART: Revenue Trend (Current Year)
-            const revenueTrend = await pool.request().query(`
+            // 6. CHART: Revenue Trend (Current Year or Selected Date Range Year)
+            const yearCondition = startDate && endDate ? 'YEAR(p.PaymentDate) = YEAR(@startDate)' : 'YEAR(p.PaymentDate) = YEAR(GETDATE())';
+            const revenueTrend = await request.query(`
                 SELECT
-                    MONTH(PaymentDate) as MonthIdx,
-                    ISNULL(SUM(Amount), 0) as Revenue
-                FROM Payments
-                WHERE Status = 'Completed' AND YEAR(PaymentDate) = YEAR(GETDATE())
-                GROUP BY MONTH(PaymentDate)
+                    MONTH(p.PaymentDate) as MonthIdx,
+                    ISNULL(SUM(p.Amount), 0) as Revenue
+                FROM Payments p
+                WHERE p.Status = 'Completed' AND ${yearCondition}
+                GROUP BY MONTH(p.PaymentDate)
                 ORDER BY MonthIdx ASC
             `);
 
             // 7. TABLE: Service Profitability
-            // Schema mới: AppointmentServices thay vì Appointments.ServiceID
-            const serviceProfitability = await pool.request().query(`
+            const serviceProfitability = await request.query(`
                 SELECT
                     s.ServiceName,
-                    s.Price as UnitPrice,
-                    COUNT(aps.AppointmentID) as UsageCount,
-                    ISNULL(SUM(p.Amount), 0) as TotalYield
+                    MAX(s.Price) as UnitPrice,
+                    SUM(CASE WHEN a.AppointmentID IS NOT NULL THEN 1 ELSE 0 END) as UsageCount,
+                    ISNULL(SUM(CASE WHEN a.AppointmentID IS NOT NULL AND inv.Status = 'Paid' THEN s.Price ELSE 0 END), 0) as TotalYield
                 FROM Services s
-                LEFT JOIN AppointmentServices aps ON s.ServiceID = aps.ServiceID
-                LEFT JOIN Appointments a ON aps.AppointmentID = a.AppointmentID AND a.Status = 'Completed'
+                LEFT JOIN Appointments a ON s.AppointmentID = a.AppointmentID AND a.Status = 'Completed' ${dateFilter}
                 LEFT JOIN Invoices inv ON a.AppointmentID = inv.AppointmentID
-                LEFT JOIN Payments p ON inv.InvoiceID = p.InvoiceID AND p.Status = 'Completed'
-                GROUP BY s.ServiceName, s.Price
+                GROUP BY s.ServiceName
                 ORDER BY TotalYield DESC
             `);
 

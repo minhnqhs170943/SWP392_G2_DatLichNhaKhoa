@@ -31,7 +31,7 @@ const findProductById = async (productId) => {
             Price,
             ImageURL,
             IsActive,
-            CreatedAt
+            CreatedAt 
         FROM [dbo].[Products]
         WHERE ProductID = @productId AND IsActive = 1
     `);
@@ -49,7 +49,7 @@ const findAllProductsForAdmin = async () => {
             Price,
             ImageURL,
             IsActive,
-            CreatedAt
+            CreatedAt,
         FROM [dbo].[Products]
         ORDER BY ProductID DESC
     `);
@@ -62,7 +62,7 @@ const createProduct = async ({ productName, brand, description, price, imageURL 
     request.input('brand', sql.NVarChar(sql.MAX), brand || null);
     request.input('description', sql.NVarChar(sql.MAX), description || null);
     request.input('price', sql.Decimal(18, 2), price);
-    request.input('imageURL', sql.NVarChar(sql.MAX), imageURL || null);
+    request.input('imageURL', sql.NVarChar(sql.MAX), imageURL || null)
 
     const result = await request.query(`
         INSERT INTO [dbo].[Products] (ProductName, Brand, Description, Price, ImageURL, IsActive, CreatedAt)
@@ -91,7 +91,7 @@ const updateProduct = async (productId, { productName, brand, description, price
             Description = @description,
             Price = @price,
             ImageURL = @imageURL,
-            IsActive = @isActive
+            IsActive = @isActive,
         WHERE ProductID = @productId
     `);
     return result.rowsAffected[0] || 0;

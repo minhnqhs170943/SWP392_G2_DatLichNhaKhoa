@@ -1,5 +1,5 @@
 import React from 'react';
-import Sidebar from '../components/Sidebar/Sidebar';
+import Sidebar from '../components/SidebarStaff/Sidebar';
 import './StaffLayout.css';
 
 const StaffLayout = ({ children }) => {

@@ -51,6 +51,9 @@
     padding: 40px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* Thêm các dòng dưới để tránh bài viết bị tràn viền */
+    box-sizing: border-box; 
+    width: 100%;
 }
 
 .blog-detail-category {
@@ -117,6 +120,10 @@
     font-size: 1.05rem;
     line-height: 1.8;
     color: #334155;
+    /* CÁC THUỘC TÍNH QUAN TRỌNG ĐỂ SỬA LỖI XUỐNG DÒNG */
+    white-space: pre-wrap;       /* Giữ lại dấu xuống dòng của text thuần */
+    word-wrap: break-word;       /* Ngắt các từ quá dài tránh tràn khung */
+    overflow-wrap: break-word;   /* Hỗ trợ ngắt từ tốt hơn trên trình duyệt mới */
 }
 
 .blog-detail-content h2 {
@@ -135,6 +142,7 @@
 
 .blog-detail-content p {
     margin-bottom: 20px;
+    display: block; /* Đảm bảo thẻ p tạo thành khối rõ ràng */
 }
 
 .blog-detail-content img {

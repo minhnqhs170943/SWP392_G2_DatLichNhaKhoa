@@ -17,8 +17,16 @@ const initialForm = {
   thumbnailFile: null,
   authorName: "",
   category: "",
+  categoryName: "",
   tags: "",
   isPublished: true,
+};
+
+// Định nghĩa giới hạn ký tự cho các trường
+const MAX_LENGTHS = {
+  title: 150,
+  summary: 300,
+  content: 5000,
 };
 
 export default function AdminBlog() {
@@ -28,9 +36,14 @@ export default function AdminBlog() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [uploading, setUploading] = useState(false);
 
   const submitLabel = useMemo(() => (editingId ? "Cập nhật blog" : "Thêm blog"), [editingId]);
+
+  // Kiểm tra lỗi quá tải chữ (real-time)
+  const isTitleError = form.title.length > MAX_LENGTHS.title;
+  const isSummaryError = form.summary.length > MAX_LENGTHS.summary;
+  const isContentError = form.content.length > MAX_LENGTHS.content;
+  const hasLimitErrors = isTitleError || isSummaryError || isContentError;
 
   const loadData = async () => {
     try {
@@ -93,6 +106,13 @@ export default function AdminBlog() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    
+    // Chặn submit nếu đang có lỗi vượt quá ký tự
+    if (hasLimitErrors) {
+      setMessage("Vui lòng rút gọn nội dung bị quá giới hạn trước khi lưu.");
+      return;
+    }
+
     try {
       setSaving(true);
       setMessage("");
@@ -112,6 +132,7 @@ export default function AdminBlog() {
         thumbnailURL: imageUrl,
         authorName: form.authorName.trim(),
         category: form.category.trim(),
+        categoryName: form.categoryName.trim(),
         tags: form.tags.trim(),
         isPublished: form.isPublished,
       };
@@ -148,6 +169,7 @@ export default function AdminBlog() {
       thumbnailURL: b.ThumbnailURL || "",
       authorName: b.AuthorName || "",
       category: b.Category || "",
+      categoryName: b.CategoryName || "",
       tags: b.Tags || "",
       isPublished: Boolean(b.IsPublished),
     });
@@ -191,7 +213,15 @@ export default function AdminBlog() {
               value={form.title} 
               onChange={(e) => onTitleChange(e.target.value)} 
               required
+              className={isTitleError ? "input-error" : ""}
             />
+            {/* Bộ đếm và báo lỗi cho Tiêu đề */}
+            <div className="char-counter-container">
+              {isTitleError && <span className="error-text">Tiêu đề quá dài!</span>}
+              <span className={`char-counter ${isTitleError ? "text-danger" : ""}`}>
+                {form.title.length} / {MAX_LENGTHS.title}
+              </span>
+            </div>
           </div>
           <div className="form-group">
             <label>Slug (URL) <span className="required">*</span></label>
@@ -212,7 +242,15 @@ export default function AdminBlog() {
             value={form.summary} 
             onChange={(e) => onChange("summary", e.target.value)}
             rows="3"
+            className={isSummaryError ? "input-error" : ""}
           />
+          {/* Bộ đếm và báo lỗi cho Tóm tắt */}
+          <div className="char-counter-container">
+            {isSummaryError && <span className="error-text">Tóm tắt quá dài!</span>}
+            <span className={`char-counter ${isSummaryError ? "text-danger" : ""}`}>
+              {form.summary.length} / {MAX_LENGTHS.summary}
+            </span>
+          </div>
         </div>
 
         <div className="form-group">
@@ -223,7 +261,15 @@ export default function AdminBlog() {
             onChange={(e) => onChange("content", e.target.value)}
             rows="8"
             required
+            className={isContentError ? "input-error" : ""}
           />
+          {/* Bộ đếm và báo lỗi cho Nội dung */}
+          <div className="char-counter-container">
+            {isContentError && <span className="error-text">Nội dung quá dài!</span>}
+            <span className={`char-counter ${isContentError ? "text-danger" : ""}`}>
+              {form.content.length} / {MAX_LENGTHS.content}
+            </span>
+          </div>
         </div>
 
         <div className="form-row">
@@ -237,12 +283,12 @@ export default function AdminBlog() {
             />
           </div>
           <div className="form-group">
-            <label>Danh mục</label>
+            <label>Tên danh mục</label>
             <input 
               type="text"
               placeholder="Ví dụ: Chăm sóc răng miệng" 
-              value={form.category} 
-              onChange={(e) => onChange("category", e.target.value)} 
+              value={form.categoryName} 
+              onChange={(e) => onChange("categoryName", e.target.value)} 
             />
           </div>
         </div>
@@ -310,7 +356,11 @@ export default function AdminBlog() {
         {message && <div className="form-message">{message}</div>}
 
         <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={saving}>
+          <button 
+            type="submit" 
+            className={`btn-primary ${hasLimitErrors ? "btn-disabled" : ""}`} 
+            disabled={saving || hasLimitErrors}
+          >
             {saving ? "Đang lưu..." : submitLabel}
           </button>
           {editingId && (
@@ -320,6 +370,7 @@ export default function AdminBlog() {
               onClick={() => {
                 setEditingId(null);
                 setForm(initialForm);
+                setMessage("");
               }}
             >
               Hủy sửa
@@ -337,7 +388,7 @@ export default function AdminBlog() {
                 <th>ID</th>
                 <th>Ảnh</th>
                 <th>Tiêu đề</th>
-                <th>Danh mục</th>
+                <th>Tên danh mục</th>
                 <th>Lượt xem</th>
                 <th>Trạng thái</th>
                 <th>Ngày xuất bản</th>
@@ -368,7 +419,7 @@ export default function AdminBlog() {
                       <div className="blog-title">{b.Title}</div>
                       <div className="blog-slug">{b.Slug}</div>
                     </td>
-                    <td>{b.Category || "-"}</td>
+                    <td>{b.CategoryName || "-"}</td>
                     <td>{b.ViewCount || 0}</td>
                     <td>
                       <span className={`status-badge ${b.IsPublished ? 'published' : 'draft'}`}>

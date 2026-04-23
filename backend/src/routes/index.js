@@ -34,6 +34,9 @@ router.use('/appointments', appointmentRoutes);
 router.use('/blogs', blogRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/admin/analytics', require('./adminStatsRoutes'));
+router.use('/admin/users', require('./adminUserRoutes'));
+router.use('/admin/invoices', require('./adminInvoiceRoutes'));
+router.use('/admin/reviews', require('./adminReviewRoutes'));
 
 // Doctor
 router.use('/doctor-dashboard', doctorDashboard);

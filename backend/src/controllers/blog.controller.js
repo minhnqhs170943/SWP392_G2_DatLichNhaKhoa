@@ -1,4 +1,5 @@
 const blogModel = require('../models/blog.model');
+const { containsProfanity } = require('../utils/profanity.util');
 
 const getBlogs = async (req, res) => {
     try {
@@ -74,11 +75,24 @@ const getBlogsForAdmin = async (req, res) => {
 
 const createBlog = async (req, res) => {
     try {
-        const { title, slug, summary, content, thumbnailURL, authorName, category, tags, isPublished } = req.body;
+        const { title, slug, summary, content, thumbnailURL, authorName, category, categoryName, tags, isPublished } = req.body;
         
         if (!title || !slug || !content) {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
         }
+
+        // --- PHẦN KIỂM SOÁT TỪ NGỮ ---
+        const checkTitle = await containsProfanity(title);
+        const checkContent = await containsProfanity(content);
+        const checkSummary = await containsProfanity(summary);
+
+        if (checkTitle || checkContent || checkSummary) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Nội dung chứa từ ngữ không phù hợp.` 
+            });
+        }
+        // ----------------------------
 
         const blogId = await blogModel.createBlog({
             title: String(title).trim(),
@@ -88,6 +102,7 @@ const createBlog = async (req, res) => {
             thumbnailURL: thumbnailURL ? String(thumbnailURL).trim() : null,
             authorName: authorName ? String(authorName).trim() : null,
             category: category ? String(category).trim() : null,
+            categoryName: categoryName ? String(categoryName).trim() : null,
             tags: tags ? String(tags).trim() : null,
             isPublished: Boolean(isPublished)
         });
@@ -106,11 +121,24 @@ const createBlog = async (req, res) => {
 const updateBlog = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, slug, summary, content, thumbnailURL, authorName, category, tags, isPublished } = req.body;
+        const { title, slug, summary, content, thumbnailURL, authorName, category, categoryName, tags, isPublished } = req.body;
         
         if (!title || !slug || !content) {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
         }
+
+        // --- PHẦN KIỂM SOÁT TỪ NGỮ ---
+        const checkTitle = await containsProfanity(title);
+        const checkContent = await containsProfanity(content);
+        const checkSummary = await containsProfanity(summary);
+
+        if (checkTitle || checkContent || checkSummary) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Nội dung chứa từ ngữ không phù hợp. Vui lòng chỉnh sửa.` 
+            });
+        }
+        // ----------------------------
 
         const affected = await blogModel.updateBlog(Number(id), {
             title: String(title).trim(),
@@ -120,6 +148,7 @@ const updateBlog = async (req, res) => {
             thumbnailURL: thumbnailURL ? String(thumbnailURL).trim() : null,
             authorName: authorName ? String(authorName).trim() : null,
             category: category ? String(category).trim() : null,
+            categoryName: categoryName ? String(categoryName).trim() : null,
             tags: tags ? String(tags).trim() : null,
             isPublished: Boolean(isPublished)
         });

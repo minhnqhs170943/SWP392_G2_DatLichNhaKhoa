@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Trash2, Plus, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import './AdminServices.css';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const AdminServices = () => {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
+    const MAX_NAME_LENGTH = 100;
+    const MAX_DESC_LENGTH = 500;
+
     const [formData, setFormData] = useState({
         serviceName: '',
         description: '',
@@ -14,10 +18,27 @@ const AdminServices = () => {
         isActive: true
     });
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
+    const filteredServices = services.filter(svc => 
+        svc.ServiceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (svc.Description && svc.Description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE) || 1;
+    const paginatedServices = filteredServices.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
+    };
+
     const fetchServices = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5001/api/services');
+            const response = await fetch(`${API_BASE}/services`);
             const data = await response.json();
             if (data.success) {
                 setServices(data.services);
@@ -58,9 +79,18 @@ const AdminServices = () => {
         e.preventDefault();
         try {
             const url = editingService 
-                ? `http://localhost:5001/api/services/${editingService.ServiceID}`
-                : 'http://localhost:5001/api/services';
+                ? `${API_BASE}/services/${editingService.ServiceID}`
+                : `${API_BASE}/services`;
             const method = editingService ? 'PUT' : 'POST';
+
+            if (formData.serviceName.length > MAX_NAME_LENGTH) {
+                alert(`Tên dịch vụ không được quá ${MAX_NAME_LENGTH} ký tự.`);
+                return;
+            }
+            if (formData.description.length > MAX_DESC_LENGTH) {
+                alert(`Mô tả không được quá ${MAX_DESC_LENGTH} ký tự.`);
+                return;
+            }
 
             const response = await fetch(url, {
                 method,
@@ -84,7 +114,7 @@ const AdminServices = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Bạn có chắc chắn muốn xóa dịch vụ này không?')) return;
         try {
-            const response = await fetch(`http://localhost:5001/api/services/${id}`, { method: 'DELETE' });
+            const response = await fetch(`${API_BASE}/services/${id}`, { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
                 fetchServices();
@@ -112,6 +142,17 @@ const AdminServices = () => {
                 </button>
             </div>
 
+            <div className="search-bar" style={{ marginBottom: '20px', position: 'relative' }}>
+                <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: '#64748b' }} />
+                <input 
+                    type="text" 
+                    placeholder="Tìm theo tên dịch vụ hoặc mô tả..." 
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+            </div>
+
             {loading ? (
                 <div className="text-center p-5"><div className="spinner-border text-primary"></div></div>
             ) : (
@@ -128,9 +169,14 @@ const AdminServices = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {services.map((svc, index) => (
-                                <tr key={svc.ServiceID}>
-                                    <td>{index + 1}</td>
+                            {paginatedServices.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="text-center py-4">Không tìm thấy dịch vụ nào.</td>
+                                </tr>
+                            ) : (
+                                paginatedServices.map((svc, index) => (
+                                    <tr key={svc.ServiceID}>
+                                        <td>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
                                     <td className="fw-bold">{svc.ServiceName}</td>
                                     <td>{svc.Description && svc.Description.length > 50 ? svc.Description.substring(0, 50) + '...' : svc.Description}</td>
                                     <td className="text-success fw-bold">{formatCurrency(svc.Price)}</td>
@@ -148,9 +194,46 @@ const AdminServices = () => {
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                                ))
+                            )}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px', gap: '5px' }}>
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                        disabled={currentPage === 1}
+                        style={{ padding: '6px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button 
+                            key={page} 
+                            onClick={() => setCurrentPage(page)}
+                            style={{ 
+                                padding: '6px 12px', 
+                                background: currentPage === page ? '#3b82f6' : '#fff', 
+                                color: currentPage === page ? '#fff' : '#0f172a',
+                                border: '1px solid #e2e8f0', 
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                        disabled={currentPage === totalPages}
+                        style={{ padding: '6px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                    >
+                        <ChevronRight size={16} />
+                    </button>
                 </div>
             )}
 
@@ -164,17 +247,27 @@ const AdminServices = () => {
                         <div className="custom-modal-body">
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-3">
-                                    <label className="form-label">Tên Dịch Vụ</label>
+                                    <label className="form-label d-flex justify-content-between">
+                                        Tên Dịch Vụ
+                                        <span className={`small ${formData.serviceName.length > MAX_NAME_LENGTH ? 'text-danger' : 'text-muted'}`}>
+                                            {formData.serviceName.length} / {MAX_NAME_LENGTH}
+                                        </span>
+                                    </label>
                                     <input 
-                                        type="text" className="form-control" required
+                                        type="text" className={`form-control ${formData.serviceName.length > MAX_NAME_LENGTH ? 'is-invalid' : ''}`} required
                                         value={formData.serviceName} 
                                         onChange={e => setFormData({...formData, serviceName: e.target.value})} 
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <label className="form-label">Mô Tả</label>
+                                    <label className="form-label d-flex justify-content-between">
+                                        Mô Tả
+                                        <span className={`small ${formData.description.length > MAX_DESC_LENGTH ? 'text-danger' : 'text-muted'}`}>
+                                            {formData.description.length} / {MAX_DESC_LENGTH}
+                                        </span>
+                                    </label>
                                     <textarea 
-                                        className="form-control" rows="3"
+                                        className={`form-control ${formData.description.length > MAX_DESC_LENGTH ? 'is-invalid' : ''}`} rows="3"
                                         value={formData.description} 
                                         onChange={e => setFormData({...formData, description: e.target.value})} 
                                     ></textarea>
