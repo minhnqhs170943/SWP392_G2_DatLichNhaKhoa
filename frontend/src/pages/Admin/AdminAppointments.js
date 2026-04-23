@@ -17,7 +17,7 @@ const AdminAppointments = () => {
     const fetchAppointments = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5001/api/appointments');
+            const response = await fetch('http://localhost:5000/api/appointments');
             const data = await response.json();
             if (data.success) {
                 setAppointments(data.data);
@@ -37,7 +37,7 @@ const AdminAppointments = () => {
         if (!window.confirm(`Xác nhận chuyển trạng thái thành: ${newStatus}?`)) return;
 
         try {
-            const response = await fetch(`http://localhost:5001/api/appointments/${appointmentId}/status`, {
+            const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })

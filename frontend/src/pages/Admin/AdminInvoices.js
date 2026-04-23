@@ -14,7 +14,7 @@ const AdminInvoices = () => {
     const fetchInvoices = useCallback(async () => {
         try {
             setLoading(true);
-            let url = 'http://localhost:5001/api/admin/invoices';
+            let url = 'http://localhost:5000/api/admin/invoices';
             const params = new URLSearchParams();
             if (searchTerm) params.append('search', searchTerm);
             if (filterType) params.append('type', filterType);
