@@ -393,7 +393,7 @@ class PaymentController {
             }
 
             // Cập nhật trạng thái Invoice thành SUCCESS
-            await Invoice.updateStatus(invoiceId, 'SUCCESS');
+            await Invoice.updateStatus(invoiceId, 'Paid');
 
             // Tạo bản ghi Payment ghi nhận thanh toán tiền mặt
             await Payment.create({
