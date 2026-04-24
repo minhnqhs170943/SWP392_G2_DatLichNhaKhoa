@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, X, XCircle } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -8,7 +8,9 @@ import './MyAppointments.css';
 
 const MyAppointments = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const user = JSON.parse(localStorage.getItem('user'));
+    const autoOpenedFromState = useRef(false);
 
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -26,6 +28,13 @@ const MyAppointments = () => {
         }
         fetchData();
     }, []); // eslint-disable-line
+
+    useEffect(() => {
+        const appointmentId = location.state?.openDetailAppointmentId;
+        if (!appointmentId || autoOpenedFromState.current) return;
+        autoOpenedFromState.current = true;
+        handleViewDetail(appointmentId);
+    }, [appointments, location.state]); // eslint-disable-line
 
     const fetchData = async () => {
         try {

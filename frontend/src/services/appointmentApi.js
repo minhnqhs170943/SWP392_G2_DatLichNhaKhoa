@@ -20,6 +20,14 @@ export async function getMyAppointments(userId) {
     return result.data || [];
 }
 
+// Lấy danh sách hóa đơn lịch hẹn chưa thanh toán (cho cart/checkout)
+export async function getMyUnpaidAppointmentInvoices(userId) {
+    const res = await fetch(`${API_BASE}/appointments/my/unpaid-invoices/${userId}`);
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Lỗi lấy hóa đơn chưa thanh toán');
+    return result.data || [];
+}
+
 // Lấy chi tiết lịch hẹn
 export async function getAppointmentDetail(appointmentId) {
     const res = await fetch(`${API_BASE}/appointments/detail/${appointmentId}`);
@@ -37,5 +45,17 @@ export async function cancelAppointment(appointmentId) {
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.message || 'Lỗi hủy lịch');
+    return result;
+}
+
+// Thanh toán lịch hẹn (chỉ áp dụng cho lịch đã Confirmed)
+export async function payAppointment(appointmentId, paymentMethod = 'PayOS_QR') {
+    const res = await fetch(`${API_BASE}/appointments/${appointmentId}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Lỗi thanh toán lịch hẹn');
     return result;
 }

@@ -69,8 +69,7 @@ const findBookedSlots = async (date) => {
     `);
     const totalDoctors = doctorsCountResult.recordset[0].TotalDoctors;
 
-    // 2. Lấy số lượng lịch hẹn theo từng khung giờ trong ngày đó
-    // (Chỉ tính các lịch đã được Staff xác nhận - Confirmed)
+
     const appointmentsResult = await request.query(`
         SELECT 
             CONVERT(VARCHAR(5), AppointmentTime, 108) as timeStr,

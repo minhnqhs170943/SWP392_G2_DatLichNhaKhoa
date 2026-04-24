@@ -34,7 +34,9 @@ const StaffAppointments = () => {
     const fetchAppointments = async () => {
         try {
             setLoading(true);
+
             const response = await fetch(`${API_BASE}/appointments`);
+
             const data = await response.json();
             if (data.success) {
                 setAppointments(data.data);
@@ -119,7 +121,9 @@ const StaffAppointments = () => {
             // Customer đã chọn bác sĩ → xác nhận trực tiếp
             setConfirmLoading(true);
             try {
+
                 const response = await fetch(`${API_BASE}/appointments/${appointment.AppointmentID}/confirm`, {
+
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
@@ -150,7 +154,9 @@ const StaffAppointments = () => {
             const dateStr = d.toISOString().split('T')[0];
             const timeStr = appointment.AppointmentTime;
 
+
             const response = await fetch(`${API_BASE}/doctors/available?date=${dateStr}&time=${timeStr}`);
+
             const data = await response.json();
             if (data.success) {
                 setAvailableDoctors(data.data || []);
@@ -177,7 +183,9 @@ const StaffAppointments = () => {
         }
         setConfirmLoading(true);
         try {
+
             const response = await fetch(`${API_BASE}/appointments/${confirmTarget.AppointmentID}/confirm`, {
+
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ doctorId: selectedDoctorId })
