@@ -20,7 +20,7 @@ const AdminServices = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 5;
+    const ITEMS_PER_PAGE = 7;
 
     const filteredServices = services.filter(svc => 
         svc.ServiceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,6 +89,11 @@ const AdminServices = () => {
             }
             if (formData.description.length > MAX_DESC_LENGTH) {
                 alert(`Mô tả không được quá ${MAX_DESC_LENGTH} ký tự.`);
+                return;
+            }
+
+            if (Number(formData.price) > 500000000) {
+                alert('Giá dịch vụ không được vượt quá 500.000.000 VNĐ.');
                 return;
             }
 
@@ -275,7 +280,7 @@ const AdminServices = () => {
                                 <div className="mb-3">
                                     <label className="form-label">Giá (VNĐ)</label>
                                     <input 
-                                        type="number" className="form-control" required min="0" step="1000"
+                                        type="number" className="form-control" required min="0" max="500000000" step="1000"
                                         value={formData.price} 
                                         onChange={e => setFormData({...formData, price: e.target.value})}
                                     />
