@@ -39,3 +39,15 @@ export async function cancelAppointment(appointmentId) {
     if (!res.ok) throw new Error(result.message || 'Lỗi hủy lịch');
     return result;
 }
+
+// Thanh toán lịch hẹn (chỉ áp dụng cho lịch đã Confirmed)
+export async function payAppointment(appointmentId, paymentMethod = 'PayOS_QR') {
+    const res = await fetch(`${API_BASE}/appointments/${appointmentId}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Lỗi thanh toán lịch hẹn');
+    return result;
+}

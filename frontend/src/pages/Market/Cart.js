@@ -1,10 +1,11 @@
 // Cart.js
 import { useEffect, useState } from "react";
 import { fetchCart, updateCartItem, removeCartItem, clearCartItems } from "../../services/cartApi";
-import { Trash2, ShieldCheck, RotateCcw, Truck, ShoppingBag, Package } from "lucide-react";
+import { Trash2, ShieldCheck, RotateCcw, Truck, ShoppingBag, Package, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { getMyAppointments } from "../../services/appointmentApi";
 
 /* ─────────────────────────────────────────────
    Styles + Keyframes
@@ -260,6 +261,8 @@ function formatPrice(n) {
 ───────────────────────────────────────────── */
 export default function Cart() {
   const [cart, setCart] = useState([]);
+  const [appointmentsNeedPayment, setAppointmentsNeedPayment] = useState([]);
+  const [selectedAppointmentIds, setSelectedAppointmentIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState(null);
   const navigate = useNavigate();
@@ -279,6 +282,18 @@ export default function Cart() {
         setLoading(true);
         const rows = await fetchCart();
         setCart(mapCartRows(rows));
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          const userId = user?.UserID ?? user?.UserId ?? user?.id;
+          const appointments = await getMyAppointments(userId);
+          const unpaidAppointments = (appointments || []).filter((appt) => {
+            const invoiceStatus = String(appt.InvoiceStatus || "").trim().toLowerCase();
+            return invoiceStatus === "unpaid";
+          });
+          setAppointmentsNeedPayment(unpaidAppointments);
+          setSelectedAppointmentIds(unpaidAppointments.map((appt) => appt.AppointmentID));
+        }
       } catch (e) {
         alert(e.message);
         if (e.message.includes("đăng nhập")) navigate("/login");
@@ -318,10 +333,30 @@ export default function Cart() {
     } catch (e) { alert(e.message); }
   };
 
+  const toggleAppointmentSelection = (appointmentId) => {
+    setSelectedAppointmentIds((prev) =>
+      prev.includes(appointmentId)
+        ? prev.filter((id) => id !== appointmentId)
+        : [...prev, appointmentId]
+    );
+  };
+
+  const toggleSelectAllAppointments = () => {
+    if (selectedAppointmentIds.length === appointmentsNeedPayment.length) {
+      setSelectedAppointmentIds([]);
+    } else {
+      setSelectedAppointmentIds(appointmentsNeedPayment.map((appt) => appt.AppointmentID));
+    }
+  };
+
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const selectedAppointments = appointmentsNeedPayment.filter((appt) =>
+    selectedAppointmentIds.includes(appt.AppointmentID)
+  );
+  const appointmentSubtotal = selectedAppointments.reduce((s, a) => s + Number(a.TotalPrice || 0), 0);
   const shippingFee = 0;
   const discount = 0;
-  const total = subtotal + shippingFee - discount;
+  const total = subtotal + appointmentSubtotal + shippingFee - discount;
 
   const trust = [
     { icon: <Truck size={16} color="#16a34a" />, text: "Miễn phí vận chuyển" },
@@ -368,7 +403,7 @@ export default function Cart() {
                     </div>
                   ))}
                 </div>
-              ) : cart.length === 0 ? (
+              ) : cart.length === 0 && appointmentsNeedPayment.length === 0 ? (
                 /* Empty */
                 <div className="ct-empty">
                   <div className="ct-empty-icon"><ShoppingBag size={58} /></div>
@@ -385,7 +420,13 @@ export default function Cart() {
                     <div className="ct-items-header">
                       <p className="ct-items-title">Sản phẩm đã chọn</p>
                     </div>
-                    {cart.map((item, idx) => (
+                    {cart.length === 0 ? (
+                      <div className="ct-item">
+                        <div className="ct-item-info">
+                          <p className="ct-item-brand" style={{ margin: 0 }}>Không có sản phẩm trong giỏ.</p>
+                        </div>
+                      </div>
+                    ) : cart.map((item, idx) => (
                       <div
                         className="ct-item"
                         key={item.id}
@@ -427,11 +468,59 @@ export default function Cart() {
                     ))}
                   </div>
 
-                  <div className="ct-clear-wrap">
-                    <button className="ct-clear-btn" onClick={handleClearCart}>
-                      Xóa toàn bộ giỏ hàng
-                    </button>
-                  </div>
+                  {appointmentsNeedPayment.length > 0 && (
+                    <div className="ct-items-card">
+                      <div className="ct-items-header">
+                        <p className="ct-items-title">Lịch hẹn đã xác nhận (thanh toán cùng đơn)</p>
+                        <button
+                          className="ct-clear-btn"
+                          style={{ marginTop: 0, padding: "4px 8px", fontSize: 12 }}
+                          onClick={toggleSelectAllAppointments}
+                        >
+                          {selectedAppointmentIds.length === appointmentsNeedPayment.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                        </button>
+                      </div>
+                      {appointmentsNeedPayment.map((appt) => (
+                        <div className="ct-item" key={appt.AppointmentID}>
+                          <input
+                            type="checkbox"
+                            checked={selectedAppointmentIds.includes(appt.AppointmentID)}
+                            onChange={() => toggleAppointmentSelection(appt.AppointmentID)}
+                            style={{ width: 16, height: 16, cursor: "pointer" }}
+                          />
+                          <div className="ct-item-img">
+                            <span style={{ fontWeight: 700, color: "#94a3b8" }}>#</span>
+                          </div>
+                          <div className="ct-item-info">
+                            <p className="ct-item-name">Lịch hẹn #{appt.AppointmentID}</p>
+                            <p className="ct-item-brand">{appt.ServiceNames || "Dịch vụ khám"}</p>
+                            <p className="ct-item-price">
+                              {(Number(appt.TotalPrice || 0)).toLocaleString("vi-VN")} ₫
+                            </p>
+                          </div>
+                          <button
+                            className="ct-del-btn"
+                            title="Xem chi tiết lịch hẹn"
+                            onClick={() =>
+                              navigate("/my-appointments", {
+                                state: { openDetailAppointmentId: appt.AppointmentID },
+                              })
+                            }
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {cart.length > 0 && (
+                    <div className="ct-clear-wrap">
+                      <button className="ct-clear-btn" onClick={handleClearCart}>
+                        Xóa toàn bộ giỏ hàng
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -444,6 +533,10 @@ export default function Cart() {
                 <div className="ct-summary-row">
                   <span className="ct-summary-label">Tạm tính</span>
                   <span className="ct-summary-val">{formatPrice(subtotal)}</span>
+                </div>
+                <div className="ct-summary-row">
+                  <span className="ct-summary-label">Lịch hẹn</span>
+                  <span className="ct-summary-val">{formatPrice(appointmentSubtotal)}</span>
                 </div>
                 <div className="ct-summary-row">
                   <span className="ct-summary-label">Phí vận chuyển</span>
@@ -463,8 +556,12 @@ export default function Cart() {
 
                 <button
                   className="ct-checkout-btn"
-                  disabled={cart.length === 0 || loading}
-                  onClick={() => navigate("/checkout")}
+                  disabled={(cart.length === 0 && selectedAppointments.length === 0) || loading}
+                  onClick={() =>
+                    navigate("/checkout", {
+                      state: { appointmentItems: selectedAppointments },
+                    })
+                  }
                 >
                   Tiến hành thanh toán
                 </button>

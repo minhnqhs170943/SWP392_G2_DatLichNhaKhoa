@@ -1,21 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import OrderCard from '../components/Orders/OrderCard';
 import paymentService from '../services/paymentService';
+import { getMyAppointments, payAppointment } from '../services/appointmentApi';
 
 const OrdersPage = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
+    const [appointmentsNeedPayment, setAppointmentsNeedPayment] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [payingAppointmentId, setPayingAppointmentId] = useState(null);
     const [filter, setFilter] = useState('ALL'); // ALL, SUCCESS, PENDING, FAILED
 
-    useEffect(() => {
-        fetchOrders();
-    }, []);
-
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         try {
             const userStr = localStorage.getItem('user');
             if (!userStr) {
@@ -24,15 +23,45 @@ const OrdersPage = () => {
             }
 
             const user = JSON.parse(userStr);
-            const response = await paymentService.getUserOrders(user.UserID);
+            const [orderResponse, appointmentResponse] = await Promise.all([
+                paymentService.getUserOrders(user.UserID),
+                getMyAppointments(user.UserID)
+            ]);
 
-            if (response.success) {
-                setOrders(response.data);
+            if (orderResponse.success) {
+                setOrders(orderResponse.data);
             }
+
+            const confirmedAndUnpaid = (appointmentResponse || []).filter((appt) => {
+                const isConfirmed = appt.Status === 'Confirmed';
+                const invoiceStatus = (appt.InvoiceStatus || '').toLowerCase();
+                const paymentStatus = (appt.PaymentStatus || '').toLowerCase();
+                const isPaid = invoiceStatus === 'paid' || paymentStatus === 'completed';
+                return isConfirmed && !isPaid;
+            });
+
+            setAppointmentsNeedPayment(confirmedAndUnpaid);
         } catch (error) {
             console.error('Error fetching orders:', error);
         } finally {
             setLoading(false);
+        }
+    }, [navigate]);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
+
+    const handlePayAppointment = async (appointmentId) => {
+        try {
+            setPayingAppointmentId(appointmentId);
+            await payAppointment(appointmentId, 'PayOS_QR');
+            await fetchOrders();
+            alert('Thanh toán lịch hẹn thành công.');
+        } catch (error) {
+            alert(error.message || 'Không thể thanh toán lịch hẹn.');
+        } finally {
+            setPayingAppointmentId(null);
         }
     };
 
@@ -143,6 +172,64 @@ const OrdersPage = () => {
                             </button>
                         ))}
                     </div>
+
+                    {appointmentsNeedPayment.length > 0 && (
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '6px',
+                            padding: '16px',
+                            marginBottom: '20px',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+                            border: '1px solid #facc15'
+                        }}>
+                            <h3 style={{ margin: 0, marginBottom: '12px', fontSize: '16px', color: '#92400e' }}>
+                                Thanh toán lịch hẹn đã xác nhận
+                            </h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {appointmentsNeedPayment.map((appt) => (
+                                    <div
+                                        key={appt.AppointmentID}
+                                        style={{
+                                            border: '1px solid #fde68a',
+                                            borderRadius: '6px',
+                                            padding: '12px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            flexWrap: 'wrap'
+                                        }}
+                                    >
+                                        <div>
+                                            <div style={{ fontWeight: '600', color: '#1f2937' }}>
+                                                Lịch hẹn #{appt.AppointmentID}
+                                            </div>
+                                            <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                                                {appt.ServiceNames || 'Dịch vụ khám'} • {(appt.TotalPrice || 0).toLocaleString('vi-VN')} ₫
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handlePayAppointment(appt.AppointmentID)}
+                                            disabled={payingAppointmentId === appt.AppointmentID}
+                                            style={{
+                                                padding: '8px 14px',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                background: '#f59e0b',
+                                                color: 'white',
+                                                fontSize: '13px',
+                                                fontWeight: '600',
+                                                cursor: payingAppointmentId === appt.AppointmentID ? 'not-allowed' : 'pointer',
+                                                opacity: payingAppointmentId === appt.AppointmentID ? 0.6 : 1
+                                            }}
+                                        >
+                                            {payingAppointmentId === appt.AppointmentID ? 'Đang xử lý...' : 'Thanh toán ngay'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Orders List */}
                     {filteredOrders.length === 0 ? (

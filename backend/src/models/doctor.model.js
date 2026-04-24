@@ -17,7 +17,7 @@ const findAllDoctors = async () => {
         from Users u
         join Roles r on r.RoleID = u.RoleID
         join Doctors d on d.UserID = u.UserID
-        where r.RoleID = 2 AND u.IsActive = 1
+        where r.RoleID = 3 AND u.IsActive = 1
     `);
     return result.recordset;
 }
@@ -51,7 +51,7 @@ const findAvailableDoctors = async (date, time) => {
         from Users u
         join Roles r on r.RoleID = u.RoleID
         join Doctors d on d.UserID = u.UserID
-        where r.RoleID = 2 AND u.IsActive = 1
+        where r.RoleID = 3 AND u.IsActive = 1
     `);
     return result.recordset;
 }
@@ -65,11 +65,11 @@ const findBookedSlots = async (date) => {
         SELECT COUNT(*) as TotalDoctors 
         FROM Doctors d
         JOIN Users u ON d.UserID = u.UserID
-        WHERE u.RoleID = 2 AND u.IsActive = 1
+        WHERE u.RoleID = 3 AND u.IsActive = 1
     `);
     const totalDoctors = doctorsCountResult.recordset[0].TotalDoctors;
 
-    // 2. Lấy số lượng lịch hẹn theo từng khung giờ trong ngày đó
+    // 3. Lấy số lượng lịch hẹn theo từng khung giờ trong ngày đó
     // (Chỉ tính các lịch chưa hủy/chưa hoàn thành)
     const appointmentsResult = await request.query(`
         SELECT 
@@ -81,7 +81,7 @@ const findBookedSlots = async (date) => {
         GROUP BY AppointmentTime
     `);
 
-    // 2. Khung giờ nào có số lịch hẹn >= số bác sĩ thì coi như "Full"
+    // 3. Khung giờ nào có số lịch hẹn >= số bác sĩ thì coi như "Full"
     const bookedSlots = appointmentsResult.recordset
         .filter(row => row.AppointmentCount >= totalDoctors)
         .map(row => row.timeStr);
@@ -107,7 +107,7 @@ const findDoctorById = async (userId) => {
                 d.Description
             FROM Users u join [dbo].[Doctors] d 
                 on u.UserId = d. UserId 
-            WHERE u.RoleID = 2 and u.UserID = @UserId
+            WHERE u.RoleID = 3 and u.UserID = @UserId
     `);
     return result.recordset[0];
 };

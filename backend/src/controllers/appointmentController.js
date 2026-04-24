@@ -23,14 +23,15 @@ exports.getAllAppointments = async (req, res) => {
                 -- Gộp tên services
                 STUFF((
                     SELECT ', ' + s.ServiceName
-                    FROM Services s
-                    WHERE s.AppointmentID = a.AppointmentID
+                    FROM AppointmentServices aps
+                    JOIN Services s ON s.ServiceID = aps.ServiceID
+                    WHERE aps.AppointmentID = a.AppointmentID
                     FOR XML PATH(''), TYPE
                 ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS ServiceNames,
                 -- Tổng tiền dịch vụ
-                (SELECT ISNULL(SUM(s.Price), 0)
-                 FROM Services s
-                 WHERE s.AppointmentID = a.AppointmentID) AS TotalPrice,
+                (SELECT ISNULL(SUM(aps.PriceAtBooking), 0)
+                 FROM AppointmentServices aps
+                 WHERE aps.AppointmentID = a.AppointmentID) AS TotalPrice,
                 -- Invoice & Payment info
                 inv.InvoiceID,
                 inv.Status AS InvoiceStatus,
@@ -204,10 +205,32 @@ exports.payAppointment = async (req, res) => {
         }
 
         const pool = await poolPromise;
+        const appointmentId = parseInt(id);
+
+        // Chỉ cho thanh toán lịch hẹn đã Confirmed
+        const appointmentResult = await pool.request()
+            .input('appointmentId', sql.Int, appointmentId)
+            .query(`
+                SELECT AppointmentID, Status
+                FROM Appointments
+                WHERE AppointmentID = @appointmentId
+            `);
+
+        if (appointmentResult.recordset.length === 0) {
+            return res.status(404).json({ success: false, message: "Không tìm thấy lịch hẹn." });
+        }
+
+        const appointment = appointmentResult.recordset[0];
+        if (appointment.Status !== 'Confirmed') {
+            return res.status(400).json({
+                success: false,
+                message: "Chỉ thanh toán được khi lịch hẹn ở trạng thái Confirmed."
+            });
+        }
 
         // Lấy thông tin Invoice của Appointment
         const invoiceResult = await pool.request()
-            .input('appointmentId', sql.Int, parseInt(id))
+            .input('appointmentId', sql.Int, appointmentId)
             .query(`
                 SELECT inv.InvoiceID, inv.TotalAmount, inv.Status
                 FROM Invoices inv
@@ -218,16 +241,16 @@ exports.payAppointment = async (req, res) => {
         if (invoiceResult.recordset.length === 0) {
             // Tạo Invoice nếu chưa có
             const totalResult = await pool.request()
-                .input('appointmentId', sql.Int, parseInt(id))
+                .input('appointmentId', sql.Int, appointmentId)
                 .query(`
-                    SELECT ISNULL(SUM(Price), 0) AS Total
-                    FROM Services
-                    WHERE AppointmentID = @appointmentId
+                    SELECT ISNULL(SUM(aps.PriceAtBooking), 0) AS Total
+                    FROM AppointmentServices aps
+                    WHERE aps.AppointmentID = @appointmentId
                 `);
             const totalAmount = totalResult.recordset[0].Total;
 
             const insertInvoice = await pool.request()
-                .input('appointmentId', sql.Int, parseInt(id))
+                .input('appointmentId', sql.Int, appointmentId)
                 .input('totalAmount', sql.Decimal(18, 2), totalAmount)
                 .query(`
                     INSERT INTO Invoices (AppointmentID, TotalAmount, Status, IssuedDate)
@@ -237,6 +260,13 @@ exports.payAppointment = async (req, res) => {
             invoice = insertInvoice.recordset[0];
         } else {
             invoice = invoiceResult.recordset[0];
+        }
+
+        if ((invoice.Status || '').toLowerCase() === 'paid') {
+            return res.status(400).json({
+                success: false,
+                message: "Lịch hẹn này đã được thanh toán."
+            });
         }
 
         const amount = invoice.TotalAmount || 0;
@@ -258,18 +288,9 @@ exports.payAppointment = async (req, res) => {
             .input('invoiceId', sql.Int, invoice.InvoiceID)
             .query(`UPDATE Invoices SET Status = 'Paid' WHERE InvoiceID = @invoiceId`);
 
-        // Auto chuyển Appointment Status → Confirmed
-        await pool.request()
-            .input('id', sql.Int, parseInt(id))
-            .query(`
-                UPDATE Appointments 
-                SET Status = 'Confirmed', UpdatedAt = GETDATE()
-                WHERE AppointmentID = @id
-            `);
-
         res.json({
             success: true,
-            message: "Thanh toán thành công! Lịch hẹn đã được tự động xác nhận.",
+            message: "Thanh toán thành công!",
             data: {
                 transactionID,
                 amount,
@@ -316,28 +337,31 @@ exports.createAppointment = async (req, res) => {
         
         const appointmentId = appointmentResult.recordset[0].AppointmentID;
 
-        // 2. Tạo copy cho Services
+        // 2. Lưu mapping dịch vụ theo AppointmentServices
         let totalAmount = 0;
         for (const svc of services) {
-            // Lấy thông tin service gốc
-            const originalServiceReq = await pool.request()
-                .input('origId', sql.Int, svc.serviceId)
-                .query('SELECT ServiceName, Description, ImageURL FROM Services WHERE ServiceID = @origId');
-            const origSvc = originalServiceReq.recordset[0];
-            
-            if (origSvc) {
-                await pool.request()
-                    .input('appointmentId', sql.Int, appointmentId)
-                    .input('serviceName', sql.NVarChar, origSvc.ServiceName)
-                    .input('description', sql.NVarChar, origSvc.Description)
-                    .input('priceAtBooking', sql.Decimal(18, 2), svc.price)
-                    .input('imageUrl', sql.VarChar, origSvc.ImageURL)
-                    .query(`
-                        INSERT INTO Services (AppointmentID, ServiceName, Description, Price, ImageURL, IsActive)
-                        VALUES (@appointmentId, @serviceName, @description, @priceAtBooking, @imageUrl, 1)
-                    `);
-                totalAmount += parseFloat(svc.price);
-            }
+            const serviceId = parseInt(svc.serviceId, 10);
+            if (!serviceId) continue;
+
+            const serviceResult = await pool.request()
+                .input('serviceId', sql.Int, serviceId)
+                .query('SELECT ServiceID, Price FROM Services WHERE ServiceID = @serviceId AND IsActive = 1');
+            const baseService = serviceResult.recordset[0];
+            if (!baseService) continue;
+
+            const parsedPrice = Number(svc.price ?? baseService.Price ?? 0);
+            const priceAtBooking = Number.isFinite(parsedPrice) ? parsedPrice : Number(baseService.Price || 0);
+
+            await pool.request()
+                .input('appointmentId', sql.Int, appointmentId)
+                .input('serviceId', sql.Int, serviceId)
+                .input('priceAtBooking', sql.Decimal(18, 2), priceAtBooking)
+                .query(`
+                    INSERT INTO AppointmentServices (AppointmentID, ServiceID, PriceAtBooking)
+                    VALUES (@appointmentId, @serviceId, @priceAtBooking)
+                `);
+
+            totalAmount += priceAtBooking;
         }
 
         // 3. Tạo Invoice (Status = Unpaid)
@@ -390,14 +414,15 @@ exports.getMyAppointments = async (req, res) => {
                     -- Gộp tên services
                     STUFF((
                         SELECT ', ' + s.ServiceName
-                        FROM Services s
-                        WHERE s.AppointmentID = a.AppointmentID
+                        FROM AppointmentServices aps
+                        JOIN Services s ON s.ServiceID = aps.ServiceID
+                        WHERE aps.AppointmentID = a.AppointmentID
                         FOR XML PATH(''), TYPE
                     ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS ServiceNames,
                     -- Tổng tiền
-                    (SELECT ISNULL(SUM(s.Price), 0)
-                     FROM Services s
-                     WHERE s.AppointmentID = a.AppointmentID) AS TotalPrice,
+                    (SELECT ISNULL(SUM(aps.PriceAtBooking), 0)
+                     FROM AppointmentServices aps
+                     WHERE aps.AppointmentID = a.AppointmentID) AS TotalPrice,
                     -- Invoice/Payment status
                     inv.InvoiceID,
                     inv.Status AS InvoiceStatus,
@@ -455,9 +480,10 @@ exports.getAppointmentDetail = async (req, res) => {
         const servicesResult = await pool.request()
             .input('id', sql.Int, parseInt(id))
             .query(`
-                SELECT ServiceID, ServiceName, Price as PriceAtBooking
-                FROM Services
-                WHERE AppointmentID = @id
+                SELECT s.ServiceID, s.ServiceName, aps.PriceAtBooking
+                FROM AppointmentServices aps
+                JOIN Services s ON s.ServiceID = aps.ServiceID
+                WHERE aps.AppointmentID = @id
             `);
 
         // Invoice & Payment
