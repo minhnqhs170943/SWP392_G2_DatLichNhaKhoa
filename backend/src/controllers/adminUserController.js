@@ -94,6 +94,14 @@ const createUser = async (req, res) => {
             `);
 
         const newUser = result.recordset[0];
+        if (roleIdInt === 2) {
+            await pool.request()
+                .input('UserID', sql.Int, newUser.UserID)
+                .query(`
+                    INSERT INTO Doctors (UserID, Bio, ExperienceYears, Specialty) 
+                    VALUES (@UserID, N'Chưa cập nhật', 0, N'Chưa cập nhật')
+                `);
+        }
         const roleResult = await pool.request()
             .input('RoleID', sql.Int, roleIdInt)
             .query(`SELECT RoleName FROM Roles WHERE RoleID = @RoleID`);
@@ -172,6 +180,20 @@ const updateUser = async (req, res) => {
 
         updateQuery += ` WHERE UserID = @UserID`;
         await request.query(updateQuery);
+        if (roleIdInt === 2) { 
+            const checkDoctor = await pool.request()
+                .input('UserID', sql.Int, id)
+                .query(`SELECT DoctorID FROM Doctors WHERE UserID = @UserID`);
+
+            if (checkDoctor.recordset.length === 0) {
+                await pool.request()
+                    .input('UserID', sql.Int, id)
+                    .query(`
+                        INSERT INTO Doctors (UserID, Bio, ExperienceYears, Specialty) 
+                        VALUES (@UserID, N'Chưa cập nhật', 0, N'Chưa cập nhật')
+                    `);
+            }
+        }
 
         const updatedResult = await pool.request()
             .input('UserID', sql.Int, id)
