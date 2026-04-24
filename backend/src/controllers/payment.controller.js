@@ -50,7 +50,7 @@ class PaymentController {
                 const invoice = await Invoice.create({
                     orderId: order.OrderID,
                     totalAmount,
-                    status: 'SUCCESS'
+                    status: 'PAID'
                 });
 
                 // Tạo payment
@@ -59,7 +59,7 @@ class PaymentController {
                     transactionId: `COD-${order.OrderID}`,
                     amount: totalAmount,
                     paymentMethod: 'COD',
-                    status: 'SUCCESS'
+                    status: 'PAID'
                 });
 
                 // Cập nhật order status
@@ -104,7 +104,7 @@ class PaymentController {
                 orderId: order.OrderID,
                 totalAmount,
                 paymentLinkId: orderCode.toString(),
-                status: 'SUCCESS' // Giả lập đã thanh toán (vì không có webhook)
+                status: 'PAID' // Giả lập đã thanh toán (vì không có webhook)
             });
 
             // Tạo payment
@@ -113,7 +113,7 @@ class PaymentController {
                 transactionId: orderCode.toString(),
                 amount: totalAmount,
                 paymentMethod: 'PAYOS',
-                status: 'SUCCESS' // Giả lập đã thanh toán
+                status: 'PAID' // Giả lập đã thanh toán
             });
 
             // Cập nhật order status
@@ -165,10 +165,10 @@ class PaymentController {
                 });
             }
 
-            // Cập nhật trạng thái thanh toán
+            // Cập nhật trạng thái thanh toán thành PAID nếu thành công
             let paymentStatus = 'FAILED';
             if (code === '00') {
-                paymentStatus = 'SUCCESS';
+                paymentStatus = 'PAID';
             } else if (code === '01') {
                 paymentStatus = 'PENDING';
             }
@@ -228,12 +228,16 @@ class PaymentController {
             if (isPaid) {
                 if (orderId.toString().startsWith('APT-')) {
                     const appointmentId = orderId.replace('APT-', '');
+                    // Cập nhật Invoice sang PAID và đồng thời cập nhật Appointments sang Confirmed
                     await pool.request()
                         .input('AppointmentID', require('../config/db').sql.Int, appointmentId)
-                        .query("UPDATE Invoices SET Status = 'SUCCESS' WHERE AppointmentID = @AppointmentID");
+                        .query(`
+                            UPDATE Invoices SET Status = 'PAID' WHERE AppointmentID = @AppointmentID;
+                            -- UPDATE Appointments SET Status = 'Confirmed' WHERE AppointmentID = @AppointmentID;
+                        `);
                     console.log(`>>> Cập nhật thành công DB cho lịch hẹn: ${appointmentId}`);
                 } else {
-                    await Order.updatePaymentStatus(orderId, 'SUCCESS');
+                    await Order.updatePaymentStatus(orderId, 'PAID');
                 }
             }
 
@@ -244,7 +248,7 @@ class PaymentController {
                     orderId: orderId,
                     totalAmount: (paymentInfo && paymentInfo.amount) ? paymentInfo.amount : dbAmount,
                     status: isPaid ? 'PAID' : 'PENDING',
-                    paymentStatus: isPaid ? 'SUCCESS' : 'PENDING'
+                    paymentStatus: isPaid ? 'PAID' : 'PENDING'
                 }
             });
 
@@ -392,8 +396,8 @@ class PaymentController {
                 return res.status(404).json({ success: false, message: 'Không tìm thấy hóa đơn' });
             }
 
-            // Cập nhật trạng thái Invoice thành SUCCESS
-            await Invoice.updateStatus(invoiceId, 'Paid');
+            // Cập nhật trạng thái Invoice thành PAID
+            await Invoice.updateStatus(invoiceId, 'PAID');
 
             // Tạo bản ghi Payment ghi nhận thanh toán tiền mặt
             await Payment.create({
@@ -401,8 +405,16 @@ class PaymentController {
                 transactionId: `CASH-${invoiceId}-${Date.now()}`,
                 amount: invoice.TotalAmount,
                 paymentMethod: 'CASH',
-                status: 'SUCCESS'
+                status: 'PAID'
             });
+
+            // BỔ SUNG: Cập nhật trạng thái Lịch hẹn tương ứng để Dashboard cập nhật ngay lập tức
+            // if (invoice.AppointmentID) {
+            //     const pool = await require('../config/db').sql.connect();
+            //     await pool.request()
+            //         .input('AppointmentID', require('../config/db').sql.Int, invoice.AppointmentID)
+            //         // .query("UPDATE Appointments SET Status = 'Confirmed' WHERE AppointmentID = @AppointmentID");
+            // }
 
             res.status(200).json({
                 success: true,
