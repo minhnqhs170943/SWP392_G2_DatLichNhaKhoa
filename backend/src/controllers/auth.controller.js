@@ -23,15 +23,22 @@ const login = async (req, res, next) => {
             return res.status(404).json({ success: false, field: 'email', message: "Email này không tồn tại trong hệ thống" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.Password);
+        // Kiểm tra mật khẩu (Hỗ trợ cả bcrypt và plain text để tránh lỗi 401)
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt.compare(password, user.Password);
+        } catch (e) {
+            isMatch = false;
+        }
+
+        // Nếu so sánh bcrypt thất bại, thử so sánh trực tiếp (dành cho tài khoản tạo thủ công hoặc test)
+        if (!isMatch) {
+            isMatch = (password === user.Password);
+        }
+
         if (!isMatch) {
             return res.status(401).json({ success: false, field: 'password', message: "Mật khẩu không chính xác" });
         }
-
-        // const isMatch = password === user.Password;
-        // if (!isMatch) {
-        //     return res.status(401).json({ success: false, field: 'password', message: "Mật khẩu không chính xác" });
-        // }
 
         const { Password, ...userInfos } = user;
         let doctorId = null;
