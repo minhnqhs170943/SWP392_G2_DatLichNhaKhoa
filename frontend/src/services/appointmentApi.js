@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Tạo lịch hẹn mới (Customer booking)
 export async function createAppointment(data) {
@@ -17,6 +17,14 @@ export async function getMyAppointments(userId) {
     const res = await fetch(`${API_BASE}/appointments/my/${userId}`);
     const result = await res.json();
     if (!res.ok) throw new Error(result.message || 'Lỗi lấy lịch sử');
+    return result.data || [];
+}
+
+// Lấy danh sách hóa đơn lịch hẹn chưa thanh toán (cho cart/checkout)
+export async function getMyUnpaidAppointmentInvoices(userId) {
+    const res = await fetch(`${API_BASE}/appointments/my/unpaid-invoices/${userId}`);
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Lỗi lấy hóa đơn chưa thanh toán');
     return result.data || [];
 }
 

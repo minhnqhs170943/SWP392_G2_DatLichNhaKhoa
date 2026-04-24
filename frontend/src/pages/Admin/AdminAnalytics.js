@@ -24,7 +24,7 @@ const AdminAnalytics = () => {
     const fetchAnalytics = useCallback(async () => {
         try {
             setLoading(true);
-            let url = 'http://localhost:5001/api/admin/analytics/overview';
+            let url = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/admin/analytics/overview`;
             if (appliedStart && appliedEnd) {
                 url += `?startDate=${appliedStart}&endDate=${appliedEnd}`;
             }

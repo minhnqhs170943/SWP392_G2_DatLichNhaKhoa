@@ -20,4 +20,17 @@ router.get('/orders/user/:userId', paymentController.getUserOrders);
 // Lấy chi tiết đơn hàng
 router.get('/orders/:orderId', paymentController.getOrderDetails);
 
+// ==========================================
+// CÁC ROUTES MỚI CHO QUẢN LÝ HÓA ĐƠN STAFF
+// ==========================================
+
+// Lấy danh sách hóa đơn khám bệnh
+router.get('/appointment-invoices', paymentController.getAppointmentInvoices);
+
+// Nhân viên xác nhận thu tiền mặt tại quầy
+router.put('/appointment-invoices/:invoiceId/cash', paymentController.confirmCashPayment);
+
+// Tạo link thanh toán PayOS cho hóa đơn khám bệnh
+router.post('/appointment-invoices/payos', paymentController.createAppointmentPaymentLink);
+
 module.exports = router;

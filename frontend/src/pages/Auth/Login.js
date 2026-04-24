@@ -57,21 +57,19 @@ const Login = () => {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
 
+                window.dispatchEvent(new Event('authChange'));
+
                 switch (data.user.RoleID) {
                     case 1: // Admin
-                        alert("Chào Admin!");
                         navigate('/admin');
                         break;
                     case 2: // Doctor
-                        alert("Chào Bác sĩ!");
                         navigate('/doctor/dashboard');
                         break;
                     case 3: // Staff
-                        alert("Chào Nhân viên!");
                         navigate('/staff/dashboard');
                         break;
                     case 4: // Patient/User
-                        alert("Đăng nhập thành công!");
                         navigate('/home');
                         break;
                     default:
@@ -88,7 +86,7 @@ const Login = () => {
             setErrors(prev => ({ ...prev, general: "Không thể kết nối đến máy chủ" }));
         }
     };
-
+    
     return (
         <div
             className="d-flex justify-content-center align-items-center min-vh-100"

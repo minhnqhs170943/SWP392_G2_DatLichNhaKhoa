@@ -17,7 +17,7 @@ const findAllDoctors = async () => {
         from Users u
         join Roles r on r.RoleID = u.RoleID
         join Doctors d on d.UserID = u.UserID
-        where r.RoleID = 3 AND u.IsActive = 1
+        where r.RoleID = 2 AND u.IsActive = 1
     `);
     return result.recordset;
 }
@@ -26,8 +26,8 @@ const findAvailableDoctors = async (date, time) => {
     const request = new sql.Request();
     request.input('AppointmentDate', sql.Date, date);
     request.input('AppointmentTime', sql.NVarChar, time);
-    // Find all active doctors except those who have an appointment at the exact given date and time
-    // that is NOT cancelled or completed (meaning it's Pending, Confirmed, Assigned).
+    // Bác sĩ chỉ bận khi đã có lịch hẹn được Staff xác nhận (Confirmed).
+    // Lịch Pending (khách mới đặt, chưa xác nhận) KHÔNG tính là bận.
     const result = await request.query(`
         select  u.UserID, 
                 u.Email, 
@@ -45,13 +45,13 @@ const findAvailableDoctors = async (date, time) => {
                     FROM Appointments 
                     WHERE AppointmentDate = @AppointmentDate
                       AND AppointmentTime = CAST(@AppointmentTime AS TIME)
-                      AND Status NOT IN ('Cancelled', 'Completed')
+                      AND Status = 'Confirmed'
                       AND DoctorID IS NOT NULL
                 ) THEN 0 ELSE 1 END as IsAvailable
         from Users u
         join Roles r on r.RoleID = u.RoleID
         join Doctors d on d.UserID = u.UserID
-        where r.RoleID = 3 AND u.IsActive = 1
+        where r.RoleID = 2 AND u.IsActive = 1
     `);
     return result.recordset;
 }
@@ -65,23 +65,22 @@ const findBookedSlots = async (date) => {
         SELECT COUNT(*) as TotalDoctors 
         FROM Doctors d
         JOIN Users u ON d.UserID = u.UserID
-        WHERE u.RoleID = 3 AND u.IsActive = 1
+        WHERE u.RoleID = 2 AND u.IsActive = 1
     `);
     const totalDoctors = doctorsCountResult.recordset[0].TotalDoctors;
 
-    // 3. Lấy số lượng lịch hẹn theo từng khung giờ trong ngày đó
-    // (Chỉ tính các lịch chưa hủy/chưa hoàn thành)
+
     const appointmentsResult = await request.query(`
         SELECT 
             CONVERT(VARCHAR(5), AppointmentTime, 108) as timeStr,
             COUNT(*) as AppointmentCount
         FROM Appointments
         WHERE AppointmentDate = @AppointmentDate
-          AND Status NOT IN ('Cancelled', 'Completed')
+          AND Status = 'Confirmed'
         GROUP BY AppointmentTime
     `);
 
-    // 3. Khung giờ nào có số lịch hẹn >= số bác sĩ thì coi như "Full"
+    // 2. Khung giờ nào có số lịch hẹn >= số bác sĩ thì coi như "Full"
     const bookedSlots = appointmentsResult.recordset
         .filter(row => row.AppointmentCount >= totalDoctors)
         .map(row => row.timeStr);
@@ -107,7 +106,7 @@ const findDoctorById = async (userId) => {
                 d.Description
             FROM Users u join [dbo].[Doctors] d 
                 on u.UserId = d. UserId 
-            WHERE u.RoleID = 3 and u.UserID = @UserId
+            WHERE u.RoleID = 2 and u.UserID = @UserId
     `);
     return result.recordset[0];
 };

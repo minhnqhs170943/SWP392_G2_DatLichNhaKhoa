@@ -14,6 +14,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const selectedProductIdsFromState = Array.isArray(location.state?.selectedProductIds)
+    ? location.state.selectedProductIds
+    : null;
 
   const [cartItems, setCartItems] = useState([]);
   const [appointmentItems, setAppointmentItems] = useState([]);
@@ -43,7 +46,12 @@ const CheckoutPage = () => {
     const loadCheckoutData = async () => {
       try {
         const rows = await fetchCart();
-        setCartItems(mapCartRows(rows));
+        const mappedCart = mapCartRows(rows);
+        if (selectedProductIdsFromState) {
+          setCartItems(mappedCart.filter((item) => selectedProductIdsFromState.includes(item.id)));
+        } else {
+          setCartItems(mappedCart);
+        }
 
         const stateAppointments = location.state?.appointmentItems;
         if (Array.isArray(stateAppointments)) {
@@ -58,7 +66,7 @@ const CheckoutPage = () => {
         const appts = await getMyAppointments(user.UserID);
         const unpaidAppointments = (appts || []).filter((appt) => {
           const invoiceStatus = String(appt.InvoiceStatus || '').trim().toLowerCase();
-          return invoiceStatus === 'unpaid';
+          return Boolean(appt.InvoiceID) && invoiceStatus === 'unpaid';
         });
         setAppointmentItems(unpaidAppointments);
       } catch (e) {
@@ -68,11 +76,14 @@ const CheckoutPage = () => {
     };
 
     loadCheckoutData();
-  }, [navigate, location.state]);
+  }, [navigate, location.state, selectedProductIdsFromState]);
 
   const calculateSubtotal = () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const calculateAppointmentSubtotal = () =>
-    appointmentItems.reduce((sum, item) => sum + Number(item.TotalPrice || 0), 0);
+    appointmentItems.reduce(
+      (sum, item) => sum + Number(item.TotalAmount ?? item.InvoiceTotalAmount ?? item.TotalPrice ?? 0),
+      0
+    );
   const calculateGrandTotal = () => calculateSubtotal() + calculateAppointmentSubtotal();
 
   const updateQty = async (id, delta) => {
@@ -82,7 +93,12 @@ const CheckoutPage = () => {
     const nextQty = item.quantity + delta;
     try {
       const rows = await updateCartItem(id, nextQty);
-      setCartItems(mapCartRows(rows));
+      const mappedCart = mapCartRows(rows);
+      if (selectedProductIdsFromState) {
+        setCartItems(mappedCart.filter((x) => selectedProductIdsFromState.includes(x.id)));
+      } else {
+        setCartItems(mappedCart);
+      }
     } catch (e) {
       alert(e.message);
     }
@@ -91,7 +107,12 @@ const CheckoutPage = () => {
   const removeItem = async (id) => {
     try {
       const rows = await removeCartItem(id);
-      setCartItems(mapCartRows(rows));
+      const mappedCart = mapCartRows(rows);
+      if (selectedProductIdsFromState) {
+        setCartItems(mappedCart.filter((x) => selectedProductIdsFromState.includes(x.id)));
+      } else {
+        setCartItems(mappedCart);
+      }
     } catch (e) {
       alert(e.message);
     }
@@ -164,7 +185,11 @@ const CheckoutPage = () => {
         });
 
         if (response.success) {
-          await clearCartItems();
+          if (selectedProductIdsFromState) {
+            await Promise.all(selectedProductIdsFromState.map((productId) => removeCartItem(productId)));
+          } else {
+            await clearCartItems();
+          }
           setCartItems([]);
           setAppointmentItems([]);
 
@@ -208,18 +233,79 @@ const CheckoutPage = () => {
               <CartItemList cartItems={cartItems} onUpdateQty={updateQty} onRemoveItem={removeItem} />
 
               {appointmentItems.length > 0 && (
-                <div className="card border mb-3" style={{ borderRadius: 12, borderColor: '#eee' }}>
+                <div
+                  className="card border mb-3"
+                  style={{
+                    borderRadius: 16,
+                    borderColor: '#dbe7ff',
+                    boxShadow: '0 8px 22px rgba(30,64,175,0.07)',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fbff 100%)',
+                  }}
+                >
                   <div className="card-body p-3 p-md-4">
                     <h5 className="fw-bold mb-3" style={{ fontSize: 16 }}>Lịch hẹn thanh toán cùng đơn</h5>
                     {appointmentItems.map((appt, index) => (
                       <div key={appt.AppointmentID}>
-                        <div className="d-flex justify-content-between align-items-start py-2">
-                          <div>
+                        <div
+                          className="d-flex justify-content-between align-items-start py-2"
+                          style={{
+                            background: '#fff',
+                            border: '1px solid #e5edff',
+                            borderRadius: 12,
+                            padding: '12px 14px',
+                          }}
+                        >
+                          <div style={{ maxWidth: '75%' }}>
                             <div className="fw-bold" style={{ fontSize: 14 }}>Lịch hẹn #{appt.AppointmentID}</div>
-                            <div className="text-muted" style={{ fontSize: 12 }}>{appt.ServiceNames || 'Dịch vụ khám'}</div>
+                            <div
+                              style={{
+                                display: 'inline-block',
+                                marginTop: 6,
+                                marginBottom: 4,
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                border: '1px solid #cfe0ff',
+                                background: '#eaf2ff',
+                                color: '#1e40af',
+                                fontSize: 11,
+                                fontWeight: 700,
+                              }}
+                            >
+                              Dịch vụ
+                            </div>
+                            <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.45 }}>
+                              {appt.ServicesList || appt.ServiceNames || 'Dịch vụ khám'}
+                            </div>
+                            <div
+                              style={{
+                                display: 'inline-block',
+                                marginTop: 6,
+                                marginBottom: 4,
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                border: '1px solid #cfe0ff',
+                                background: '#eaf2ff',
+                                color: '#1e40af',
+                                fontSize: 11,
+                                fontWeight: 700,
+                              }}
+                            >
+                              Đơn thuốc
+                            </div>
+                            <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.45 }}>
+                              {appt.ProductsList || 'Không có đơn thuốc'}
+                            </div>
+                            <div className="d-flex gap-2 flex-wrap mt-2">
+                              <div style={{ fontSize: 12, border: '1px solid #dbe7ff', borderRadius: 10, padding: '6px 10px', background: '#f8fbff' }}>
+                                Tiền dịch vụ: <strong>{Number(appt.ServiceAmount || 0).toLocaleString('vi-VN')} ₫</strong>
+                              </div>
+                              <div style={{ fontSize: 12, border: '1px solid #dbe7ff', borderRadius: 10, padding: '6px 10px', background: '#f8fbff' }}>
+                                Tiền sản phẩm: <strong>{Number(appt.ProductAmount || 0).toLocaleString('vi-VN')} ₫</strong>
+                              </div>
+                            </div>
                           </div>
-                          <div className="fw-semibold" style={{ color: '#4285f4', fontSize: 13 }}>
-                            {Number(appt.TotalPrice || 0).toLocaleString('vi-VN')} ₫
+                          <div className="fw-semibold" style={{ color: '#2563eb', fontSize: 13 }}>
+                            Tổng: {Number(appt.TotalAmount ?? appt.InvoiceTotalAmount ?? appt.TotalPrice ?? 0).toLocaleString('vi-VN')} ₫
                           </div>
                         </div>
                         {index < appointmentItems.length - 1 && <hr className="my-2" style={{ borderColor: '#f0f0f0' }} />}

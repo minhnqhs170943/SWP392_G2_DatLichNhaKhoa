@@ -64,4 +64,16 @@ const changePassword = async (userId, newPassword) => {
     `);
 };
 
-module.exports = { findUserByEmail, findUserByPhone, createUser, getUserById, updateUserProfile, changePassword };
+const updateAvatar = async (userId, avatarUrl) => {
+    const request = new sql.Request();
+    request.input('userId', sql.Int, parseInt(userId));
+    request.input('avatarUrl', sql.VarChar, avatarUrl);
+
+    await request.query(`
+        UPDATE Users
+        SET AvatarURL = @avatarUrl
+        WHERE UserID = @userId
+    `);
+};
+
+module.exports = { findUserByEmail, findUserByPhone, createUser, getUserById, updateUserProfile, changePassword, updateAvatar };

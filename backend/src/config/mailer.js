@@ -9,4 +9,19 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-module.exports = transporter;
+const sendMail = async (to, subject, html) => {
+    try {
+        const info = await transporter.sendMail({
+            from: `"Nha Khoa SWP392" <${process.env.EMAIL_USER}>`,
+            to,
+            subject,
+            html
+        });
+        return info;
+    } catch (error) {
+        console.error("Lỗi Nodemailer:", error);
+        throw error;
+    }
+};
+
+module.exports = { transporter, sendMail };

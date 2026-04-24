@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/SidebarStaff/Sidebar';
-import { Search, Filter, Eye, X } from 'lucide-react';
+import { Search, Filter, Eye, X, Calendar } from 'lucide-react';
 import './StaffAppointments.css';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const StaffAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // Modal state
     const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -31,7 +34,9 @@ const StaffAppointments = () => {
     const fetchAppointments = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/appointments');
+
+            const response = await fetch(`${API_BASE}/appointments`);
+
             const data = await response.json();
             if (data.success) {
                 setAppointments(data.data);
@@ -49,7 +54,7 @@ const StaffAppointments = () => {
 
     const updateStatus = async (appointmentId, newStatus) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/status`, {
+            const response = await fetch(`${API_BASE}/appointments/${appointmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -116,7 +121,9 @@ const StaffAppointments = () => {
             // Customer đã chọn bác sĩ → xác nhận trực tiếp
             setConfirmLoading(true);
             try {
-                const response = await fetch(`http://localhost:5000/api/appointments/${appointment.AppointmentID}/confirm`, {
+
+                const response = await fetch(`${API_BASE}/appointments/${appointment.AppointmentID}/confirm`, {
+
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
@@ -147,7 +154,9 @@ const StaffAppointments = () => {
             const dateStr = d.toISOString().split('T')[0];
             const timeStr = appointment.AppointmentTime;
 
-            const response = await fetch(`http://localhost:5000/api/doctors/available?date=${dateStr}&time=${timeStr}`);
+
+            const response = await fetch(`${API_BASE}/doctors/available?date=${dateStr}&time=${timeStr}`);
+
             const data = await response.json();
             if (data.success) {
                 setAvailableDoctors(data.data || []);
@@ -174,7 +183,9 @@ const StaffAppointments = () => {
         }
         setConfirmLoading(true);
         try {
-            const response = await fetch(`http://localhost:5000/api/appointments/${confirmTarget.AppointmentID}/confirm`, {
+
+            const response = await fetch(`${API_BASE}/appointments/${confirmTarget.AppointmentID}/confirm`, {
+
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ doctorId: selectedDoctorId })
@@ -205,13 +216,28 @@ const StaffAppointments = () => {
         setSelectedAppointment(null);
     };
 
-    const filteredAppointments = appointments.filter(app => {
-        const matchStatus = filterStatus === 'All' || app.Status === filterStatus;
-        const matchSearch = app.PatientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (app.DoctorName && app.DoctorName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (app.ServiceNames && app.ServiceNames.toLowerCase().includes(searchTerm.toLowerCase()));
-        return matchStatus && matchSearch;
-    });
+    const filteredAppointments = appointments
+        .filter(app => {
+            const matchStatus = filterStatus === 'All' || app.Status === filterStatus;
+            const matchSearch = app.PatientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (app.DoctorName && app.DoctorName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (app.ServiceNames && app.ServiceNames.toLowerCase().includes(searchTerm.toLowerCase()));
+
+            // Lọc theo ngày
+            const appDate = app.AppointmentDate.split('T')[0];
+            const matchStartDate = !startDate || appDate >= startDate;
+            const matchEndDate = !endDate || appDate <= endDate;
+
+            return matchStatus && matchSearch && matchStartDate && matchEndDate;
+        })
+        .sort((a, b) => {
+            // Auto cho Pending lên đầu
+            if (a.Status === 'Pending' && b.Status !== 'Pending') return -1;
+            if (a.Status !== 'Pending' && b.Status === 'Pending') return 1;
+
+            // Nếu cùng status hoặc không phải Pending, sắp xếp theo ngày mới nhất
+            return new Date(b.AppointmentDate) - new Date(a.AppointmentDate);
+        });
 
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0);
@@ -255,6 +281,30 @@ const StaffAppointments = () => {
                                 <option value="Completed">Hoàn Thành (Completed)</option>
                                 <option value="Cancelled">Đã Hủy (Cancelled)</option>
                             </select>
+                        </div>
+                    </div>
+                    <div className="filter-group">
+                        <label>Từ Ngày</label>
+                        <div style={{ position: 'relative' }}>
+                            <Calendar size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                style={{ paddingLeft: '38px' }}
+                            />
+                        </div>
+                    </div>
+                    <div className="filter-group">
+                        <label>Đến Ngày</label>
+                        <div style={{ position: 'relative' }}>
+                            <Calendar size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                style={{ paddingLeft: '38px' }}
+                            />
                         </div>
                     </div>
                 </div>

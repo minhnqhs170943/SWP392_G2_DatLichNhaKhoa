@@ -8,17 +8,23 @@ const AdminInvoices = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [filterDay, setFilterDay] = useState('');
+    const [filterMonth, setFilterMonth] = useState('');
+    const [filterYear, setFilterYear] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
 
     const fetchInvoices = useCallback(async () => {
         try {
             setLoading(true);
-            let url = 'http://localhost:5001/api/admin/invoices';
+            let url = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/admin/invoices`;
             const params = new URLSearchParams();
             if (searchTerm) params.append('search', searchTerm);
             if (filterType) params.append('type', filterType);
             if (filterStatus) params.append('status', filterStatus);
+            if (filterDay) params.append('day', filterDay);
+            if (filterMonth) params.append('month', filterMonth);
+            if (filterYear) params.append('year', filterYear);
 
             if (params.toString()) url += `?${params.toString()}`;
 
@@ -33,7 +39,7 @@ const AdminInvoices = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, filterType, filterStatus]);
+    }, [searchTerm, filterType, filterStatus, filterDay, filterMonth, filterYear]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -83,32 +89,75 @@ const AdminInvoices = () => {
 
             <div className="filters-section">
                 <div className="search-box">
-                    <Search className="search-icon" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo Mã HĐ, Tên khách hàng..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    <label className="search-label">Tìm kiếm</label>
+                    <div className="search-container">
+                        <Search className="search-icon" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Mã HĐ, Tên khách hàng..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
 
                 <div className="filter-group">
-                    <div className="filter-item">
-                        <Filter size={16} />
-                        <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-                            <option value="">Tất cả loại</option>
-                            <option value="Appointment">Lịch hẹn khám</option>
-                            <option value="Order">Đơn hàng sản phẩm</option>
-                        </select>
+                    <div className="filter-box">
+                        <label className="filter-label">Loại giao dịch</label>
+                        <div className="filter-item">
+                            <Filter size={16} />
+                            <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                                <option value="">Tất cả loại</option>
+                                <option value="Appointment">Lịch hẹn khám</option>
+                                <option value="Order">Đơn hàng sản phẩm</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div className="filter-item">
-                        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="Paid">Đã thanh toán</option>
-                            <option value="Unpaid">Chờ thanh toán</option>
-                            <option value="Cancelled">Đã hủy</option>
-                        </select>
+                    <div className="filter-box">
+                        <label className="filter-label">Trạng thái</label>
+                        <div className="filter-item">
+                            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="Paid">Đã thanh toán</option>
+                                <option value="Unpaid">Chờ thanh toán</option>
+                                <option value="Cancelled">Đã hủy</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="filter-box">
+                        <label className="filter-label">Thời gian</label>
+                        <div className="filter-item" style={{ gap: '5px' }}>
+                            <Calendar size={16} />
+                            <select value={filterDay} onChange={(e) => setFilterDay(e.target.value)} style={{ width: '65px' }}>
+                                <option value="">Ngày</option>
+                                {Array.from({ length: 31 }, (_, i) => (
+                                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                ))}
+                            </select>
+                            <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={{ width: '75px' }}>
+                                <option value="">Tháng</option>
+                                {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                                ))}
+                            </select>
+                            <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ width: '85px' }}>
+                                <option value="">Năm</option>
+                                {[2023, 2024, 2025, 2026].map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                            {(filterDay || filterMonth || filterYear) && (
+                                <button 
+                                    onClick={() => { setFilterDay(''); setFilterMonth(''); setFilterYear(''); }}
+                                    style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', marginLeft: '5px' }}
+                                    title="Xóa lọc ngày"
+                                >
+                                    Xóa
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -48,7 +48,7 @@ const BookingPage = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const servicesRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/services`).then(r => r.json());
+            const servicesRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/services`).then(r => r.json());
             setServices(servicesRes.data || servicesRes.services || []);
         } catch (error) {
             console.error('Lỗi tải dữ liệu:', error);
@@ -66,7 +66,7 @@ const BookingPage = () => {
 
     const fetchBookedSlots = async (date) => {
         try {
-            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/booked-slots?date=${date}`);
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/doctors/booked-slots?date=${date}`);
             const data = await res.json();
             if (data.success) {
                 setBookedSlots(data.data || []);
@@ -96,7 +96,15 @@ const BookingPage = () => {
         switch (currentStep) {
             case 1: return selectedServices.length > 0;
             case 2: return selectedDate && selectedTime;
-            case 3: return true; // Doctor is optional
+            case 3: {
+                // Nếu có bác sĩ rảnh → bắt buộc chọn 1 bác sĩ
+                const hasAvailableDoctor = doctors.some(d => d.IsAvailable);
+                if (hasAvailableDoctor) {
+                    return selectedDoctor !== null;
+                }
+                // Nếu tất cả bận → cho phép đi tiếp (hệ thống chọn)
+                return true;
+            }
             case 4: return true;
             default: return false;
         }
@@ -105,11 +113,19 @@ const BookingPage = () => {
     const fetchAvailableDoctors = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/doctors/available?date=${selectedDate}&time=${selectedTime}`);
             const data = await res.json();
             if (data.success) {
-                setDoctors(data.data || []);
-                setSelectedDoctor(null); // Reset when time changes
+                const allDoctors = data.data || [];
+                setDoctors(allDoctors);
+                // Chỉ tự chọn bác sĩ rảnh đầu tiên (IsAvailable === true)
+                const availableOnes = allDoctors.filter(d => d.IsAvailable);
+                if (availableOnes.length > 0) {
+                    setSelectedDoctor(availableOnes[0]);
+                } else {
+                    // Tất cả bận → hệ thống sẽ chọn
+                    setSelectedDoctor(null);
+                }
             }
         } catch (error) {
             console.error('Lỗi tải bác sĩ rảnh:', error);
@@ -194,7 +210,7 @@ const BookingPage = () => {
                         <div className="success-icon">🎉</div>
                         <h2>Đặt Lịch Thành Công!</h2>
                         <p className="success-subtitle">Lịch hẹn của bạn đã được tạo. Vui lòng thanh toán để xác nhận.</p>
-                        
+
                         <div className="success-details">
                             <div className="success-row">
                                 <span>Mã lịch hẹn</span>
@@ -202,7 +218,7 @@ const BookingPage = () => {
                             </div>
                             <div className="success-row">
                                 <span>Tổng tiền</span>
-                                <strong style={{color: '#059669'}}>{formatCurrency(bookingSuccess.totalAmount)}</strong>
+                                <strong style={{ color: '#059669' }}>{formatCurrency(bookingSuccess.totalAmount)}</strong>
                             </div>
                             <div className="success-row">
                                 <span>Trạng thái</span>
@@ -250,7 +266,7 @@ const BookingPage = () => {
                             </div>
                         ))}
                         <div className="step-connector">
-                            <div className="step-connector-fill" style={{width: `${((currentStep - 1) / 3) * 100}%`}}></div>
+                            <div className="step-connector-fill" style={{ width: `${((currentStep - 1) / 3) * 100}%` }}></div>
                         </div>
                     </div>
 
@@ -262,7 +278,7 @@ const BookingPage = () => {
                                 <h2>Chọn Dịch Vụ Khám</h2>
                                 <p className="step-desc">Bạn có thể chọn một hoặc nhiều dịch vụ</p>
                                 <div className="booking-search-box">
-                                    <span className="search-icon">🔍</span>
+                                    <span className="search-icon"></span>
                                     <input
                                         type="text"
                                         placeholder="Tìm kiếm dịch vụ..."
@@ -288,7 +304,7 @@ const BookingPage = () => {
                                         </div>
                                     ))}
                                     {services.filter(svc => svc.ServiceName.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
-                                        <div style={{gridColumn: '1/-1', textAlign: 'center', padding: '30px', color: '#94a3b8'}}>Không tìm thấy dịch vụ phù hợp.</div>
+                                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '30px', color: '#94a3b8' }}>Không tìm thấy dịch vụ phù hợp.</div>
                                     )}
                                 </div>
                                 {selectedServices.length > 0 && (
@@ -305,7 +321,7 @@ const BookingPage = () => {
                             <div className="step-panel">
                                 <h2>Chọn Ngày & Giờ Khám</h2>
                                 <p className="step-desc">Chọn thời gian phù hợp cho buổi khám</p>
-                                
+
                                 <div className="datetime-section">
                                     <div className="date-picker-wrapper">
                                         <label>📅 Ngày khám</label>
@@ -346,7 +362,7 @@ const BookingPage = () => {
                                 <h2>Chọn Bác Sĩ</h2>
                                 <p className="step-desc">Danh sách bác sĩ còn trống lịch vào {selectedTime} ngày {new Date(selectedDate).toLocaleDateString('vi-VN')}. Bạn có thể chọn hoặc hệ thống tự phân công.</p>
                                 <div className="booking-search-box">
-                                    <span className="search-icon">🔍</span>
+                                    <span className="search-icon"></span>
                                     <input
                                         type="text"
                                         placeholder="Tìm bác sĩ theo tên hoặc chuyên khoa..."
@@ -357,7 +373,19 @@ const BookingPage = () => {
                                     {doctorSearch && <button className="search-clear" onClick={() => setDoctorSearch('')}>✕</button>}
                                 </div>
                                 <div className="doctors-grid">
-                                    {!doctorSearch && (
+                                    {/* Hiện ô "Hệ thống chọn" khi TẤT CẢ bác sĩ đều bận */}
+                                    {!doctorSearch && doctors.length > 0 && !doctors.some(d => d.IsAvailable) && (
+                                        <div
+                                            className={`doctor-card ${selectedDoctor === null ? 'selected' : ''}`}
+                                            onClick={() => setSelectedDoctor(null)}
+                                        >
+                                            <div className="doctor-avatar">🏥</div>
+                                            <h3>Để hệ thống chọn</h3>
+                                            <p className="doctor-specialty">Tất cả bác sĩ hiện tại đã bận. Nhân viên sẽ phân công bác sĩ khi có lịch trống.</p>
+                                        </div>
+                                    )}
+                                    {/* Hiện ô "Hệ thống chọn" khi không có bác sĩ nào trong hệ thống */}
+                                    {!doctorSearch && doctors.length === 0 && (
                                         <div
                                             className={`doctor-card ${selectedDoctor === null ? 'selected' : ''}`}
                                             onClick={() => setSelectedDoctor(null)}
@@ -391,9 +419,9 @@ const BookingPage = () => {
                                             )}
                                         </div>
                                     ))}
-                                    {doctors.length === 0 && !doctorSearch && (
+                                    {doctors.length === 0 && doctorSearch && (
                                         <div className="no-doctor-msg" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '20px', color: '#64748b' }}>
-                                            Hiện tại không có bác sĩ nào trống lịch vào khung giờ này. Vui lòng chọn giờ khác, hoặc "Để hệ thống phân công".
+                                            Không tìm thấy bác sĩ phù hợp với tìm kiếm của bạn.
                                         </div>
                                     )}
                                 </div>
@@ -405,7 +433,7 @@ const BookingPage = () => {
                             <div className="step-panel">
                                 <h2>Xác Nhận Đặt Lịch</h2>
                                 <p className="step-desc">Kiểm tra lại thông tin trước khi đặt lịch</p>
-                                
+
                                 <div className="confirm-card">
                                     <div className="confirm-section">
                                         <h4>👤 Thông tin bệnh nhân</h4>

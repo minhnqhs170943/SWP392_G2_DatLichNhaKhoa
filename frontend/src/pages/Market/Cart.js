@@ -5,7 +5,7 @@ import { Trash2, ShieldCheck, RotateCcw, Truck, ShoppingBag, Package, Eye } from
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { getMyAppointments } from "../../services/appointmentApi";
+import { getMyUnpaidAppointmentInvoices } from "../../services/appointmentApi";
 
 /* ─────────────────────────────────────────────
    Styles + Keyframes
@@ -113,8 +113,52 @@ const STYLES = `
 .ct-item-info { flex: 1; min-width: 0; }
 .ct-item-name  { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ct-item-brand { font-size: 12px; color: #94a3b8; margin: 0 0 4px; }
+.ct-item-brand { font-size: 12px; color: #000000; margin: 0 0 4px; }
 .ct-item-price { font-size: 13.5px; font-weight: 700; color: #3b82f6; margin: 0; }
+.ct-appt-box {
+  background: linear-gradient(135deg, #f8fbff 0%, #f2f8ff 100%);
+  border: 1px solid #e2ecff;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.ct-appt-line {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.45;
+}
+.ct-appt-chip {
+  display: inline-block;
+  background: #eaf2ff;
+  color: #1e40af;
+  border: 1px solid #cfe0ff;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.ct-appt-money-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.ct-appt-money-pill {
+  background: #fff;
+  border: 1px solid #dbe7ff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #334155;
+}
+.ct-appt-money-pill strong { color: #0f172a; }
+.ct-appt-total {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #2563eb;
+}
 
 /* ── Qty controls ── */
 .ct-qty {
@@ -261,6 +305,7 @@ function formatPrice(n) {
 ───────────────────────────────────────────── */
 export default function Cart() {
   const [cart, setCart] = useState([]);
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [appointmentsNeedPayment, setAppointmentsNeedPayment] = useState([]);
   const [selectedAppointmentIds, setSelectedAppointmentIds] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -281,18 +326,16 @@ export default function Cart() {
       try {
         setLoading(true);
         const rows = await fetchCart();
-        setCart(mapCartRows(rows));
+        const mappedCart = mapCartRows(rows);
+        setCart(mappedCart);
+        setSelectedProductIds(mappedCart.map((item) => item.id));
         const userStr = localStorage.getItem("user");
         if (userStr) {
           const user = JSON.parse(userStr);
           const userId = user?.UserID ?? user?.UserId ?? user?.id;
-          const appointments = await getMyAppointments(userId);
-          const unpaidAppointments = (appointments || []).filter((appt) => {
-            const invoiceStatus = String(appt.InvoiceStatus || "").trim().toLowerCase();
-            return invoiceStatus === "unpaid";
-          });
-          setAppointmentsNeedPayment(unpaidAppointments);
-          setSelectedAppointmentIds(unpaidAppointments.map((appt) => appt.AppointmentID));
+          const unpaidInvoices = await getMyUnpaidAppointmentInvoices(userId);
+          setAppointmentsNeedPayment(unpaidInvoices || []);
+          setSelectedAppointmentIds((unpaidInvoices || []).map((appt) => appt.AppointmentID));
         }
       } catch (e) {
         alert(e.message);
@@ -308,7 +351,11 @@ export default function Cart() {
     if (!item) return;
     try {
       const rows = await updateCartItem(id, item.qty + delta);
-      setCart(mapCartRows(rows));
+      const mappedCart = mapCartRows(rows);
+      setCart(mappedCart);
+      setSelectedProductIds((prev) =>
+        prev.filter((pid) => mappedCart.some((cartItem) => cartItem.id === pid))
+      );
       window.dispatchEvent(new Event("cart:updated"));
     } catch (e) { alert(e.message); }
   };
@@ -318,7 +365,9 @@ export default function Cart() {
     setTimeout(async () => {
       try {
         const rows = await removeCartItem(id);
-        setCart(mapCartRows(rows));
+        const mappedCart = mapCartRows(rows);
+        setCart(mappedCart);
+        setSelectedProductIds((prev) => prev.filter((pid) => pid !== id));
         window.dispatchEvent(new Event("cart:updated"));
       } catch (e) { alert(e.message); }
       setRemovingId(null);
@@ -329,8 +378,25 @@ export default function Cart() {
     try {
       await clearCartItems();
       setCart([]);
+      setSelectedProductIds([]);
       window.dispatchEvent(new Event("cart:updated"));
     } catch (e) { alert(e.message); }
+  };
+
+  const toggleProductSelection = (productId) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const toggleSelectAllProducts = () => {
+    if (selectedProductIds.length === cart.length) {
+      setSelectedProductIds([]);
+    } else {
+      setSelectedProductIds(cart.map((item) => item.id));
+    }
   };
 
   const toggleAppointmentSelection = (appointmentId) => {
@@ -349,11 +415,15 @@ export default function Cart() {
     }
   };
 
-  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const selectedCartItems = cart.filter((item) => selectedProductIds.includes(item.id));
+  const subtotal = selectedCartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const selectedAppointments = appointmentsNeedPayment.filter((appt) =>
     selectedAppointmentIds.includes(appt.AppointmentID)
   );
-  const appointmentSubtotal = selectedAppointments.reduce((s, a) => s + Number(a.TotalPrice || 0), 0);
+  const appointmentSubtotal = selectedAppointments.reduce(
+    (s, a) => s + Number(a.TotalAmount ?? a.InvoiceTotalAmount ?? a.TotalPrice ?? 0),
+    0
+  );
   const shippingFee = 0;
   const discount = 0;
   const total = subtotal + appointmentSubtotal + shippingFee - discount;
@@ -419,6 +489,15 @@ export default function Cart() {
                   <div className="ct-items-card">
                     <div className="ct-items-header">
                       <p className="ct-items-title">Sản phẩm đã chọn</p>
+                      {cart.length > 0 && (
+                        <button
+                          className="ct-clear-btn"
+                          style={{ marginTop: 0, padding: "4px 8px", fontSize: 12 }}
+                          onClick={toggleSelectAllProducts}
+                        >
+                          {selectedProductIds.length === cart.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                        </button>
+                      )}
                     </div>
                     {cart.length === 0 ? (
                       <div className="ct-item">
@@ -438,6 +517,12 @@ export default function Cart() {
                           pointerEvents: removingId === item.id ? "none" : "auto",
                         }}
                       >
+                        <input
+                          type="checkbox"
+                          checked={selectedProductIds.includes(item.id)}
+                          onChange={() => toggleProductSelection(item.id)}
+                          style={{ width: 16, height: 16, cursor: "pointer" }}
+                        />
                         {/* Image */}
                         <div className="ct-item-img">
                           <Package size={26} />
@@ -493,10 +578,23 @@ export default function Cart() {
                           </div>
                           <div className="ct-item-info">
                             <p className="ct-item-name">Lịch hẹn #{appt.AppointmentID}</p>
-                            <p className="ct-item-brand">{appt.ServiceNames || "Dịch vụ khám"}</p>
-                            <p className="ct-item-price">
-                              {(Number(appt.TotalPrice || 0)).toLocaleString("vi-VN")} ₫
-                            </p>
+                            <div className="ct-appt-box">
+                              <span className="ct-appt-chip">Dịch vụ</span>
+                              <p className="ct-appt-line">{appt.ServicesList || appt.ServiceNames || "Dịch vụ khám"}</p>
+                              <span className="ct-appt-chip">Đơn thuốc</span>
+                              <p className="ct-appt-line">{appt.ProductsList || "Không có đơn thuốc"}</p>
+                              <div className="ct-appt-money-row">
+                                <div className="ct-appt-money-pill">
+                                  Tiền dịch vụ: <strong>{formatPrice(appt.ServiceAmount || 0)}</strong>
+                                </div>
+                                <div className="ct-appt-money-pill">
+                                  Tiền sản phẩm: <strong>{formatPrice(appt.ProductAmount || 0)}</strong>
+                                </div>
+                              </div>
+                              <p className="ct-appt-total">
+                                Tổng hóa đơn: {formatPrice(appt.TotalAmount ?? appt.InvoiceTotalAmount ?? appt.TotalPrice ?? 0)}
+                              </p>
+                            </div>
                           </div>
                           <button
                             className="ct-del-btn"
@@ -556,10 +654,13 @@ export default function Cart() {
 
                 <button
                   className="ct-checkout-btn"
-                  disabled={(cart.length === 0 && selectedAppointments.length === 0) || loading}
+                  disabled={(selectedCartItems.length === 0 && selectedAppointments.length === 0) || loading}
                   onClick={() =>
                     navigate("/checkout", {
-                      state: { appointmentItems: selectedAppointments },
+                      state: {
+                        appointmentItems: selectedAppointments,
+                        selectedProductIds: selectedProductIds,
+                      },
                     })
                   }
                 >

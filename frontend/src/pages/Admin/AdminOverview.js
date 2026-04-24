@@ -45,7 +45,7 @@ const AdminOverview = () => {
     const fetchStats = useCallback(async () => {
         try {
             setLoading(true);
-            let url = `http://localhost:5001/api/dashboard/stats?year=${selectedYear}`;
+            let url = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/dashboard/stats?year=${selectedYear}`;
             if (selectedMonth) {
                 url += `&month=${selectedMonth}`;
             }

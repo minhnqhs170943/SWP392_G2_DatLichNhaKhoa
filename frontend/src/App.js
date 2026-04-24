@@ -1,14 +1,14 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import RoleRoute from './components/RoleRoute';
 import AdminLayout from './layouts/AdminLayout';
-import AdminBlog from './pages/Admin/AdminBlog';
-import ProductManagement from './pages/Admin/ProductManagement';
-import AdminServices from './pages/Admin/AdminServices';
-import AdminAppointments from './pages/Admin/AdminAppointments';
 import AdminAnalytics from './pages/Admin/AdminAnalytics';
-import AdminOverview from './pages/Admin/AdminOverview';
+import AdminAppointments from './pages/Admin/AdminAppointments';
+import AdminBlog from './pages/Admin/AdminBlog';
 import AdminInvoices from './pages/Admin/AdminInvoices';
+import AdminOverview from './pages/Admin/AdminOverview';
 import AdminReviews from './pages/Admin/AdminReviews';
+import AdminServices from './pages/Admin/AdminServices';
+import ProductManagement from './pages/Admin/ProductManagement';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import Login from './pages/Auth/Login';
 import Profile from './pages/Auth/Profile';
@@ -18,7 +18,14 @@ import MyAppointments from './pages/Booking/MyAppointments';
 import CheckoutPage from './pages/CheckoutPage';
 import StaffAppointments from './pages/Dashboard/StaffAppointments';
 import StaffDashboard from './pages/Dashboard/StaffDashboard';
+import StaffInvoices from './pages/Dashboard/StaffInvoices';
 import UserManagement from './pages/Dashboard/UserManagement';
+import ConsultationDetail from './pages/Doctor/ConsultationDetail';
+import ConsultationHistory from './pages/Doctor/ConsultationHistory';
+import ConsultationList from './pages/Doctor/ConsultationList';
+import DoctorDashboard from './pages/Doctor/DoctorDashboard';
+import DoctorPending from './pages/Doctor/DoctorPending';
+import DoctorProfile from './pages/Doctor/DoctorProfile';
 import HomePage from './pages/Homepage';
 import Cart from './pages/Market/Cart';
 import Doctor from './pages/Market/Doctor';
@@ -31,12 +38,11 @@ import OrdersPage from './pages/OrdersPage';
 import PaymentCancel from './pages/PaymentCancel';
 import PaymentQRPage from './pages/PaymentQRPage';
 import PaymentSuccess from './pages/PaymentSuccess';
-import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 
 
 // RoleID từ DB: 1-Admin, 2-Doctor, 3-Staff, 4-User
-import BlogListPage from './pages/BlogListPage';
 import BlogDetailPage from './pages/BlogDetailPage';
+import BlogListPage from './pages/BlogListPage';
 import ContactPage from './pages/ContactPage';
 
 // RoleID từ DB: 1-Admin, 2-Staff, 3-Doctor, 4-Patient
@@ -44,7 +50,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/home" />} />
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -73,8 +79,14 @@ function App() {
         <Route path="/profile" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><Profile /></RoleRoute>} />
         <Route path="/notifications" element={<RoleRoute allowedRoles={[1, 2, 3, 4]}><NotificationsPage /></RoleRoute>} />
 
+
         {/* Doctor */}
         <Route path="/doctor/dashboard" element={<RoleRoute allowedRoles={[2]}><DoctorDashboard /></RoleRoute>} />
+        <Route path="/doctor/pending" element={<RoleRoute allowedRoles={[2]}><DoctorPending /></RoleRoute>} />
+        <Route path="/doctor/consultation" element={<RoleRoute allowedRoles={[2]}><ConsultationList /></RoleRoute>} />
+        <Route path="/doctor/consultation/:id" element={<RoleRoute allowedRoles={[2]}><ConsultationDetail /></RoleRoute>} />
+        <Route path="/doctor/history" element={<RoleRoute allowedRoles={[2]}><ConsultationHistory /></RoleRoute>} />
+        <Route path="/doctor/profile" element={<RoleRoute allowedRoles={[2]}><DoctorProfile /></RoleRoute>} />
 
 
         {/* Admin */}
@@ -92,6 +104,7 @@ function App() {
         {/* Staff Dashboard */}
         <Route path="/staff/dashboard" element={<RoleRoute allowedRoles={[1, 3]}><StaffDashboard /></RoleRoute>} />
         <Route path="/staff/appointments" element={<RoleRoute allowedRoles={[1, 3]}><StaffAppointments /></RoleRoute>} />
+        <Route path="/staff/invoices" element={<RoleRoute allowedRoles={[1, 3]}><StaffInvoices /></RoleRoute>} />
       </Routes>
     </Router>
   );
