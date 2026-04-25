@@ -117,6 +117,7 @@ const AdminInvoices = () => {
                     <div className="filter-box">
                         <label className="filter-label">Trạng thái</label>
                         <div className="filter-item">
+                            <Eye size={16} />
                             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                                 <option value="">Tất cả trạng thái</option>
                                 <option value="Paid">Đã thanh toán</option>

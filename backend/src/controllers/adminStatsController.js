@@ -32,10 +32,12 @@ class AdminStatsController {
                 revenueDateFilter = 'AND p.PaymentDate >= @startDate AND p.PaymentDate <= @endDate';
             }
             const revenueMetrics = await request.query(`
-                SELECT ISNULL(SUM(Amount), 0) as GrossRevenue
-                FROM Payments p
-                WHERE Status = 'Completed' ${revenueDateFilter}
-            `);
+            SELECT ISNULL(SUM(p.Amount), 0) as GrossRevenue
+            FROM Payments p
+            INNER JOIN Invoices inv ON p.InvoiceID = inv.InvoiceID
+            WHERE p.Status IN ('Completed', 'Success', 'Paid') 
+                AND inv.Status = 'Paid' ${revenueDateFilter}
+`);
 
             // 3. KPI: Appointment Stats
             const appointmentFilter = startDate && endDate ? 'WHERE AppointmentDate >= @startDate AND AppointmentDate <= @endDate' : '';
