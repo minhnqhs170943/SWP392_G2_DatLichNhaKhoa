@@ -1,5 +1,6 @@
 const blogModel = require('../models/blog.model');
-const { containsProfanity } = require('../utils/profanity.util');
+// Gọi hàm từ file tiện ích
+const { checkBadWords } = require('../utils/badWordsFilter'); 
 
 const getBlogs = async (req, res) => {
     try {
@@ -81,18 +82,19 @@ const createBlog = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
         }
 
-        // --- PHẦN KIỂM SOÁT TỪ NGỮ ---
-        const checkTitle = await containsProfanity(title);
-        const checkContent = await containsProfanity(content);
-        const checkSummary = await containsProfanity(summary);
+        // --- KIỂM TRA TỪ NÓNG ---
+        const checkTitle = checkBadWords(title);
+        const checkContent = checkBadWords(content);
+        const checkSummary = checkBadWords(summary);
 
-        if (checkTitle || checkContent || checkSummary) {
+        if (checkTitle.isBad || checkContent.isBad || checkSummary.isBad) {
+            const violatedWord = checkTitle.word || checkContent.word || checkSummary.word;
             return res.status(400).json({ 
                 success: false, 
-                message: `Nội dung chứa từ ngữ không phù hợp.` 
+                message: `Nội dung chứa từ ngữ không phù hợp: "${violatedWord}". Vui lòng chỉnh sửa.` 
             });
         }
-        // ----------------------------
+        // -----------------------
 
         const blogId = await blogModel.createBlog({
             title: String(title).trim(),
@@ -127,18 +129,19 @@ const updateBlog = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc (title, slug, content)' });
         }
 
-        // --- PHẦN KIỂM SOÁT TỪ NGỮ ---
-        const checkTitle = await containsProfanity(title);
-        const checkContent = await containsProfanity(content);
-        const checkSummary = await containsProfanity(summary);
+        // --- KIỂM TRA TỪ NÓNG ---
+        const checkTitle = checkBadWords(title);
+        const checkContent = checkBadWords(content);
+        const checkSummary = checkBadWords(summary);
 
-        if (checkTitle || checkContent || checkSummary) {
+        if (checkTitle.isBad || checkContent.isBad || checkSummary.isBad) {
+            const violatedWord = checkTitle.word || checkContent.word || checkSummary.word;
             return res.status(400).json({ 
                 success: false, 
-                message: `Nội dung chứa từ ngữ không phù hợp. Vui lòng chỉnh sửa.` 
+                message: `Nội dung chứa từ ngữ không phù hợp: "${violatedWord}". Vui lòng chỉnh sửa.` 
             });
         }
-        // ----------------------------
+        // -----------------------
 
         const affected = await blogModel.updateBlog(Number(id), {
             title: String(title).trim(),

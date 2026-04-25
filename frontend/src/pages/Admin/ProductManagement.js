@@ -113,8 +113,13 @@ const ProductManagement = () => {
     const validate = () => {
         const errs = {};
         if (!currentProduct.ProductName?.trim()) errs.ProductName = 'Tên sản phẩm là bắt buộc.';
-        if (!currentProduct.Price && currentProduct.Price !== 0) errs.Price = 'Giá là bắt buộc.';
-        else if (isNaN(parseFloat(currentProduct.Price)) || parseFloat(currentProduct.Price) < 0) errs.Price = 'Giá không hợp lệ.';
+        if (!currentProduct.Price && currentProduct.Price !== 0) {
+            errs.Price = 'Giá là bắt buộc.';
+        } else if (isNaN(parseFloat(currentProduct.Price)) || parseFloat(currentProduct.Price) < 0) {
+            errs.Price = 'Giá không hợp lệ.';
+        } else if (parseFloat(currentProduct.Price) > 500000000) {
+            errs.Price = 'Giá không được vượt quá 500.000.000 VNĐ.';
+        }
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
@@ -361,7 +366,7 @@ const ProductManagement = () => {
                                     <label>Giá (VNĐ) <span className="required">*</span></label>
                                     <input type="number" name="Price" value={currentProduct.Price}
                                         onChange={handleInputChange} placeholder="Nhập giá"
-                                        disabled={modalMode === 'view'} min="0"
+                                        disabled={modalMode === 'view'} min="0" max="500000000"
                                         className={errors.Price ? 'input-error' : ''} />
                                     {errors.Price && <span className="error-msg">{errors.Price}</span>}
                                 </div>

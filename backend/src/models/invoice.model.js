@@ -74,31 +74,34 @@ class Invoice {
     }
 
     // Lấy danh sách hóa đơn của lịch khám bệnh để hiển thị trên Frontend
-    static async getAppointmentInvoices() {
-        try {
-            const pool = await sql.connect();
-            const result = await pool.request()
-                .query(`
-                    SELECT 
-                        i.InvoiceID as id, 
-                        i.AppointmentID as appointmentId,
-                        u.FullName as patientName, 
-                        u.Phone as phone, 
-                        'Khám và Điều trị' as service,
-                        CONVERT(varchar, a.AppointmentDate, 103) as date, 
-                        i.TotalAmount as amount, 
-                        CASE WHEN i.Status = 'SUCCESS' THEN 'Paid' ELSE 'Unpaid' END as status
-                    FROM Invoices i
-                    JOIN Appointments a ON i.AppointmentID = a.AppointmentID
-                    JOIN Users u ON a.PatientID = u.UserID
-                    WHERE i.AppointmentID IS NOT NULL
-                    ORDER BY i.IssuedDate DESC
-                `);
-            return result.recordset;
-        } catch (error) {
-            throw error;
-        }
+// Lấy danh sách hóa đơn của lịch khám bệnh để hiển thị trên Frontend
+static async getAppointmentInvoices() {
+    try {
+        const pool = await sql.connect();
+        const result = await pool.request()
+            .query(`
+                SELECT 
+                    i.InvoiceID as id, 
+                    i.AppointmentID as appointmentId,
+                    u.FullName as patientName, 
+                    u.Phone as phone, 
+                    'Khám và Điều trị' as service,
+                    CONVERT(varchar, a.AppointmentDate, 103) as date, 
+                    i.TotalAmount as amount, 
+                    -- SỬA TẠI ĐÂY: Trả về trực tiếp i.Status để Frontend tự xử lý toUpperCase()
+                    -- Hoặc ép kiểu đồng bộ về PAID/UNPAID
+                    UPPER(i.Status) as status
+                FROM Invoices i
+                JOIN Appointments a ON i.AppointmentID = a.AppointmentID
+                JOIN Users u ON a.PatientID = u.UserID
+                WHERE i.AppointmentID IS NOT NULL
+                ORDER BY i.IssuedDate DESC
+            `);
+        return result.recordset;
+    } catch (error) {
+        throw error;
     }
+}
 }
 
 module.exports = Invoice;

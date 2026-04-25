@@ -24,12 +24,12 @@ const StaffInvoices = () => {
         }
     };
 
-    // 2. Tự động cập nhật khi quay lại trang (từ trang Success hoặc Tab khác)
+    // 2. Tự động cập nhật khi quay lại trang
     useEffect(() => {
-        fetchInvoices(); // Chạy lần đầu
+        fetchInvoices(); 
 
         const handleFocus = () => {
-            fetchInvoices(); // Tự động làm mới data khi màn hình được active lại
+            fetchInvoices(); 
         };
 
         window.addEventListener('focus', handleFocus);
@@ -40,7 +40,12 @@ const StaffInvoices = () => {
 
     // 3. Logic tìm kiếm và lọc
     const filteredInvoices = invoices.filter(inv => {
-        const matchesStatus = filterStatus === 'All' || inv.status === filterStatus;
+        // ĐỒNG BỘ: Chuyển trạng thái về chữ HOA để so sánh chính xác
+        const currentStatus = inv.status?.toUpperCase() || 'UNPAID';
+        const targetFilter = filterStatus?.toUpperCase();
+
+        const matchesStatus = filterStatus === 'All' || currentStatus === targetFilter;
+        
         const patientName = inv.patientName || '';
         const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                              `#INV-${inv.id}`.includes(searchTerm) ||
@@ -62,14 +67,15 @@ const StaffInvoices = () => {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
+                    // SỬA LỖI: Đảm bảo sử dụng đúng endpoint PUT để cập nhật trạng thái PAID
                     const response = await fetch(`http://localhost:5000/api/payment/appointment-invoices/${id}/cash`, {
                         method: 'PUT'
                     });
                     const data = await response.json();
 
                     if (data.success) {
-                        fetchInvoices(); // Gọi lại hàm lấy dữ liệu để cập nhật UI
-                        Swal.fire('Thành công', 'Hóa đơn đã chuyển sang trạng thái Đã Thanh Toán', 'success');
+                        await fetchInvoices(); // Cập nhật lại danh sách ngay lập tức
+                        Swal.fire('Thành công', 'Hóa đơn đã được cập nhật trạng thái ĐÃ THANH TOÁN', 'success');
                     } else {
                         Swal.fire('Lỗi', data.message || 'Không thể xác nhận thanh toán', 'error');
                     }
@@ -80,7 +86,7 @@ const StaffInvoices = () => {
         });
     };
 
-    // 5. Gọi API PayOS và Navigate tới trang /payment/qr
+    // 5. Gọi API PayOS
     const handlePayOS = async (inv) => {
         try {
             Swal.fire({ title: 'Đang tạo mã QR...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
@@ -90,7 +96,7 @@ const StaffInvoices = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     invoiceId: inv.id,
-                    returnUrl: `${window.location.origin}/payment/success`,
+                    returnUrl: `${window.location.origin}/payment/success?orderCode=APT-${inv.appointmentId}`,
                     cancelUrl: `${window.location.origin}/payment/cancel`
                 })
             });
@@ -101,7 +107,7 @@ const StaffInvoices = () => {
                 navigate('/payment/qr', {
                     state: {
                         paymentData: {
-                            orderId: `APT-${inv.appointmentId}`, // Dùng mã lịch hẹn để đồng bộ backend
+                            orderId: `APT-${inv.appointmentId}`,
                             checkoutUrl: result.data.checkoutUrl,
                             qrCode: result.data.qrCode,
                             amount: inv.amount
@@ -119,7 +125,6 @@ const StaffInvoices = () => {
     return (
         <StaffLayout>
             <div className="staff-invoices">
-                {/* Page Header */}
                 <div className="page-header">
                     <div className="header-left">
                         <h2>Quản Lý Hóa Đơn</h2>
@@ -144,14 +149,20 @@ const StaffInvoices = () => {
                     <div className="stat-card">
                         <div className="stat-info">
                             <p>Chờ thanh toán</p>
-                            <h3 style={{color: '#f59e0b'}}>{invoices.filter(i => i.status === 'Unpaid').length}</h3>
+                            <h3 style={{color: '#f59e0b'}}>
+                                {/* Đếm tất cả trạng thái khác PAID */}
+                                {invoices.filter(i => i.status?.toUpperCase() !== 'PAID').length}
+                            </h3>
                         </div>
                         <div className="stat-icon orange"><Clock size={24}/></div>
                     </div>
                     <div className="stat-card">
                         <div className="stat-info">
                             <p>Đã thanh toán</p>
-                            <h3 style={{color: '#10b981'}}>{invoices.filter(i => i.status === 'Paid').length}</h3>
+                            <h3 style={{color: '#10b981'}}>
+                                {/* Đếm chính xác trạng thái PAID */}
+                                {invoices.filter(i => i.status?.toUpperCase() === 'PAID').length}
+                            </h3>
                         </div>
                         <div className="stat-icon green"><CheckCircle size={24}/></div>
                     </div>
@@ -197,49 +208,54 @@ const StaffInvoices = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredInvoices.map((inv) => (
-                                <tr key={inv.id}>
-                                    <td className="inv-code">#INV-{inv.id}</td>
-                                    <td style={{ fontWeight: 600, color: '#64748b' }}>#APT-{inv.appointmentId}</td>
-                                    <td>
-                                        <div className="patient-info">
-                                            <div className="patient-avatar">{inv.patientName ? inv.patientName.charAt(0) : '?'}</div>
-                                            <div className="patient-details">
-                                                <h4>{inv.patientName}</h4>
-                                                <p>{inv.phone}</p>
+                            {filteredInvoices.map((inv) => {
+                                // Xác định trạng thái PAID chính xác
+                                const isPaid = inv.status?.toUpperCase() === 'PAID';
+                                return (
+                                    <tr key={inv.id}>
+                                        <td className="inv-code">#INV-{inv.id}</td>
+                                        <td style={{ fontWeight: 600, color: '#64748b' }}>#APT-{inv.appointmentId}</td>
+                                        <td>
+                                            <div className="patient-info">
+                                                <div className="patient-avatar">{inv.patientName ? inv.patientName.charAt(0) : '?'}</div>
+                                                <div className="patient-details">
+                                                    <h4>{inv.patientName}</h4>
+                                                    <p>{inv.phone}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td>{inv.service}</td>
-                                    <td>{inv.date}</td>
-                                    <td className="amount-cell">{inv.amount.toLocaleString('vi-VN')}đ</td>
-                                    <td>
-                                        <span className={`status-badge ${inv.status === 'Paid' ? 'completed' : 'pending'}`}>
-                                            {inv.status === 'Paid' ? 'Đã thanh toán' : 'Chờ thanh toán'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="action-buttons">
-                                            {inv.status === 'Unpaid' ? (
-                                                <>
-                                                    <button className="btn-action btn-approve" onClick={() => handlePayOS(inv)} title="Thanh toán QR">
-                                                        <CreditCard size={16}/> QR
-                                                    </button>
-                                                    <button className="btn-action btn-complete" onClick={() => handleCashPayment(inv.id)} title="Tiền mặt">
-                                                        <Banknote size={16}/> Tiền mặt
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <button className="btn-action btn-view"><Eye size={16}/> Xem</button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td>{inv.service}</td>
+                                        <td>{inv.date}</td>
+                                        <td className="amount-cell">{inv.amount?.toLocaleString('vi-VN')}đ</td>
+                                        <td>
+                                            {/* Cập nhật CSS class và Label dựa trên PAID */}
+                                            <span className={`status-badge ${isPaid ? 'completed' : 'pending'}`}>
+                                                {isPaid ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="action-buttons">
+                                                {!isPaid ? (
+                                                    <>
+                                                        <button className="btn-action btn-approve" onClick={() => handlePayOS(inv)} title="Thanh toán QR">
+                                                            <CreditCard size={16}/> QR
+                                                        </button>
+                                                        <button className="btn-action btn-complete" onClick={() => handleCashPayment(inv.id)} title="Tiền mặt">
+                                                            <Banknote size={16}/> Tiền mặt
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button className="btn-action btn-view"><Eye size={16}/> Xem</button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {filteredInvoices.length === 0 && (
                                 <tr>
-                                    <td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>
-                                        Không tìm thấy hóa đơn nào
+                                    <td colSpan="8" style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
+                                        Không tìm thấy hóa đơn nào phù hợp.
                                     </td>
                                 </tr>
                             )}

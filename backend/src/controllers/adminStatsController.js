@@ -86,14 +86,16 @@ class AdminStatsController {
             `);
 
             // 7. TABLE: Service Profitability
+            // 7. TABLE: Service Profitability (ĐÃ FIX LỖI JOIN BẢNG)
             const serviceProfitability = await request.query(`
-                SELECT
-                    s.ServiceName,
+                SELECT 
+                    s.ServiceName, 
                     MAX(s.Price) as UnitPrice,
                     SUM(CASE WHEN a.AppointmentID IS NOT NULL THEN 1 ELSE 0 END) as UsageCount,
-                    ISNULL(SUM(CASE WHEN a.AppointmentID IS NOT NULL AND inv.Status = 'Paid' THEN s.Price ELSE 0 END), 0) as TotalYield
+                    ISNULL(SUM(CASE WHEN a.AppointmentID IS NOT NULL AND inv.Status = 'Paid' THEN aps.PriceAtBooking ELSE 0 END), 0) as TotalYield
                 FROM Services s
-                LEFT JOIN Appointments a ON s.AppointmentID = a.AppointmentID AND a.Status = 'Completed' ${dateFilter}
+                LEFT JOIN AppointmentServices aps ON s.ServiceID = aps.ServiceID
+                LEFT JOIN Appointments a ON aps.AppointmentID = a.AppointmentID AND a.Status = 'Completed' ${dateFilter}
                 LEFT JOIN Invoices inv ON a.AppointmentID = inv.AppointmentID
                 GROUP BY s.ServiceName
                 ORDER BY TotalYield DESC

@@ -47,7 +47,7 @@ const PaymentSuccess = () => {
                         setOrderDetails({
                             orderId: orderId,
                             totalAmount: location.state.paymentData.amount,
-                            paymentStatus: 'SUCCESS'
+                            paymentStatus: 'PAID'
                         });
                     }
                 }
@@ -117,7 +117,11 @@ const PaymentSuccess = () => {
                     fontWeight: '600',
                     marginBottom: '12px'
                 }}>
-                    {isStaffInvoice ? 'Thu tiền thành công!' : 'Thanh toán thành công!'}
+                    {/* Kiểm tra nếu là PAID hoặc thanh toán khi nhận hàng (COD) */}
+                    {orderDetails?.paymentStatus === 'PAID' || orderDetails?.paymentStatus === 'COD' 
+                        ? (isStaffInvoice ? 'Thu tiền thành công!' : 'Thanh toán thành công!')
+                        : 'Đang kiểm tra thanh toán...'}
+                    
                 </h1>
 
                 <p style={{
