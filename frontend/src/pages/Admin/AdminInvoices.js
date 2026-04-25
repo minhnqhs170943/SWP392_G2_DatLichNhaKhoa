@@ -59,20 +59,23 @@ const AdminInvoices = () => {
         });
     };
 
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case 'Paid':
-            case 'Completed':
-                return <span className="status-badge status-paid"><CheckCircle size={14} /> Đã thanh toán</span>;
-            case 'Unpaid':
-            case 'Pending':
-                return <span className="status-badge status-pending"><Clock size={14} /> Chờ thanh toán</span>;
-            case 'Cancelled':
-                return <span className="status-badge status-cancelled"><AlertCircle size={14} /> Đã hủy</span>;
-            default:
-                return <span className="status-badge status-default">{status}</span>;
-        }
-    };
+const getStatusBadge = (status) => {
+    // Chuyển về chữ hoa để so sánh không phân biệt hoa thường
+    const statusUpper = status ? status.toUpperCase() : '';
+
+    switch (statusUpper) {
+        case 'PAID':
+        case 'COMPLETED':
+            return <span className="status-badge status-paid"><CheckCircle size={14} /> Đã thanh toán</span>;
+        case 'UNPAID':
+        case 'PENDING':
+            return <span className="status-badge status-pending"><Clock size={14} /> Chờ thanh toán</span>;
+        case 'CANCELLED':
+            return <span className="status-badge status-cancelled"><AlertCircle size={14} /> Đã hủy</span>;
+        default:
+            return <span className="status-badge status-default">{status}</span>;
+    }
+};
 
     // Calculate pagination
     const totalPages = Math.ceil(invoices.length / ITEMS_PER_PAGE) || 1;

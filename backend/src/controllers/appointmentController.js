@@ -24,11 +24,13 @@ exports.getAllAppointments = async (req, res) => {
                 STUFF((
                     SELECT ', ' + s.ServiceName
                     FROM AppointmentServices aps
+
                     JOIN Services s ON aps.ServiceID = s.ServiceID
                     WHERE aps.AppointmentID = a.AppointmentID
                     FOR XML PATH(''), TYPE
                 ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS ServiceNames,
                 -- SỬA LỖI: Tính tổng tiền từ bảng trung gian AppointmentServices
+
                 (SELECT ISNULL(SUM(aps.PriceAtBooking), 0)
                  FROM AppointmentServices aps
                  WHERE aps.AppointmentID = a.AppointmentID) AS TotalPrice,
@@ -197,9 +199,31 @@ exports.payAppointment = async (req, res) => {
         }
 
         const pool = await poolPromise;
+        const appointmentId = parseInt(id);
+
+        // Chỉ cho thanh toán lịch hẹn đã Confirmed
+        const appointmentResult = await pool.request()
+            .input('appointmentId', sql.Int, appointmentId)
+            .query(`
+                SELECT AppointmentID, Status
+                FROM Appointments
+                WHERE AppointmentID = @appointmentId
+            `);
+
+        if (appointmentResult.recordset.length === 0) {
+            return res.status(404).json({ success: false, message: "Không tìm thấy lịch hẹn." });
+        }
+
+        const appointment = appointmentResult.recordset[0];
+        if (appointment.Status !== 'Confirmed') {
+            return res.status(400).json({
+                success: false,
+                message: "Chỉ thanh toán được khi lịch hẹn ở trạng thái Confirmed."
+            });
+        }
 
         const invoiceResult = await pool.request()
-            .input('appointmentId', sql.Int, parseInt(id))
+            .input('appointmentId', sql.Int, appointmentId)
             .query(`
                 SELECT inv.InvoiceID, inv.TotalAmount, inv.Status
                 FROM Invoices inv
@@ -210,16 +234,18 @@ exports.payAppointment = async (req, res) => {
         if (invoiceResult.recordset.length === 0) {
             // SỬA LỖI: Tính tổng tiền từ bảng trung gian AppointmentServices
             const totalResult = await pool.request()
-                .input('appointmentId', sql.Int, parseInt(id))
+                .input('appointmentId', sql.Int, appointmentId)
                 .query(`
+
                     SELECT ISNULL(SUM(PriceAtBooking), 0) AS Total
                     FROM AppointmentServices
                     WHERE AppointmentID = @appointmentId
+
                 `);
             const totalAmount = totalResult.recordset[0].Total;
 
             const insertInvoice = await pool.request()
-                .input('appointmentId', sql.Int, parseInt(id))
+                .input('appointmentId', sql.Int, appointmentId)
                 .input('totalAmount', sql.Decimal(18, 2), totalAmount)
                 .query(`
                     INSERT INTO Invoices (AppointmentID, TotalAmount, Status, IssuedDate)
@@ -229,6 +255,13 @@ exports.payAppointment = async (req, res) => {
             invoice = insertInvoice.recordset[0];
         } else {
             invoice = invoiceResult.recordset[0];
+        }
+
+        if ((invoice.Status || '').toLowerCase() === 'paid') {
+            return res.status(400).json({
+                success: false,
+                message: "Lịch hẹn này đã được thanh toán."
+            });
         }
 
         const amount = invoice.TotalAmount || 0;
@@ -248,6 +281,7 @@ exports.payAppointment = async (req, res) => {
             .input('invoiceId', sql.Int, invoice.InvoiceID)
             .query(`UPDATE Invoices SET Status = 'Paid' WHERE InvoiceID = @invoiceId`);
 
+
         await pool.request()
             .input('id', sql.Int, parseInt(id))
             .query(`
@@ -256,9 +290,10 @@ exports.payAppointment = async (req, res) => {
                 WHERE AppointmentID = @id
             `);
 
+
         res.json({
             success: true,
-            message: "Thanh toán thành công! Lịch hẹn đã được tự động xác nhận.",
+            message: "Thanh toán thành công!",
             data: {
                 transactionID,
                 amount,
@@ -304,6 +339,7 @@ exports.createAppointment = async (req, res) => {
         
         const appointmentId = appointmentResult.recordset[0].AppointmentID;
 
+
         // 2. SỬA LỖI: Lưu dịch vụ vào bảng trung gian AppointmentServices
         let totalAmount = 0;
         for (const svc of services) {
@@ -325,6 +361,7 @@ exports.createAppointment = async (req, res) => {
                     `);
                 totalAmount += parseFloat(priceAtBooking);
             }
+
         }
 
         // 3. Tạo Invoice (Status = Unpaid)
@@ -377,16 +414,19 @@ exports.getMyAppointments = async (req, res) => {
                     STUFF((
                         SELECT ', ' + s.ServiceName
                         FROM AppointmentServices aps
+
                         JOIN Services s ON aps.ServiceID = s.ServiceID
                         WHERE aps.AppointmentID = a.AppointmentID
                         FOR XML PATH(''), TYPE
                     ).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS ServiceNames,
                     -- SỬA LỖI: Tính tổng tiền từ bảng trung gian AppointmentServices
+
                     (SELECT ISNULL(SUM(aps.PriceAtBooking), 0)
                      FROM AppointmentServices aps
                      WHERE aps.AppointmentID = a.AppointmentID) AS TotalPrice,
                     -- Invoice/Payment status
                     inv.InvoiceID,
+                    inv.TotalAmount AS InvoiceTotalAmount,
                     inv.Status AS InvoiceStatus,
                     pay.Status AS PaymentStatus,
                     pay.PaymentMethod,
@@ -443,7 +483,9 @@ exports.getAppointmentDetail = async (req, res) => {
             .query(`
                 SELECT s.ServiceID, s.ServiceName, aps.PriceAtBooking
                 FROM AppointmentServices aps
+
                 JOIN Services s ON aps.ServiceID = s.ServiceID
+
                 WHERE aps.AppointmentID = @id
             `);
 
@@ -467,6 +509,67 @@ exports.getAppointmentDetail = async (req, res) => {
         });
     } catch (error) {
         console.error("Lỗi lấy chi tiết lịch hẹn:", error);
+        res.status(500).json({ success: false, message: "Lỗi server" });
+    }
+};
+
+// GET customer's unpaid appointment invoices for cart/checkout
+exports.getMyUnpaidAppointmentInvoices = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('userId', sql.Int, parseInt(userId))
+            .query(`
+                SELECT
+                    i.InvoiceID,
+                    a.AppointmentID,
+                    i.IssuedDate,
+                    p.FullName AS PatientName,
+                    p.Phone AS PatientPhone,
+                    dr.FullName AS DoctorName,
+                    a.MedicalRecord,
+                    ISNULL((
+                        SELECT STRING_AGG(s.ServiceName, ', ')
+                        FROM AppointmentServices aps
+                        JOIN Services s ON aps.ServiceID = s.ServiceID
+                        WHERE aps.AppointmentID = a.AppointmentID
+                    ), N'Không có dịch vụ') AS ServicesList,
+                    ISNULL((
+                        SELECT STRING_AGG(pr.ProductName + ' (x' + CAST(od.Quantity AS VARCHAR) + ')', ', ')
+                        FROM OrderDetails od
+                        JOIN Products pr ON od.ProductID = pr.ProductID
+                        WHERE od.OrderID = i.OrderID
+                    ), N'Không có đơn thuốc') AS ProductsList,
+                    ISNULL((
+                        SELECT SUM(aps.PriceAtBooking)
+                        FROM AppointmentServices aps
+                        WHERE aps.AppointmentID = a.AppointmentID
+                    ), 0) AS ServiceAmount,
+                    ISNULL((
+                        SELECT SUM(od.Quantity * od.UnitPrice)
+                        FROM OrderDetails od
+                        WHERE od.OrderID = i.OrderID
+                    ), 0) AS ProductAmount,
+                    i.TotalAmount,
+                    i.Status
+                FROM Invoices i
+                JOIN Appointments a ON i.AppointmentID = a.AppointmentID
+                JOIN Users p ON a.PatientID = p.UserID
+                LEFT JOIN Doctors d ON a.DoctorID = d.DoctorID
+                LEFT JOIN Users dr ON d.UserID = dr.UserID
+                WHERE p.UserID = @userId
+                  AND i.Status = 'Unpaid'
+                ORDER BY i.IssuedDate DESC, i.InvoiceID DESC
+            `);
+
+        res.json({
+            success: true,
+            data: result.recordset
+        });
+    } catch (error) {
+        console.error("Lỗi lấy hóa đơn chưa thanh toán của bệnh nhân:", error);
         res.status(500).json({ success: false, message: "Lỗi server" });
     }
 };

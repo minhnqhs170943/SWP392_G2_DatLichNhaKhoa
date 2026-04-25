@@ -22,6 +22,8 @@ router.get('/detail/:id', appointmentController.getAppointmentDetail);
 // POST create new appointment (customer booking)
 router.post('/create', appointmentController.createAppointment);
 
+router.get('/my/unpaid-invoices/:userId', appointmentController.getMyUnpaidAppointmentInvoices);
+router.get('/my/:userId/unpaid-invoices', appointmentController.getMyUnpaidAppointmentInvoices);
 // GET customer's appointment history
 router.get('/my/:userId', appointmentController.getMyAppointments);
 

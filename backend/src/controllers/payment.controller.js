@@ -1,4 +1,5 @@
 const payos = require('../config/payos');
+const { sql } = require('../config/db');
 const Order = require('../models/order.model');
 const Payment = require('../models/payment.model');
 const Invoice = require('../models/invoice.model');
@@ -9,20 +10,92 @@ class PaymentController {
     // Tạo link thanh toán PayOS
     async createPaymentLink(req, res) {
         try {
-            const { userId, items, shippingAddress, paymentMethod, returnUrl, cancelUrl } = req.body;
+            const { userId, items = [], appointmentIds = [], shippingAddress, paymentMethod, returnUrl, cancelUrl } = req.body;
+            const parsedAppointmentIds = [...new Set((appointmentIds || [])
+                .map((id) => parseInt(id, 10))
+                .filter((id) => Number.isInteger(id) && id > 0))];
 
             // Validate input
-            if (!userId || !items || items.length === 0 || !shippingAddress) {
+            if (!userId || (!items.length && !parsedAppointmentIds.length) || !shippingAddress) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Thiếu thông tin đơn hàng'
+                    message: 'Thiếu thông tin thanh toán'
                 });
             }
 
-            // Tính tổng tiền
-            const totalAmount = items.reduce((sum, item) => {
+            // Tổng tiền sản phẩm trong cart
+            const cartAmount = items.reduce((sum, item) => {
                 return sum + (item.price * item.quantity);
             }, 0);
+
+            // Tính tổng tiền lịch hẹn đã confirmed + chuẩn bị invoice để mark Paid
+            const appointmentCharges = [];
+            const pool = await sql.connect();
+
+            for (const appointmentId of parsedAppointmentIds) {
+                const checkResult = await pool.request()
+                    .input('AppointmentID', sql.Int, appointmentId)
+                    .input('UserID', sql.Int, userId)
+                    .query(`
+                        SELECT
+                            a.AppointmentID,
+                            a.Status,
+                            inv.InvoiceID,
+                            inv.Status AS InvoiceStatus,
+                            inv.TotalAmount AS InvoiceAmount,
+                            ISNULL((
+                                SELECT SUM(aps.PriceAtBooking)
+                                FROM AppointmentServices aps
+                                WHERE aps.AppointmentID = a.AppointmentID
+                            ), 0) AS CalculatedAmount
+                        FROM Appointments a
+                        LEFT JOIN Invoices inv ON inv.AppointmentID = a.AppointmentID
+                        WHERE a.AppointmentID = @AppointmentID
+                          AND a.PatientID = @UserID
+                    `);
+
+                if (!checkResult.recordset.length) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Lịch hẹn #${appointmentId} không hợp lệ hoặc không thuộc về bạn`
+                    });
+                }
+
+                const appt = checkResult.recordset[0];
+                const appointmentStatus = String(appt.Status || '').toLowerCase();
+                if (appointmentStatus === 'cancelled') {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Không thể thanh toán lịch hẹn đã hủy (#${appointmentId})`
+                    });
+                }
+
+                const invoiceStatus = String(appt.InvoiceStatus || '').toLowerCase();
+                if (invoiceStatus === 'paid') {
+                    continue;
+                }
+
+                const amount = Number(appt.InvoiceAmount ?? appt.CalculatedAmount ?? 0);
+                let invoiceId = appt.InvoiceID;
+
+                if (!invoiceId) {
+                    const createdInvoice = await Invoice.create({
+                        appointmentId: appt.AppointmentID,
+                        totalAmount: amount,
+                        status: 'Unpaid'
+                    });
+                    invoiceId = createdInvoice.InvoiceID;
+                }
+
+                appointmentCharges.push({
+                    appointmentId: appt.AppointmentID,
+                    invoiceId,
+                    amount
+                });
+            }
+
+            const appointmentAmount = appointmentCharges.reduce((sum, x) => sum + x.amount, 0);
+            const totalAmount = cartAmount + appointmentAmount;
 
             // Xác định payment method (mặc định là PAYOS nếu không có)
             const finalPaymentMethod = paymentMethod || 'PAYOS';
@@ -36,13 +109,15 @@ class PaymentController {
             });
 
             // Tạo order details
-            const orderDetails = items.map(item => ({
-                orderId: order.OrderID,
-                productId: item.productId,
-                quantity: item.quantity,
-                unitPrice: item.price
-            }));
-            await OrderDetail.createBulk(orderDetails);
+            if (items.length > 0) {
+                const orderDetails = items.map(item => ({
+                    orderId: order.OrderID,
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    unitPrice: item.price
+                }));
+                await OrderDetail.createBulk(orderDetails);
+            }
 
             // Nếu là COD, không cần tạo payment link
             if (finalPaymentMethod === 'COD') {
@@ -61,6 +136,11 @@ class PaymentController {
                     paymentMethod: 'COD',
                     status: 'PAID'
                 });
+
+                // Mark Paid cho invoice lịch hẹn đi cùng checkout
+                for (const appt of appointmentCharges) {
+                    await Invoice.updateStatus(appt.invoiceId, 'Paid');
+                }
 
                 // Cập nhật order status
                 await Order.updateStatus(order.OrderID, 'SUCCESS');
@@ -88,11 +168,18 @@ class PaymentController {
                 orderCode: orderCode,
                 amount: totalAmount,
                 description: `Thanh toan don hang #${order.OrderID}`,
-                items: items.map(item => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: item.price
-                })),
+                items: [
+                    ...items.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                    })),
+                    ...appointmentCharges.map(appt => ({
+                        name: `Lich hen #${appt.appointmentId}`,
+                        quantity: 1,
+                        price: appt.amount
+                    }))
+                ],
                 cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/payment/cancel`,
                 returnUrl: returnUrl || `${process.env.FRONTEND_URL}/payment/success?orderCode=${order.OrderID}`
             };
@@ -115,6 +202,11 @@ class PaymentController {
                 paymentMethod: 'PAYOS',
                 status: 'PAID' // Giả lập đã thanh toán
             });
+
+            // Mark Paid cho invoice lịch hẹn đi cùng checkout
+            for (const appt of appointmentCharges) {
+                await Invoice.updateStatus(appt.invoiceId, 'Paid');
+            }
 
             // Cập nhật order status
             await Order.updateStatus(order.OrderID, 'SUCCESS');
