@@ -1,10 +1,9 @@
 const reviewModel = require('../models/review.model');
-const { containsProfanity } = require('../utils/profanity.util');
 
 const MIN_COMMENT_LENGTH = 10;
 const MAX_COMMENT_LENGTH = 500;
 
-const normalizeAndValidateComment = async (comment) => {
+const normalizeAndValidateComment = (comment) => {
     const normalizedComment = typeof comment === 'string' ? comment.trim() : '';
 
     if (!normalizedComment) {
@@ -17,9 +16,6 @@ const normalizeAndValidateComment = async (comment) => {
 
     if (normalizedComment.length > MAX_COMMENT_LENGTH) {
         return { valid: false, message: `Nhận xét tối đa ${MAX_COMMENT_LENGTH} ký tự.` };
-    }
-    if (await containsProfanity(normalizedComment)) {
-        return { valid: false, message: 'Nhận xét chứa từ ngữ không phù hợp.' };
     }
 
     return { valid: true, normalizedComment };
@@ -73,7 +69,7 @@ const createReview = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Rating phải từ 1 đến 5' });
         }
 
-        const commentCheck = await normalizeAndValidateComment(comment);
+        const commentCheck = normalizeAndValidateComment(comment);
         if (!commentCheck.valid) {
             return res.status(400).json({ success: false, message: commentCheck.message });
         }
@@ -117,7 +113,7 @@ const updateReview = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Rating phải từ 1 đến 5' });
         }
 
-        const commentCheck = await normalizeAndValidateComment(comment);
+        const commentCheck = normalizeAndValidateComment(comment);
         if (!commentCheck.valid) {
             return res.status(400).json({ success: false, message: commentCheck.message });
         }
