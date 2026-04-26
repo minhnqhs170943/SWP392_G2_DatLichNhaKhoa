@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Eye, Download, FileText, ShoppingBag, Calendar, CheckCircle, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, ShoppingBag, Calendar, CheckCircle, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import './AdminInvoices.css';
 
 const AdminInvoices = () => {

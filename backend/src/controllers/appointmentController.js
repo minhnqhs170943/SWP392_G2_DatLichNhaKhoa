@@ -165,7 +165,7 @@ exports.confirmAppointment = async (req, res) => {
             .input('doctorId', sql.Int, finalDoctorId)
             .query(`
                 UPDATE Appointments 
-                SET DoctorID = @doctorId, Status = 'Assigned', UpdatedAt = GETDATE()
+                SET DoctorID = @doctorId, Status = 'Confirmed', UpdatedAt = GETDATE()
                 WHERE AppointmentID = @id
             `);
 
