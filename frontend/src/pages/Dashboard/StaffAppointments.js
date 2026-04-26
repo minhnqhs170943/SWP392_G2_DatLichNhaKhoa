@@ -434,12 +434,14 @@ const StaffAppointments = () => {
                                 <div className="detail-row">
                                     <div className="detail-label">Thanh Toán</div>
                                     <div className="detail-value">
-                                        {selectedAppointment.PaymentStatus === 'Completed' ? (
-                                            <span className="status-badge completed">Đã thanh toán ({selectedAppointment.PaymentMethod})</span>
-                                        ) : (
-                                            <span className="status-badge pending">Chưa thanh toán</span>
-                                        )}
+                                    {/* Kiểm tra cả hai trường hợp để an toàn */}
+                                    {(selectedAppointment.PaymentStatus === 'Completed' || selectedAppointment.InvoiceStatus === 'PAID') ? (
+                                    <span className="status-badge completed">Đã thanh toán ({selectedAppointment.PaymentMethod || 'PAYOS'})</span>
+                                    ) : (
+                                    <span className="status-badge pending">Chưa thanh toán</span>
+                                    )}
                                     </div>
+                                    
                                 </div>
                                 <div className="detail-row" style={{ flexDirection: 'column', paddingBottom: '0' }}>
                                     <div className="detail-label" style={{ width: '100%', marginBottom: '8px' }}>Ghi Chú Yêu Cầu:</div>
