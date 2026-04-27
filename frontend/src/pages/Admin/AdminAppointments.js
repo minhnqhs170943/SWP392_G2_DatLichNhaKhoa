@@ -140,8 +140,6 @@ const AdminAppointments = () => {
                             style={{ paddingLeft: '38px' }}
                         >
                             <option value="All">Tất cả trạng thái</option>
-                            <option value="Pending">Chờ Xác Nhận</option>
-                            <option value="Confirmed">Đã Xác Nhận (Confirmed)</option>
                             <option value="Completed">Hoàn Thành (Completed)</option>
                             <option value="Cancelled">Đã Hủy (Cancelled)</option>
                         </select>

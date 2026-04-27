@@ -35,8 +35,8 @@ class AdminStatsController {
             SELECT ISNULL(SUM(p.Amount), 0) as GrossRevenue
             FROM Payments p
             INNER JOIN Invoices inv ON p.InvoiceID = inv.InvoiceID
-            WHERE p.Status IN ('Completed', 'Success', 'Paid') 
-                AND inv.Status = 'Paid' ${revenueDateFilter}
+            WHERE p.Status = 'Paid' 
+                AND UPPER(inv.Status) = 'PAID' ${revenueDateFilter}
 `);
 
             // 3. KPI: Appointment Stats
@@ -59,7 +59,7 @@ class AdminStatsController {
                 JOIN Users u ON d.UserID = u.UserID
                 LEFT JOIN Appointments a ON d.DoctorID = a.DoctorID
                 LEFT JOIN Invoices inv ON a.AppointmentID = inv.AppointmentID
-                LEFT JOIN Payments p ON inv.InvoiceID = p.InvoiceID AND p.Status = 'Completed' ${revenueDateFilter}
+                LEFT JOIN Payments p ON inv.InvoiceID = p.InvoiceID AND p.Status = 'PAID' ${revenueDateFilter}
                 GROUP BY u.FullName
                 ORDER BY Revenue DESC
             `);
@@ -71,7 +71,7 @@ class AdminStatsController {
                     COUNT(PaymentID) as Transactions,
                     ISNULL(SUM(Amount), 0) as TotalVolume
                 FROM Payments p
-                WHERE Status = 'Completed' ${revenueDateFilter}
+                WHERE Status = 'PAID' ${revenueDateFilter}
                 GROUP BY PaymentMethod
             `);
 
@@ -82,7 +82,7 @@ class AdminStatsController {
                     MONTH(p.PaymentDate) as MonthIdx,
                     ISNULL(SUM(p.Amount), 0) as Revenue
                 FROM Payments p
-                WHERE p.Status = 'Completed' AND ${yearCondition}
+                WHERE p.Status = 'PAID' AND ${yearCondition}
                 GROUP BY MONTH(p.PaymentDate)
                 ORDER BY MonthIdx ASC
             `);
