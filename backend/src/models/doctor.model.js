@@ -45,7 +45,7 @@ const findAvailableDoctors = async (date, time) => {
                     FROM Appointments 
                     WHERE AppointmentDate = @AppointmentDate
                       AND AppointmentTime = CAST(@AppointmentTime AS TIME)
-                      AND Status = 'Confirmed'
+                      AND Status = 'Assigned'
                       AND DoctorID IS NOT NULL
                 ) THEN 0 ELSE 1 END as IsAvailable
         from Users u
@@ -76,7 +76,7 @@ const findBookedSlots = async (date) => {
             COUNT(*) as AppointmentCount
         FROM Appointments
         WHERE AppointmentDate = @AppointmentDate
-          AND Status = 'Confirmed'
+          AND Status IN ('Assigned', 'Approved')
         GROUP BY AppointmentTime
     `);
 

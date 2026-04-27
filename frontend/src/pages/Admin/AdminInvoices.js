@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Eye, Download, FileText, ShoppingBag, Calendar, CheckCircle, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, ShoppingBag, Calendar, CheckCircle, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import './AdminInvoices.css';
 
 const AdminInvoices = () => {
@@ -8,9 +8,8 @@ const AdminInvoices = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
-    const [filterDay, setFilterDay] = useState('');
-    const [filterMonth, setFilterMonth] = useState('');
-    const [filterYear, setFilterYear] = useState('');
+    const [filterStartDate, setFilterStartDate] = useState('');
+    const [filterEndDate, setFilterEndDate] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
 
@@ -22,9 +21,8 @@ const AdminInvoices = () => {
             if (searchTerm) params.append('search', searchTerm);
             if (filterType) params.append('type', filterType);
             if (filterStatus) params.append('status', filterStatus);
-            if (filterDay) params.append('day', filterDay);
-            if (filterMonth) params.append('month', filterMonth);
-            if (filterYear) params.append('year', filterYear);
+            if (filterStartDate) params.append('startDate', filterStartDate);
+            if (filterEndDate) params.append('endDate', filterEndDate);
 
             if (params.toString()) url += `?${params.toString()}`;
 
@@ -39,7 +37,7 @@ const AdminInvoices = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, filterType, filterStatus, filterDay, filterMonth, filterYear]);
+    }, [searchTerm, filterType, filterStatus, filterStartDate, filterEndDate]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -134,27 +132,24 @@ const getStatusBadge = (status) => {
                         <label className="filter-label">Thời gian</label>
                         <div className="filter-item" style={{ gap: '5px' }}>
                             <Calendar size={16} />
-                            <select value={filterDay} onChange={(e) => setFilterDay(e.target.value)} style={{ width: '65px' }}>
-                                <option value="">Ngày</option>
-                                {Array.from({ length: 31 }, (_, i) => (
-                                    <option key={i + 1} value={i + 1}>{i + 1}</option>
-                                ))}
-                            </select>
-                            <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={{ width: '75px' }}>
-                                <option value="">Tháng</option>
-                                {Array.from({ length: 12 }, (_, i) => (
-                                    <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
-                                ))}
-                            </select>
-                            <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ width: '85px' }}>
-                                <option value="">Năm</option>
-                                {[2023, 2024, 2025, 2026].map(y => (
-                                    <option key={y} value={y}>{y}</option>
-                                ))}
-                            </select>
-                            {(filterDay || filterMonth || filterYear) && (
+                            <input 
+                                type="date" 
+                                value={filterStartDate} 
+                                onChange={(e) => setFilterStartDate(e.target.value)}
+                                style={{ border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '4px', outline: 'none' }}
+                                title="Từ ngày"
+                            />
+                            <span style={{ fontSize: '14px', color: '#64748b' }}>đến</span>
+                            <input 
+                                type="date" 
+                                value={filterEndDate} 
+                                onChange={(e) => setFilterEndDate(e.target.value)}
+                                style={{ border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '4px', outline: 'none' }}
+                                title="Đến ngày"
+                            />
+                            {(filterStartDate || filterEndDate) && (
                                 <button 
-                                    onClick={() => { setFilterDay(''); setFilterMonth(''); setFilterYear(''); }}
+                                    onClick={() => { setFilterStartDate(''); setFilterEndDate(''); }}
                                     style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', marginLeft: '5px' }}
                                     title="Xóa lọc ngày"
                                 >

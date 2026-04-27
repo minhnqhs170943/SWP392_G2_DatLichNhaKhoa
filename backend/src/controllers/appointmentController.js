@@ -179,7 +179,7 @@ exports.confirmAppointment = async (req, res) => {
             data: {
                 doctorId: finalDoctorId,
                 doctorName: doctorInfo.recordset[0]?.FullName || '',
-                newStatus: 'Confirmed'
+                newStatus: 'Assigned'
             }
         });
     } catch (error) {
@@ -201,7 +201,7 @@ exports.payAppointment = async (req, res) => {
         const pool = await poolPromise;
         const appointmentId = parseInt(id);
 
-        // Chỉ cho thanh toán lịch hẹn đã Confirmed
+        // Chỉ cho thanh toán lịch hẹn đã Assigned
         const appointmentResult = await pool.request()
             .input('appointmentId', sql.Int, appointmentId)
             .query(`
@@ -215,10 +215,10 @@ exports.payAppointment = async (req, res) => {
         }
 
         const appointment = appointmentResult.recordset[0];
-        if (appointment.Status !== 'Confirmed') {
+        if (appointment.Status !== 'Assigned') {
             return res.status(400).json({
                 success: false,
-                message: "Chỉ thanh toán được khi lịch hẹn ở trạng thái Confirmed."
+                message: "Chỉ thanh toán được khi lịch hẹn ở trạng thái Assigned."
             });
         }
 
@@ -286,7 +286,7 @@ exports.payAppointment = async (req, res) => {
             .input('id', sql.Int, parseInt(id))
             .query(`
                 UPDATE Appointments 
-                SET Status = 'Confirmed', UpdatedAt = GETDATE()
+                SET Status = 'Assigned', UpdatedAt = GETDATE()
                 WHERE AppointmentID = @id
             `);
 
@@ -298,7 +298,7 @@ exports.payAppointment = async (req, res) => {
                 transactionID,
                 amount,
                 paymentMethod,
-                newStatus: 'Confirmed'
+                newStatus: 'Assigned'
             }
         });
 

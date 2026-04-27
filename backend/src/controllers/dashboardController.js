@@ -138,7 +138,8 @@ exports.getDashboardStats = async (req, res) => {
                 s.ServiceName as name,
                 COUNT(s.ServiceID) as value
             FROM Appointments a
-            JOIN Services s ON a.AppointmentID = s.AppointmentID
+            JOIN AppointmentServices aps ON a.AppointmentID = aps.AppointmentID
+            JOIN Services s ON aps.ServiceID = s.ServiceID
             WHERE a.Status <> 'Cancelled'
         `;
         if (startDate && endDate) {
